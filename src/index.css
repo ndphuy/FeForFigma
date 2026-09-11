@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, ::before, ::after {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    background-color: #0b1310;
+    color: #101B17;
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  input, button, select, textarea {
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  a {
+    color: #0B7A5C;
+    text-decoration: none;
+  }
+  a:hover {
+    color: #0E9873;
+  }
+}
+
+/* Animations from Design System */
+@keyframes rs-ring {
+  0% { transform: scale(0.72); opacity: 0.55; }
+  70% { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+@keyframes rs-ring2 {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  75% { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+@keyframes rs-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes rs-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes rs-dots {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@keyframes rs-pulse2 {
+  0% { transform: scale(0.75); opacity: 0.6; }
+  75% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes rs-shimmer {
+  0% { background-position: -320px 0; }
+  100% { background-position: 320px 0; }
+}
+
+@keyframes rs-spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-rs-ring {
+  animation: rs-ring 2.8s ease-out infinite;
+}
+
+.animate-rs-ring2 {
+  animation: rs-ring2 2.6s ease-out infinite;
+}
+
+.animate-rs-pop {
+  animation: rs-pop 0.5s ease-out both;
+}
+
+.animate-rs-float {
+  animation: rs-float 3.6s ease-in-out infinite;
+}
+
+.animate-rs-pulse-slow {
+  animation: rs-pulse2 2.2s ease-out infinite;
+}
+
+/* Scroll utilities */
+.rs-scroll::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
+
+.rs-scroll,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
