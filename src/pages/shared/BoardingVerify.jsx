@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { BoardingPIN } from '../../components/BoardingPIN';
-import { 
-  KeyRound, 
-  ShieldCheck, 
-  CheckCircle2, 
-  XCircle, 
-  Car, 
-  User, 
+import {
+  KeyRound,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  Car,
+  User,
   ArrowRight,
   Sparkles
 } from 'lucide-react';
@@ -66,9 +66,7 @@ export const BoardingVerify = () => {
           >
             ‹
           </button>
-          <span className="text-xs font-bold text-[#101B17] uppercase tracking-wider">
-            Xác thực lên xe (Mã PIN)
-          </span>
+
           <div className="w-10" />
         </div>
 
@@ -77,11 +75,10 @@ export const BoardingVerify = () => {
           <button
             type="button"
             onClick={() => setViewMode('passenger_show')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              viewMode === 'passenger_show'
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${viewMode === 'passenger_show'
                 ? 'bg-white text-[#0B7A5C] shadow-xs'
                 : 'text-[#5B6B64] hover:text-[#101B17]'
-            }`}
+              }`}
           >
             <User className="w-3.5 h-3.5" />
             <span>Khách (Mã PIN)</span>
@@ -90,11 +87,10 @@ export const BoardingVerify = () => {
           <button
             type="button"
             onClick={() => setViewMode('driver_input')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              viewMode === 'driver_input'
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${viewMode === 'driver_input'
                 ? 'bg-white text-[#0B7A5C] shadow-xs'
                 : 'text-[#5B6B64] hover:text-[#101B17]'
-            }`}
+              }`}
           >
             <Car className="w-3.5 h-3.5" />
             <span>Tài xế (Nhập mã PIN)</span>
@@ -135,11 +131,10 @@ export const BoardingVerify = () => {
                 {[0, 1, 2, 3].map((idx) => (
                   <div
                     key={idx}
-                    className={`w-13 h-15 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold font-mono transition-all ${
-                      inputPin[idx]
+                    className={`w-13 h-15 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold font-mono transition-all ${inputPin[idx]
                         ? 'border-[#0F9D76] text-[#0B7A5C] bg-[#F1FAF6] shadow-xs'
                         : 'border-[#E4EAE7] text-[#C3CDC9] bg-[#F7FAF9]'
-                    }`}
+                      }`}
                   >
                     {inputPin[idx] || '•'}
                   </div>

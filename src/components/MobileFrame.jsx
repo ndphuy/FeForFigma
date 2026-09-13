@@ -38,6 +38,8 @@ export const MobileFrame = ({ children, hideNav = false }) => {
         { name: '8. Đặt chỗ thành công (Booking Confirmed)', path: '/passenger/booking-confirm/trip_001' },
         { name: '9. Theo dõi trực tiếp (Passenger Live)', path: '/passenger/live-tracking' },
         { name: '10. Đánh giá chuyến đi (Review Trip)', path: '/shared/review-trip' },
+        { name: '11. Thông báo hành khách (Notifications)', path: '/passenger/notifications' },
+        { name: '12. Danh sách tin nhắn hành khách', path: '/passenger/messages' },
       ]
     },
     {
@@ -48,13 +50,15 @@ export const MobileFrame = ({ children, hideNav = false }) => {
         { name: '3. Danh sách yêu cầu chờ duyệt (Requests)', path: '/driver/requests' },
         { name: '4. Điều hướng GPS & Trả khách (Active Trip)', path: '/driver/active-trip' },
         { name: '5. Xác thực CCCD & GPLX (KYC)', path: '/driver/kyc' },
+        { name: '6. Thông báo tài xế (Notifications)', path: '/driver/notifications' },
+        { name: '7. Danh sách tin nhắn tài xế', path: '/driver/messages' },
       ]
     },
     {
       group: 'Dịch vụ & Tiện ích',
       screens: [
         { name: 'Lịch sử chuyến đi (Trip History)', path: '/shared/trip-history' },
-        { name: 'Tin nhắn trao đổi (Trip Chat)', path: '/shared/chat/trip_001' },
+        { name: 'Tin nhắn trao đổi (Trip Chat)', path: '/passenger/messages' },
         { name: 'Ví RouteShare & Lịch sử giao dịch', path: '/wallet' },
         { name: 'Nạp tiền qua VietQR (PayOS)', path: '/wallet/top-up' },
         { name: 'Lịch trình đi lại định kỳ', path: '/shared/schedule' },

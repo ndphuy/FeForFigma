@@ -51,14 +51,16 @@ export const PassengerHome = () => {
           </span>
         </div>
 
-        {/* Static Notification Bell Icon */}
-        <div 
+        <button
+          type="button"
+          onClick={() => navigate('/passenger/notifications')}
           className="relative w-10 h-10 border border-[#EEF2F0] rounded-2xl bg-white flex items-center justify-center text-[#4B5A54] shrink-0 cursor-pointer hover:bg-[#F7FAF9] transition-colors"
           title="Thông báo"
+          aria-label="Mở thông báo"
         >
           <Bell className="w-4.5 h-4.5" />
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EE7A22] ring-2 ring-white" />
-        </div>
+        </button>
       </div>
 
       {/* Main Content */}
@@ -280,4 +282,3 @@ export const PassengerHome = () => {
     </div>
   );
 };
-

@@ -100,13 +100,7 @@ export const PassengerLiveTracking = () => {
           </div>
         </div>
 
-        {/* Boarding PIN banner */}
-        <div className="flex items-center justify-between pt-2.5 border-t border-[#EEF2F0]">
-          <span className="text-xs text-[#4B5A54] font-medium">Mã PIN lên xe:</span>
-          <span className="px-2.5 py-0.5 rounded-lg bg-[#0F9D76] text-white font-mono font-bold text-xs tracking-wider">
-            {activeBooking?.pin || '4821'}
-          </span>
-        </div>
+
       </div>
 
       {/* BOTTOM CONTROLS & DRIVER INFO CARD */}

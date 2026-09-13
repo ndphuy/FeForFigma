@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Home, Search, MessageSquare, User, PlusCircle, Inbox, Clock, History } from 'lucide-react';
+import { Home, CarFront, MessageSquare, Bell, User } from 'lucide-react';
 
 export const BottomNav = () => {
   const navigate = useNavigate();
@@ -9,23 +9,31 @@ export const BottomNav = () => {
   const { currentRole, pendingBookingsForDriver } = useApp();
 
   const passengerTabs = [
-    { 
-      id: 'p_home', 
-      label: 'Khám phá', 
-      icon: Home, 
-      path: '/passenger/home' 
+    {
+      id: 'p_home',
+      label: 'Trang chủ',
+      icon: Home,
+      path: '/passenger/home'
     },
-    { 
-      id: 'p_history', 
-      label: 'Lịch sử', 
-      icon: Clock, 
-      path: '/passenger/history' 
+    {
+      id: 'p_history',
+      label: 'Chuyến đi',
+      icon: CarFront,
+      path: '/passenger/history'
     },
-    { 
-      id: 'p_chat', 
-      label: 'Tin nhắn', 
-      icon: MessageSquare, 
-      path: '/shared/chat/trip_001' 
+    {
+      id: 'p_chat',
+      label: 'Tin nhắn',
+      icon: MessageSquare,
+      path: '/passenger/messages',
+      hasUnread: true
+    },
+    {
+      id: 'p_notifications',
+      label: 'Thông báo',
+      icon: Bell,
+      path: '/passenger/notifications',
+      hasUnread: true
     },
     { 
       id: 'p_profile', 
@@ -36,24 +44,31 @@ export const BottomNav = () => {
   ];
 
   const driverTabs = [
-    { 
-      id: 'd_home', 
-      label: 'Bảng tin', 
-      icon: Home, 
-      path: '/driver/home' 
+    {
+      id: 'd_home',
+      label: 'Trang chủ',
+      icon: Home,
+      path: '/driver/home'
     },
-    { 
-      id: 'd_history', 
-      label: 'Lịch sử', 
-      icon: Clock, 
-      path: '/driver/history' 
+    {
+      id: 'd_history',
+      label: 'Chuyến đi',
+      icon: CarFront,
+      path: '/driver/history'
     },
-    { 
-      id: 'd_requests', 
-      label: 'Yêu cầu', 
-      icon: Inbox, 
-      path: '/driver/requests',
-      badge: pendingBookingsForDriver.length > 0 ? pendingBookingsForDriver.length : null
+    {
+      id: 'd_chat',
+      label: 'Tin nhắn',
+      icon: MessageSquare,
+      path: '/driver/messages',
+      hasUnread: true
+    },
+    {
+      id: 'd_notifications',
+      label: 'Thông báo',
+      icon: Bell,
+      path: '/driver/notifications',
+      hasUnread: pendingBookingsForDriver.length > 0
     },
     { 
       id: 'd_profile', 
@@ -66,7 +81,7 @@ export const BottomNav = () => {
   const tabs = currentRole === 'driver' ? driverTabs : passengerTabs;
 
   return (
-    <div className="w-full bg-white border-t border-[#E4EAE7] px-4 py-2 flex items-center justify-between select-none z-40 shrink-0 shadow-[0_-2px_10px_rgba(16,27,23,0.03)]">
+    <div className="w-full bg-white px-2 pt-2.5 pb-[22px] flex items-center justify-around select-none z-40 shrink-0 shadow-[0_-2px_18px_rgba(16,27,23,0.06)]">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = location.pathname === tab.path;
@@ -74,20 +89,24 @@ export const BottomNav = () => {
         return (
           <button
             key={tab.id}
+            type="button"
             onClick={() => navigate(tab.path)}
-            className={`flex flex-col items-center justify-center flex-1 py-1 transition-all relative ${
-              isActive ? 'text-[#0F9D76] font-semibold' : 'text-[#8A9993] hover:text-[#4B5A54]'
+            aria-label={tab.label}
+            aria-current={isActive ? 'page' : undefined}
+            className={`flex min-w-[62px] flex-col items-center justify-center flex-1 gap-1.5 py-2 px-1 rounded-2xl transition-all relative ${
+              isActive ? 'bg-[#F1FAF6] text-[#0F9D76] font-semibold' : 'text-[#8A9993] hover:text-[#4B5A54]'
             }`}
           >
             <div className="relative">
               <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.3px]' : 'stroke-[1.8px]'}`} />
-              {tab.badge && (
-                <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] px-1 bg-[#EE7A22] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {tab.badge}
-                </span>
+              {tab.hasUnread && (
+                <span
+                  aria-label="Có thông báo chưa đọc"
+                  className="absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-[#EE7A22] rounded-full ring-2 ring-white"
+                />
               )}
             </div>
-            <span className="text-[11px] mt-1 tracking-tight">
+            <span className="text-[10.5px] tracking-tight whitespace-nowrap">
               {tab.label}
             </span>
           </button>
@@ -96,4 +115,3 @@ export const BottomNav = () => {
     </div>
   );
 };
-

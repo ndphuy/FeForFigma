@@ -1,376 +1,299 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { List, Mail, Plus } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Plus, Wallet, ChevronRight, Users, Navigation, Bell, Info, Phone, MessageSquare, MapPin, X, Car } from 'lucide-react';
+
+const WEEK_DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
 export const DriverHome = () => {
   const navigate = useNavigate();
-  const { currentUser, trips, pendingBookingsForDriver, driverWallet } = useApp();
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  const { currentUser, bookings, schedules, toggleSchedule } = useApp();
+  const workSchedule = schedules[0];
+  const isScheduleActive = workSchedule?.active ?? true;
+  const bookedPassengers = bookings.slice(0, 2).map((booking) => ({
+    id: booking.passengerId,
+    initials: booking.passengerInitials,
+    shortName: booking.passengerName.split(' ').at(-1)
+  }));
+  const bookedSeats = bookedPassengers.length;
+  const totalSeats = 3;
 
-  const formattedWallet = new Intl.NumberFormat('vi-VN').format(driverWallet);
-  const activeTrip = trips[0] || {};
-  const confirmedPassengers = activeTrip.passengers || [];
-  
-  // Passenger capacity is 3 for a 4-seater car (1 driver + 3 passenger seats)
-  const passengerCapacity = 3;
-  const occupiedSeatsCount = confirmedPassengers.length;
-  const freeSeatsCount = Math.max(0, passengerCapacity - occupiedSeatsCount);
+  const toggleWorkSchedule = () => {
+    if (workSchedule) toggleSchedule(workSchedule.id);
+  };
 
   return (
-    <div className="w-full flex flex-col bg-[#F4F7F5] pb-6">
-      {/* Top Bar matching synchronized header style */}
-      <div className="flex-none bg-white px-4 pt-1.5 pb-3 flex items-center gap-3 border-b border-[#EEF2F0]">
+    <div className="w-full min-h-full bg-[#F4F7F5] flex flex-col">
+      <header className="flex-none bg-white px-5 pt-1 pb-[18px] flex items-center gap-3.5">
         <button
           type="button"
           onClick={() => navigate('/profile')}
-          className="w-11 h-11 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-sm flex items-center justify-center shrink-0 border border-[#B2E2D0]/60 cursor-pointer shadow-xs"
+          className="w-12 h-12 rounded-full bg-[#DDF3EA] text-[#0B7A5C] flex items-center justify-center text-base font-semibold shrink-0"
+          aria-label="Mở hồ sơ tài xế"
         >
           {currentUser.initials || 'QH'}
         </button>
 
-        <div className="flex-1 min-w-0 flex flex-col">
-          <span className="text-[11px] font-medium text-[#8A9993]">Chào buổi sáng</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[15px] font-bold text-[#101B17] truncate">{currentUser.name || 'Quốc Huy'}</span>
-            <ShieldCheck className="w-4 h-4 text-[#0F9D76] shrink-0" />
-          </div>
-          <span className="inline-flex items-center gap-1.5 text-xs text-[#4B5A54] mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0F9D76]" />
-            Tài xế đã xác thực
-            <span className="text-[#C3CDC9] text-[10px]">▾</span>
+        <div className="flex-1 min-w-0 flex flex-col gap-px">
+          <span className="text-xs font-medium text-[#8A9993]">Chào buổi sáng</span>
+          <span className="flex items-center gap-[7px] text-lg font-semibold text-[#101B17] leading-tight min-w-0">
+            <span className="truncate">{currentUser.name || 'Quốc Huy'}</span>
+            <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" aria-label="Tài xế đã xác thực">
+              <circle cx="12" cy="12" r="10" fill="#0F9D76" />
+              <polyline points="7.5,12.5 10.5,15.5 16.5,9" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="text-[11.5px] text-[#8A9993] truncate">
+            <span className="text-[#F0A020]">★</span> {currentUser.trustScore || '4.8'} · {currentUser.vehicle?.model || 'Honda City'} · {currentUser.vehicle?.plate || '51G-119.02'}
           </span>
         </div>
 
-        {/* Static Notification Bell Icon */}
-        <div
-          className="relative w-10 h-10 border border-[#EEF2F0] rounded-2xl bg-white flex items-center justify-center text-[#4B5A54] shrink-0 cursor-pointer hover:bg-[#F7FAF9] transition-colors"
-          title="Thông báo"
+        <button
+          type="button"
+          onClick={() => navigate('/driver/notifications')}
+          className="relative w-12 h-12 border border-[#EEF2F0] rounded-2xl bg-white flex items-center justify-center shrink-0 hover:bg-[#F7FAF9] transition-colors"
+          aria-label="Mở thông báo"
         >
-          <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EE7A22] ring-2 ring-white" />
-        </div>
-      </div>
+          <svg viewBox="0 0 24 24" className="w-[21px] h-[21px]" fill="none" stroke="#4B5A54" strokeWidth="1.9" strokeLinecap="round">
+            <rect x="5" y="4.5" width="14" height="15" rx="4" />
+            <line x1="9" y1="9.5" x2="15" y2="9.5" />
+            <line x1="9" y1="14" x2="13" y2="14" />
+          </svg>
+          <span className="absolute top-[9px] right-[9px] w-2.5 h-2.5 rounded-full bg-[#EE7A22] border-2 border-white" />
+        </button>
+      </header>
 
-      {/* Main Content */}
-      <div className="p-3.5 flex flex-col gap-3">
-        {/* Primary CTA: + Tạo chuyến đi mới */}
+      <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
         <button
           type="button"
           onClick={() => navigate('/driver/create-trip')}
-          className="w-full h-13 min-h-[52px] rounded-2xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-sm shadow-[0_6px_18px_rgba(15,157,118,0.28)] flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+          className="w-full h-16 rounded-[20px] bg-[#0F9D76] hover:bg-[#0B8A66] text-white text-[17px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_22px_rgba(15,157,118,0.30)] active:scale-[0.99] transition-all"
         >
-          <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-base leading-none">
-            +
-          </span>
-          <span>Tạo chuyến đi mới</span>
+          <span className="w-[26px] h-[26px] rounded-full bg-white/20 flex items-center justify-center text-[17px] leading-none">+</span>
+          Tạo chuyến đi
         </button>
 
-        {/* Compact Wallet Bar */}
-        <div
-          onClick={() => navigate('/wallet')}
-          className="bg-white rounded-2xl p-3 border border-[#E4EAE7] shadow-[0_2px_8px_rgba(16,27,23,0.03)] flex items-center justify-between cursor-pointer hover:border-[#0F9D76] transition-all"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#DDF3EA] text-[#0F9D76] flex items-center justify-center shrink-0">
-              <Wallet className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[10.5px] text-[#8A9993] block font-medium">Số dư ví Tài xế</span>
-              <span className="text-xs font-bold text-[#101B17] font-mono">{formattedWallet} ₫</span>
-            </div>
-          </div>
+        <div className="rounded-[22px] bg-[#FFF4E9] border border-[#F7D9B8] p-4 flex items-center gap-3.5">
+          <span className="flex shrink-0">
+            {bookedPassengers.map((passenger, index) => (
+              <span
+                key={passenger.id}
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border-2 border-[#FFF4E9] ${
+                  index === 0 ? 'bg-[#DDF3EA] text-[#0B7A5C]' : '-ml-3.5 bg-white text-[#4B5A54]'
+                }`}
+              >
+                {passenger.initials}
+              </span>
+            ))}
+          </span>
 
-          <div className="flex items-center gap-1 text-[11.5px] font-bold text-[#0B7A5C] bg-[#F1FAF6] px-2.5 py-1 rounded-xl">
-            <span>Chi tiết ví</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
+          <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <span className="text-[14.5px] font-semibold text-[#8A4A0B]">{bookings.length} yêu cầu chờ bạn duyệt</span>
+            <span className="text-xs leading-[1.35] text-[#8A4A0B]">Gửi 12 phút trước · chuyến 07:00 hôm nay</span>
+          </span>
+
+          <button
+            type="button"
+            onClick={() => navigate('/driver/requests')}
+            className="h-11 px-4 rounded-[14px] bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[13.5px] font-semibold shrink-0 transition-colors"
+          >
+            Duyệt
+          </button>
         </div>
 
-        {/* Pending Requests Banner (Orange) */}
-        {pendingBookingsForDriver.length > 0 && (
-          <div className="bg-[#FFF4E9] border border-[#F7D9B8] rounded-2xl p-3 flex items-center gap-2.5">
-            <div className="flex -space-x-2 shrink-0">
-              {pendingBookingsForDriver.map((pb, idx) => (
-                <span
-                  key={pb.id || idx}
-                  className="w-8 h-8 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xs flex items-center justify-center border-2 border-[#FFF4E9]"
-                >
-                  {pb.passengerInitials || 'MA'}
-                </span>
-              ))}
-            </div>
-
-            <div className="flex-1 min-w-0 flex flex-col">
-              <span className="text-xs font-bold text-[#8A4A0B]">
-                {pendingBookingsForDriver.length} yêu cầu chờ bạn duyệt
-              </span>
-              <span className="text-[11px] text-[#8A4A0B]/80 truncate">
-                {pendingBookingsForDriver[0]?.passengerName}: {pendingBookingsForDriver[0]?.pickupPoint}
-              </span>
-            </div>
-
+        <section className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <h1 className="text-[15px] font-semibold text-[#101B17]">Chuyến hôm nay</h1>
             <button
               type="button"
-              onClick={() => navigate('/driver/requests')}
-              className="h-10 min-h-[40px] px-5 rounded-xl bg-[#EE7A22] hover:bg-[#D96A16] text-white text-xs font-bold shrink-0 transition-all shadow-xs cursor-pointer flex items-center justify-center active:scale-[0.98]"
+              onClick={() => navigate('/driver/history')}
+              className="text-[13px] font-semibold text-[#0B7A5C] hover:underline"
             >
-              Duyệt
-            </button>
-          </div>
-        )}
-
-        {/* Today's Active Trip Card */}
-        <div className="flex flex-col gap-2 pt-0.5">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-sm font-bold text-[#101B17]">Chuyến hôm nay</span>
-            <button
-              type="button"
-              onClick={() => navigate('/driver/active-trip')}
-              className="text-xs font-bold text-[#0B7A5C] hover:underline cursor-pointer"
-            >
-              Điều hướng ↗
+              Quản lý
             </button>
           </div>
 
-          <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_12px_rgba(16,27,23,0.05)] flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DDF1F4] text-[#0A6E7A] text-[10.5px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0A6E7A]" /> Đã xác nhận
+          <div className="bg-white rounded-3xl p-[18px] shadow-[0_4px_16px_rgba(16,27,23,0.07)] flex flex-col gap-3.5">
+            <div className="flex items-center justify-between gap-2.5">
+              <span className="h-[30px] px-3 rounded-full bg-[#DDF1F4] text-[#0A6E7A] text-[11.5px] font-semibold inline-flex items-center gap-1.5 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0A6E7A]" />
+                Đã xác nhận
               </span>
-              
-              <button
-                type="button"
-                onClick={() => setShowDetailModal(true)}
-                className="text-xs font-bold text-[#0F9D76] hover:underline flex items-center gap-1 cursor-pointer bg-[#F1FAF6] px-2.5 py-1 rounded-lg border border-[#BDE7D5]/60"
-              >
-                <Info className="w-3.5 h-3.5" />
-                <span>Thông tin chi tiết</span>
-              </button>
+              <span className="text-[12.5px] text-[#8A9993] text-right">Khởi hành sau 1 giờ 19 phút</span>
             </div>
 
-            {/* Route */}
-            <div className="flex gap-2.5">
-              <div className="flex flex-col items-center pt-1.5 gap-1 shrink-0">
+            <div className="flex gap-3.5">
+              <div className="flex flex-col items-center pt-[5px] gap-1 shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#0F9D76]" />
-                <span className="w-0.5 flex-1 min-h-[30px] bg-[#DFE7E3]" />
-                <span className="w-2.5 h-2.5 rounded-xs bg-[#EE7A22]" />
+                <span className="w-0.5 flex-1 min-h-7 bg-[#DFE7E3]" />
+                <span className="w-2.5 h-2.5 rounded-[2px] bg-[#EE7A22]" />
               </div>
 
-              <div className="flex-1 min-w-0 flex flex-col justify-between gap-2.5">
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-xs font-bold text-[#101B17] truncate">{activeTrip.origin || 'FPT University HCMC'}</span>
-                  <span className="text-xs font-bold text-[#101B17] font-mono shrink-0">{activeTrip.departureTime || '07:00'}</span>
+              <div className="flex-1 min-w-0 flex flex-col gap-4">
+                <div className="flex justify-between gap-2.5">
+                  <span className="min-w-0 text-[15px] font-semibold text-[#101B17] truncate">Nhà · Phú Mỹ Hưng</span>
+                  <span className="text-[15px] font-bold text-[#101B17] shrink-0">07:00</span>
                 </div>
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-xs font-bold text-[#101B17] truncate">{activeTrip.destination || 'Chợ Bến Thành, Q.1'}</span>
-                  <span className="text-xs text-[#8A9993] font-mono shrink-0">07:48</span>
+                <div className="flex justify-between gap-2.5">
+                  <span className="min-w-0 text-[15px] font-semibold text-[#101B17] truncate">FPT University HCMC</span>
+                  <span className="text-[15px] font-semibold text-[#8A9993] shrink-0">07:48</span>
                 </div>
               </div>
             </div>
 
-            {/* Dynamic Seat Occupancy & Confirmed Passengers List */}
-            <div className="flex flex-col gap-2 pt-2.5 border-t border-[#EEF2F0]">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#8A9993] font-semibold">
-                  Tình trạng chỗ ngồi ({occupiedSeatsCount}/{passengerCapacity} chỗ)
-                </span>
-                <span className="font-bold text-[#0F9D76]">
-                  {freeSeatsCount > 0 ? `${freeSeatsCount} ghế trống` : 'Đã đủ khách'}
-                </span>
+            <div className="flex flex-col gap-2.5 border-t border-[#EEF2F0] pt-3.5">
+              <div className="flex items-center justify-between gap-3 text-[12.5px]">
+                <span className="font-semibold text-[#4B5A54]">{bookedSeats}/{totalSeats} chỗ đã đặt · còn {totalSeats - bookedSeats} chỗ</span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/shared/cost-breakdown')}
+                  className="font-semibold text-[#0B7A5C] shrink-0 hover:underline"
+                >
+                  Chia lại {(45000 * bookedSeats).toLocaleString('de-DE')} ₫
+                </button>
               </div>
 
-              {confirmedPassengers.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {confirmedPassengers.map((p) => (
-                    <div
-                      key={p.id}
-                      className="w-full p-2.5 rounded-2xl bg-[#F7FAF9] border border-[#E4EAE7] flex items-center justify-between gap-2.5"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xs flex items-center justify-center shrink-0 border border-[#B2E2D0]/50">
-                          {p.initials || 'KH'}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold text-[#101B17] truncate">{p.name}</span>
-                          <span className="text-[10.5px] text-[#4B5A54] truncate">
-                            Đón tại: <strong className="text-[#101B17] font-semibold">{p.pickupPoint}</strong>
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-semibold text-[#EE7A22] bg-[#FFF4E9] border border-[#F7D9B8]/60 px-2 py-0.5 rounded-md shrink-0">
-                        Chờ đón
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-3 rounded-2xl bg-[#F7FAF9] border border-[#EEF2F0] text-center text-xs text-[#8A9993]">
-                  Chưa có hành khách nào đặt chỗ
-                </div>
-              )}
+              <div className="grid grid-cols-3 gap-2">
+                {bookedPassengers.map((passenger) => (
+                  <button
+                    key={passenger.id}
+                    type="button"
+                    onClick={() => navigate('/driver/messages')}
+                    className="h-11 rounded-[14px] bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center gap-[7px] text-xs font-semibold"
+                  >
+                    <span className="w-5 h-5 rounded-full bg-[#0F9D76] text-white flex items-center justify-center text-[9px] font-bold">
+                      {passenger.initials}
+                    </span>
+                    <span className="truncate">{passenger.shortName}</span>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => navigate('/driver/requests')}
+                  className="h-11 rounded-[14px] border-[1.5px] border-dashed border-[#DFE7E3] bg-white text-[#8A9993] flex items-center justify-center gap-[7px] text-xs font-semibold"
+                >
+                  <span className="w-5 h-5 rounded-full bg-[#EEF2F0] flex items-center justify-center text-[9px] font-bold">+</span>
+                  Còn trống
+                </button>
+              </div>
             </div>
 
-            {/* Navigation CTA */}
-            <button
-              type="button"
-              onClick={() => navigate('/driver/active-trip')}
-              className="w-full h-12 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-sm rounded-xl shadow-[0_4px_14px_rgba(15,157,118,0.25)] flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
-            >
-              <Navigation className="w-4 h-4" />
-              <span>Bắt đầu điều hướng chuyến đi</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* DETAIL INFO MODAL */}
-      {showDetailModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center animate-[fadeIn_0.2s_ease-out]">
-          <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-4.5 flex flex-col gap-3.5 max-h-[85vh] overflow-y-auto rs-scroll shadow-2xl">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#EEF2F0]">
-              <div className="flex flex-col">
-                <span className="text-base font-bold text-[#101B17]">Chi tiết chuyến đi</span>
-                <span className="text-xs text-[#8A9993] font-mono">Mã chuyến: #TRIP-001 · Hôm nay 07:00</span>
-              </div>
+            <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
-                onClick={() => setShowDetailModal(false)}
-                className="w-8 h-8 rounded-full bg-[#F4F7F5] hover:bg-[#E4EAE7] flex items-center justify-center text-[#101B17] font-bold cursor-pointer"
+                onClick={() => navigate('/driver/route-preview')}
+                className="h-[50px] rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#4B5A54] text-sm font-semibold hover:border-[#BDE7D5] hover:bg-[#F7FAF9] active:scale-[0.99] transition-all"
               >
-                <X className="w-4 h-4" />
+                Xem lộ trình
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/driver/active-trip')}
+                className="h-[50px] rounded-2xl bg-[#F1FAF6] text-[#0B7A5C] text-sm font-semibold hover:bg-[#DDF3EA] active:scale-[0.99] transition-all"
+              >
+                Bắt đầu chuyến
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-3 gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate('/driver/create-trip')}
+            className="min-h-24 rounded-[20px] border-[1.5px] border-[#E4EAE7] bg-white flex flex-col items-center justify-center gap-2 px-2 text-[#101B17] font-semibold text-xs active:scale-[0.98] hover:border-[#BDE7D5] hover:bg-[#F7FAF9] transition-all"
+          >
+            <span className="w-9 h-9 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center">
+              <Plus className="w-4 h-4 stroke-[2.5px]" />
+            </span>
+            Tạo chuyến
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/driver/history')}
+            className="relative min-h-24 rounded-[20px] border-[1.5px] border-[#E4EAE7] bg-white flex flex-col items-center justify-center gap-2 px-2 text-[#101B17] font-semibold text-xs active:scale-[0.98] hover:border-[#BDE7D5] hover:bg-[#F7FAF9] transition-all"
+          >
+            <span className="w-9 h-9 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center">
+              <List className="w-4 h-4 stroke-[2.5px]" />
+            </span>
+            <span className="absolute top-2.5 right-2.5 min-w-5 h-5 px-1.5 rounded-full bg-[#0F9D76] text-white text-[11px] font-bold flex items-center justify-center">4</span>
+            Chuyến của tôi
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/driver/requests')}
+            className="relative min-h-24 rounded-[20px] border-[1.5px] border-[#E4EAE7] bg-white flex flex-col items-center justify-center gap-2 px-2 text-[#101B17] font-semibold text-xs leading-[1.3] active:scale-[0.98] hover:border-[#BDE7D5] hover:bg-[#F7FAF9] transition-all"
+          >
+            <span className="w-9 h-9 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center">
+              <Mail className="w-4 h-4 stroke-2" />
+            </span>
+            <span className="absolute top-2.5 right-2.5 min-w-5 h-5 px-1.5 rounded-full bg-[#EE7A22] text-white text-[11px] font-bold flex items-center justify-center">{bookings.length}</span>
+            <span>Yêu cầu đặt<br />chỗ</span>
+          </button>
+        </section>
+
+        <section className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[15px] font-semibold text-[#101B17]">Lịch đi làm cố định</h2>
+              <span className="px-2 py-1 rounded-lg bg-[#F1FAF6] text-[#0B7A5C] text-[10px] font-bold tracking-[0.06em]">AI</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/shared/schedule')}
+              className="text-[13px] font-semibold text-[#0B7A5C] hover:underline"
+            >
+              Sửa
+            </button>
+          </div>
+
+          <div className={`rounded-[22px] bg-white p-[18px] shadow-[0_2px_10px_rgba(16,27,23,0.05)] transition-opacity ${
+            isScheduleActive ? 'opacity-100' : 'opacity-60'
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className="w-11 h-11 rounded-[15px] bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center text-[11px] font-bold shrink-0">
+                T2–T6
+              </span>
+              <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <span className="text-[14.5px] font-semibold text-[#101B17] truncate">Nhà → FPT University</span>
+                <span className="text-xs text-[#8A9993]">07:00 · 3 chỗ mỗi chuyến</span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isScheduleActive}
+                onClick={toggleWorkSchedule}
+                aria-label="Bật hoặc tắt lịch đi làm cố định"
+                className={`relative w-[46px] h-7 rounded-full transition-colors shrink-0 ${isScheduleActive ? 'bg-[#0F9D76]' : 'bg-[#D9E2DE]'}`}
+              >
+                <span className={`absolute top-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-sm transition-all ${isScheduleActive ? 'left-[21px]' : 'left-[3px]'}`} />
               </button>
             </div>
 
-            {/* Vehicle Info */}
-            <div className="p-3 rounded-2xl bg-[#F7FAF9] border border-[#E4EAE7] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#DDF3EA] text-[#0B7A5C] flex items-center justify-center text-base">
-                  🚗
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-[#101B17]">{activeTrip.vehicleModel || 'Honda City'} · {activeTrip.vehicleColor || 'Trắng'}</span>
-                  <span className="text-xs font-mono text-[#0B7A5C] font-semibold">{activeTrip.vehiclePlate || '51G-119.02'}</span>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-white border border-[#E4EAE7] text-[10.5px] font-bold text-[#4B5A54]">
-                {occupiedSeatsCount}/{passengerCapacity} chỗ
-              </span>
+            <div className="grid grid-cols-7 gap-1.5 border-t border-[#EEF2F0] pt-3.5 mt-3.5">
+              {WEEK_DAYS.map((day, index) => {
+                const active = index < 5 && isScheduleActive;
+                return (
+                  <span
+                    key={day}
+                    className={`h-10 rounded-xl flex items-center justify-center text-xs font-semibold ${
+                      active ? 'bg-[#DDF3EA] text-[#0B7A5C]' : 'bg-[#F7FAF9] text-[#C3CDC9]'
+                    }`}
+                  >
+                    {day}
+                  </span>
+                );
+              })}
             </div>
 
-            {/* Full Itinerary Stops */}
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-[#101B17] uppercase tracking-wider">Lộ trình & Điểm dừng</span>
-              <div className="bg-[#F7FAF9] rounded-2xl p-3 border border-[#E4EAE7] flex flex-col gap-2.5">
-                {activeTrip.stops?.map((st, idx) => (
-                  <div key={st.id || idx} className="flex items-start gap-2.5 relative">
-                    <div className="flex flex-col items-center mt-1">
-                      <span className={`w-2.5 h-2.5 rounded-full ${idx === 0 ? 'bg-[#0F9D76]' : idx === activeTrip.stops.length - 1 ? 'bg-[#EE7A22]' : 'bg-[#0B7A5C]'}`} />
-                      {idx < activeTrip.stops.length - 1 && <span className="w-0.5 h-6 bg-[#DFE7E3] my-0.5" />}
-                    </div>
-                    <div className="flex-1 min-w-0 flex justify-between items-start">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-[#101B17] truncate">{st.name}</span>
-                        <span className="text-[10px] text-[#8A9993]">{st.role}</span>
-                      </div>
-                      <span className="text-xs font-mono font-bold text-[#0B7A5C]">{st.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Confirmed Passengers Information */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#101B17] uppercase tracking-wider">
-                  Hành khách đã đặt ({confirmedPassengers.length})
-                </span>
-                <span className="text-xs font-bold font-mono text-[#0F9D76]">
-                  Thu được: {new Intl.NumberFormat('vi-VN').format(confirmedPassengers.reduce((sum, p) => sum + (p.fareVnd || 0), 0))} ₫
-                </span>
-              </div>
-
-              {confirmedPassengers.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {confirmedPassengers.map((p) => (
-                    <div
-                      key={p.id}
-                      className="p-3 rounded-2xl bg-white border border-[#E4EAE7] shadow-2xs flex flex-col gap-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xs flex items-center justify-center border border-[#B2E2D0]/50">
-                            {p.initials || 'KH'}
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-[#101B17] block">{p.name}</span>
-                            <span className="text-[10.5px] text-[#8A9993]">{p.phone}</span>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="text-xs font-bold font-mono text-[#0F9D76] block">
-                            {new Intl.NumberFormat('vi-VN').format(p.fareVnd || 35000)} ₫
-                          </span>
-                          <span className="text-[9.5px] text-[#8A9993]">Đã xác nhận</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#F7FAF9] p-2 rounded-xl text-[10.5px] flex flex-col gap-1 text-[#4B5A54]">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[#0F9D76] font-bold">Điểm đón:</span>
-                          <span className="truncate">{p.pickupPoint}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[#EE7A22] font-bold">Điểm trả:</span>
-                          <span className="truncate">{p.dropoffPoint}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 pt-1 border-t border-[#EEF2F0]">
-                        <a
-                          href={`tel:${p.phone}`}
-                          className="flex-1 h-8.5 rounded-xl bg-[#F1FAF6] hover:bg-[#DDF3EA] text-[#0B7A5C] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                          <span>Gọi điện</span>
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowDetailModal(false);
-                            navigate(`/shared/chat/${p.id}`);
-                          }}
-                          className="flex-1 h-8.5 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Nhắn tin</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-3 rounded-2xl bg-[#F7FAF9] text-center text-xs text-[#8A9993]">
-                  Chưa có hành khách nào đặt chỗ cho chuyến đi này.
-                </div>
-              )}
-            </div>
-
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setShowDetailModal(false)}
-              className="w-full h-11 bg-[#F4F7F5] hover:bg-[#E4EAE7] text-[#101B17] font-bold text-xs rounded-xl transition-colors cursor-pointer mt-1"
-            >
-              Đóng thông tin
-            </button>
+            <p className="text-xs leading-[1.5] text-[#8A9993] mt-3.5">
+              Tự đăng chuyến lúc 20:00 tối hôm trước. 6 khách thường xuyên đi tuyến này.
+            </p>
           </div>
-        </div>
-      )}
+        </section>
+      </div>
     </div>
   );
 };
-

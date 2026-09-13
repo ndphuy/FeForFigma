@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Calendar, 
-  Clock, 
-  MapPin, 
   ChevronRight, 
-  Star, 
-  ShieldCheck, 
-  CheckCircle2, 
-  XCircle, 
   Car, 
   Wallet, 
   X, 
-  MessageSquare, 
-  Phone,
-  RotateCcw
+  Phone
 } from 'lucide-react';
 
 export const TripHistory = () => {
-  const navigate = useNavigate();
-  const { currentRole, trips, bookings, currentUser } = useApp();
+  const { currentRole } = useApp();
   const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'completed' | 'upcoming'
   const [selectedHistoryTrip, setSelectedHistoryTrip] = useState(null);
 
@@ -261,127 +251,139 @@ export const TripHistory = () => {
 
       {/* TRIP DETAIL MODAL */}
       {selectedHistoryTrip && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center animate-[fadeIn_0.2s_ease-out]">
-          <div className="w-full max-w-[390px] bg-white rounded-t-[32px] p-4.5 flex flex-col gap-3.5 max-h-[85vh] overflow-y-auto rs-scroll shadow-2xl">
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-[#07110D]/55 backdrop-blur-[2.5px] animate-rs-backdrop-in"
+          onClick={() => setSelectedHistoryTrip(null)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="trip-detail-title"
+            onClick={(event) => event.stopPropagation()}
+            className="animate-rs-sheet-up flex max-h-[86vh] w-full max-w-[390px] flex-col overflow-hidden rounded-t-[30px] bg-white shadow-[0_-18px_48px_rgba(7,17,13,0.22)]"
+          >
+            <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-[#D7E0DC]" />
+
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-[#EEF2F0]">
+            <div className="flex shrink-0 items-start justify-between border-b border-[#EEF2F0] px-4 pb-3.5 pt-2.5">
               <div className="flex flex-col">
-                <span className="text-base font-bold text-[#101B17]">Chi tiết chuyến đi</span>
-                <span className="text-xs text-[#8A9993]">{selectedHistoryTrip.date} · {selectedHistoryTrip.time}</span>
+                <h2 id="trip-detail-title" className="text-[19px] font-semibold leading-6 text-[#101B17]">Chi tiết chuyến đi</h2>
+                <span className="mt-0.5 text-sm text-[#8A9993]">{selectedHistoryTrip.date} · {selectedHistoryTrip.time}</span>
               </div>
               <button
                 type="button"
+                aria-label="Đóng chi tiết chuyến đi"
                 onClick={() => setSelectedHistoryTrip(null)}
-                className="w-8 h-8 rounded-full bg-[#F4F7F5] hover:bg-[#E4EAE7] flex items-center justify-center text-[#101B17] font-bold cursor-pointer"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F4F7F5] text-[#101B17] transition-colors hover:bg-[#E4EAE7]"
               >
-                <X className="w-4 h-4" />
+                <X className="h-5 w-5" strokeWidth={2} />
               </button>
             </div>
 
-            {/* Status & Code */}
-            <div className="p-3 rounded-2xl bg-[#F7FAF9] border border-[#EEF2F0] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${selectedHistoryTrip.statusColor}`}>
+            <div className="rs-scroll flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-3.5">
+              {/* Status & Code */}
+              <div className="flex min-h-[48px] shrink-0 items-center justify-between rounded-[18px] border border-[#E4EAE7] bg-[#F7FAF9] px-3.5 py-2.5">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${selectedHistoryTrip.statusColor}`}>
                   {selectedHistoryTrip.statusLabel}
                 </span>
-              </div>
-              <span className="text-xs font-mono font-bold text-[#0B7A5C]">
-                {selectedHistoryTrip.code || '#RS-TRIP-99'}
-              </span>
-            </div>
-
-            {/* Itinerary */}
-            <div className="bg-[#F7FAF9] rounded-2xl p-3.5 border border-[#E4EAE7] flex flex-col gap-2.5">
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8A9993]">Lộ trình di chuyển</span>
-              <div className="flex items-start gap-2.5">
-                <div className="flex flex-col items-center mt-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#0F9D76]" />
-                  <span className="w-0.5 h-6 bg-[#DFE7E3] my-0.5" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#EE7A22]" />
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-between gap-2 text-xs">
-                  <div>
-                    <span className="text-[9.5px] text-[#8A9993] block">Điểm xuất phát</span>
-                    <span className="font-bold text-[#101B17]">{selectedHistoryTrip.origin}</span>
-                  </div>
-                  <div>
-                    <span className="text-[9.5px] text-[#8A9993] block">Điểm đến</span>
-                    <span className="font-bold text-[#101B17]">{selectedHistoryTrip.destination}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Driver / Passenger Info */}
-            {currentRole === 'driver' ? (
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8A9993]">
-                  Hành khách tham gia ({selectedHistoryTrip.passengers?.length || 0})
+                <span className="font-mono text-[13px] font-bold text-[#0B7A5C]">
+                  {selectedHistoryTrip.code || `#RS-${selectedHistoryTrip.id.slice(-4).toUpperCase()}`}
                 </span>
-                <div className="flex flex-col gap-2">
-                  {selectedHistoryTrip.passengers?.map((p, idx) => (
-                    <div key={idx} className="p-2.5 rounded-xl bg-white border border-[#E4EAE7] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7.5 h-7.5 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xs flex items-center justify-center">
-                          {p.initials}
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-[#101B17] block">{p.name}</span>
-                          <span className="text-[10px] text-[#8A9993]">{p.pickup} → {p.dropoff}</span>
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold font-mono text-[#0F9D76]">
-                        {new Intl.NumberFormat('vi-VN').format(p.fare)} ₫
-                      </span>
+              </div>
+
+              {/* Itinerary */}
+              <div className="flex shrink-0 flex-col gap-3 rounded-[20px] border border-[#DDE5E1] bg-[#F9FBFA] px-3.5 py-4">
+                <span className="text-xs font-semibold uppercase tracking-[0.06em] text-[#8A9993]">Lộ trình di chuyển</span>
+                <div className="flex items-stretch gap-3">
+                  <div className="flex flex-col items-center py-1">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#0F9D76]" />
+                    <span className="my-1 min-h-7 w-0.5 flex-1 bg-[#DFE7E3]" />
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-[#EE7A22]" />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#8A9993]">Điểm xuất phát</span>
+                      <span className="text-[14px] font-semibold leading-5 text-[#101B17]">{selectedHistoryTrip.origin}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="p-3 rounded-2xl bg-white border border-[#E4EAE7] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xs flex items-center justify-center">
-                    {selectedHistoryTrip.driverInitials}
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-[#101B17] block">Tài xế: {selectedHistoryTrip.driverName}</span>
-                    <span className="text-[10.5px] text-[#8A9993]">{selectedHistoryTrip.vehicleDetail || selectedHistoryTrip.vehicle}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#8A9993]">Điểm đến</span>
+                      <span className="text-[14px] font-semibold leading-5 text-[#101B17]">{selectedHistoryTrip.destination}</span>
+                    </div>
                   </div>
                 </div>
-                <a
-                  href={`tel:${selectedHistoryTrip.driverPhone}`}
-                  className="w-8.5 h-8.5 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center"
-                >
-                  <Phone className="w-3.5 h-3.5" />
-                </a>
               </div>
-            )}
 
-            {/* Payment Summary */}
-            <div className="p-3 rounded-2xl bg-[#F1FAF6] border border-[#BDE7D5]/70 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-[#0F9D76]" />
-                <span className="text-xs font-semibold text-[#101B17]">
-                  {currentRole === 'driver' ? 'Tổng tiền thu được:' : 'Chi phí chia sẻ:'}
+              {/* Driver / Passenger Info */}
+              {currentRole === 'driver' ? (
+                <div className="flex flex-col gap-2 rounded-[20px] border border-[#DDE5E1] bg-white p-3.5">
+                  <span className="text-xs font-semibold uppercase tracking-[0.06em] text-[#8A9993]">
+                    Hành khách tham gia ({selectedHistoryTrip.passengers?.length || 0})
+                  </span>
+                  <div className="flex flex-col gap-2">
+                    {selectedHistoryTrip.passengers?.map((passenger) => (
+                      <div key={`${selectedHistoryTrip.id}-${passenger.phone}`} className="flex items-center justify-between rounded-2xl bg-[#F7FAF9] p-2.5">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DDF3EA] text-xs font-bold text-[#0B7A5C]">
+                            {passenger.initials}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="block truncate text-[13px] font-semibold text-[#101B17]">{passenger.name}</span>
+                            <span className="block truncate text-[10.5px] text-[#8A9993]">{passenger.pickup} → {passenger.dropoff}</span>
+                          </div>
+                        </div>
+                        <span className="shrink-0 pl-2 font-mono text-xs font-bold text-[#0F9D76]">
+                          {new Intl.NumberFormat('vi-VN').format(passenger.fare)} ₫
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex min-h-[72px] shrink-0 items-center justify-between rounded-[20px] border border-[#DDE5E1] bg-white px-3.5 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#DDF3EA] text-base font-semibold text-[#0B7A5C]">
+                      {selectedHistoryTrip.driverInitials}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block truncate text-[14px] font-semibold text-[#101B17]">Tài xế: {selectedHistoryTrip.driverName}</span>
+                      <span className="mt-0.5 block truncate text-xs text-[#8A9993]">{selectedHistoryTrip.vehicleDetail || selectedHistoryTrip.vehicle}</span>
+                    </div>
+                  </div>
+                  <a
+                    href={`tel:${selectedHistoryTrip.driverPhone}`}
+                    aria-label={`Gọi tài xế ${selectedHistoryTrip.driverName}`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[#F1FAF6] text-[#0B7A5C]"
+                  >
+                    <Phone className="h-[18px] w-[18px]" strokeWidth={2} />
+                  </a>
+                </div>
+              )}
+
+              {/* Payment Summary */}
+              <div className="flex min-h-[52px] shrink-0 items-center justify-between rounded-[18px] border border-[#BDE7D5] bg-[#F1FAF6] px-3.5 py-3">
+                <div className="flex items-center gap-2.5">
+                  <Wallet className="h-[18px] w-[18px] text-[#0F9D76]" strokeWidth={2} />
+                  <span className="text-[14px] font-semibold text-[#101B17]">
+                    {currentRole === 'driver' ? 'Tổng tiền thu được:' : 'Chi phí chia sẻ:'}
+                  </span>
+                </div>
+                <span className="shrink-0 font-mono text-[14px] font-bold text-[#0F9D76]">
+                  {new Intl.NumberFormat('vi-VN').format(currentRole === 'driver' ? selectedHistoryTrip.totalEarnings : selectedHistoryTrip.fareVnd)} ₫
                 </span>
               </div>
-              <span className="text-xs font-bold font-mono text-[#0F9D76]">
-                {new Intl.NumberFormat('vi-VN').format(currentRole === 'driver' ? selectedHistoryTrip.totalEarnings : selectedHistoryTrip.fareVnd)} ₫
-              </span>
-            </div>
 
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setSelectedHistoryTrip(null)}
-              className="w-full h-11 bg-[#F4F7F5] hover:bg-[#E4EAE7] text-[#101B17] font-bold text-xs rounded-xl transition-colors cursor-pointer mt-1"
-            >
-              Đóng chi tiết
-            </button>
-          </div>
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedHistoryTrip(null)}
+                className="h-12 w-full shrink-0 rounded-[18px] bg-[#F4F7F5] text-[14px] font-semibold text-[#101B17] transition-colors hover:bg-[#E4EAE7]"
+              >
+                Đóng chi tiết
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </div>
   );
 };
-

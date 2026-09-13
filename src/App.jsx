@@ -37,6 +37,8 @@ import { TripChat } from './pages/shared/TripChat';
 import { BoardingVerify } from './pages/shared/BoardingVerify';
 import { TripComplete } from './pages/shared/TripComplete';
 import { TripHistory } from './pages/shared/TripHistory';
+import { NotificationsPage } from './pages/shared/NotificationsPage';
+import { ConversationList } from './pages/shared/ConversationList';
 
 const AppRoutes = () => {
   const { currentRole } = useApp();
@@ -51,6 +53,7 @@ const AppRoutes = () => {
     '/passenger/booking-confirm',
     '/passenger/request-booking',
     '/passenger/pickup-picker',
+    '/passenger/results',
     '/shared/chat',
     '/shared/trip-complete',
     '/wallet/top-up'
@@ -103,6 +106,10 @@ const AppRoutes = () => {
         <Route path="/shared/trip-history" element={<TripHistory />} />
         <Route path="/passenger/history" element={<TripHistory />} />
         <Route path="/driver/history" element={<TripHistory />} />
+        <Route path="/passenger/messages" element={<ConversationList />} />
+        <Route path="/driver/messages" element={<ConversationList />} />
+        <Route path="/passenger/notifications" element={<NotificationsPage />} />
+        <Route path="/driver/notifications" element={<NotificationsPage />} />
         <Route path="/passenger/cost-breakdown" element={<CostBreakdown />} />
         <Route path="/shared/cost-breakdown" element={<CostBreakdown />} />
         <Route path="/shared/live-tracking" element={<LiveTracking />} />
