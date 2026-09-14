@@ -122,13 +122,16 @@ export const RequestBooking = () => {
                 key={num}
                 type="button"
                 onClick={() => setSeats(num)}
-                className={`flex-1 h-12 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 h-14 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                   seats === num
                     ? 'bg-[#0F9D76] text-white shadow-xs'
                     : 'bg-[#F4F7F5] text-[#4B5A54] hover:bg-[#EAEFEA]'
                 }`}
               >
-                {num} chỗ ({new Intl.NumberFormat('vi-VN').format(trip.priceVnd * num)} ₫)
+                <span className="text-xs font-bold leading-none">{num} chỗ</span>
+                <span className={`text-[10px] font-mono leading-none ${seats === num ? 'text-white/85' : 'text-[#8A9993]'}`}>
+                  {new Intl.NumberFormat('vi-VN').format(trip.priceVnd * num)} ₫
+                </span>
               </button>
             ))}
           </div>
