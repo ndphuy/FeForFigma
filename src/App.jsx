@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { MobileFrame } from './components/MobileFrame';
+import { AdminApp } from './pages/admin/AdminApp';
 
 // Auth & Profile
 import { LoginPage } from './pages/auth/LoginPage';
@@ -43,6 +44,14 @@ import { ConversationList } from './pages/shared/ConversationList';
 const AppRoutes = () => {
   const { currentRole } = useApp();
   const location = useLocation();
+
+  if (location.pathname.startsWith('/admin')) {
+    return (
+      <Routes>
+        <Route path="/admin/*" element={<AdminApp />} />
+      </Routes>
+    );
+  }
 
   const hideNavRoutes = [
     '/auth/login',

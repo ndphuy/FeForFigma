@@ -65,6 +65,12 @@ export const MobileFrame = ({ children, hideNav = false }) => {
         { name: 'Hồ sơ cá nhân & Chuyển đổi vai trò', path: '/profile' },
         { name: 'Đăng nhập / Xác thực', path: '/auth/login' },
       ]
+    },
+    {
+      group: 'Quản trị (Admin)',
+      screens: [
+        { name: 'Admin Console — Bảng điều khiển desktop', path: '/admin/overview' },
+      ]
     }
   ];
 
