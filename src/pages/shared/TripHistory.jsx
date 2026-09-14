@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { 
-  Calendar, 
-  ChevronRight, 
-  Car, 
-  Wallet, 
-  X, 
-  Phone
+import {
+  Calendar,
+  ChevronRight,
+  Car,
+  Wallet,
+  X,
+  Phone,
+  Flag
 } from 'lucide-react';
+import { ReportModal } from '../../components/ReportModal';
 
 export const TripHistory = () => {
   const { currentRole } = useApp();
   const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'completed' | 'upcoming'
   const [selectedHistoryTrip, setSelectedHistoryTrip] = useState(null);
+  const [showReport, setShowReport] = useState(false);
 
   // Mock comprehensive history list with clean vehicle strings
   const historyData = currentRole === 'driver' ? [
@@ -372,6 +375,16 @@ export const TripHistory = () => {
                 </span>
               </div>
 
+              {/* Report Trip Issue */}
+              <button
+                type="button"
+                onClick={() => setShowReport(true)}
+                className="flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-[16px] border border-[#F7D9B8] bg-[#FFF4E9] text-[13px] font-semibold text-[#8A4A0B] transition-colors hover:bg-[#FFEEDB]"
+              >
+                <Flag className="h-3.5 w-3.5" />
+                Báo cáo sự cố chuyến đi
+              </button>
+
               {/* Close Button */}
               <button
                 type="button"
@@ -384,6 +397,14 @@ export const TripHistory = () => {
           </section>
         </div>
       )}
+
+      {/* Report Modal */}
+      <ReportModal
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        reportedName={selectedHistoryTrip ? (currentRole === 'driver' ? (selectedHistoryTrip.passengers?.[0]?.name || 'hành khách') : selectedHistoryTrip.driverName) : ''}
+        tripCode={selectedHistoryTrip?.code || selectedHistoryTrip?.id}
+      />
     </div>
   );
 };

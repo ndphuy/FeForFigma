@@ -1,161 +1,110 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Phone, MessageSquare, AlertTriangle, Crosshair, Map } from 'lucide-react';
+import { ShieldCheck, Phone, MessageSquare, AlertTriangle, Crosshair, Map, Flag, Check } from 'lucide-react';
+import { ReportModal } from '../../components/ReportModal';
+import { LiveRouteMap } from '../../components/LiveRouteMap';
+
+// Stop names carry a "(Điểm X)" suffix in trip.stops but bookings store the bare
+// name — normalize both sides before matching a passenger's pickup/dropoff to a stop.
+const normalizeStopName = (s) => (s || '').replace(/\s*\(Điểm\s*\w+\)\s*$/i, '').trim();
 
 export const LiveTracking = () => {
   const navigate = useNavigate();
-  const { activeTrip, confirmPassengerDropoff, completeTrip, notify } = useApp();
+  const { activeTrip, confirmPassengerPickup, confirmPassengerDropoff, completeTrip, notify } = useApp();
+  const passengers = activeTrip?.passengers || [];
 
-  // Phases: 'start' -> 'toPickup' -> 'onboard' -> 'arrived'
-  const [phase, setPhase] = useState('toPickup');
-  const [minutesToPickup, setMinutesToPickup] = useState(6);
   const [showSosModal, setShowSosModal] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
-  // Points on map
-  const pts = {
-    origin: [58, 640],
-    car: [128, 520],
-    pickup: [212, 398],
-    drop: [318, 172]
-  };
+  // Real trip phase, derived from each passenger's own status — not a fake global timeline.
+  // Grab-style: the trip can only finish once every passenger has actually been dropped off.
+  const totalCount = passengers.length;
+  const waitingCount = passengers.filter((p) => p.status === 'waiting_pickup').length;
+  const onBoardCount = passengers.filter((p) => p.status === 'on_board').length;
+  const droppedCount = passengers.filter((p) => p.status === 'dropped_off').length;
+  const allDone = totalCount > 0 && droppedCount === totalCount;
+  const phase = totalCount === 0 ? 'start' : waitingCount > 0 ? 'toPickup' : onBoardCount > 0 ? 'onboard' : 'arrived';
 
-  const carAt = phase === 'start' ? pts.origin : phase === 'arrived' ? pts.drop : phase === 'onboard' ? [258, 300] : pts.car;
+  // Map: plot the trip's real stops and mark which ones are an actual pickup/dropoff.
+  const routeStops = activeTrip?.stops?.length >= 2
+    ? activeTrip.stops
+    : [
+        { id: 'o', name: activeTrip?.origin },
+        { id: 'd', name: activeTrip?.destination },
+      ];
 
-  const j = (a) => a.map(pt => `${pt[0]},${pt[1]}`).join(' ');
+  const mapPoints = routeStops.map((stop, idx) => {
+    const stopName = normalizeStopName(stop.name);
+    const isOrigin = idx === 0;
+    const isDestination = idx === routeStops.length - 1;
+    const pickupsHere = passengers.filter((p) => normalizeStopName(p.pickupPoint) === stopName);
+    const dropoffsHere = passengers.filter((p) => normalizeStopName(p.dropoffPoint) === stopName);
+    const isPickupStop = isOrigin || pickupsHere.length > 0;
+    const isDropoffStop = !isPickupStop && (isDestination || dropoffsHere.length > 0);
+    const done = isPickupStop
+      ? isOrigin ? waitingCount === 0 : pickupsHere.every((p) => p.status !== 'waiting_pickup')
+      : isDestination ? allDone : dropoffsHere.every((p) => p.status === 'dropped_off');
 
-  const donePoints = phase === 'start' ? [pts.origin] : phase === 'toPickup' ? [pts.origin, carAt]
-    : phase === 'onboard' ? [pts.origin, pts.pickup, carAt] : [pts.origin, pts.pickup, pts.drop];
-  const livePoints = phase === 'start' ? [pts.origin, pts.pickup, pts.drop]
-    : phase === 'toPickup' ? [carAt, pts.pickup, pts.drop]
-    : phase === 'onboard' ? [carAt, pts.drop] : [pts.drop];
+    return {
+      label: stopName,
+      type: isPickupStop ? 'pickup' : isDropoffStop ? 'dropoff' : 'waypoint',
+      done,
+    };
+  });
+
+  // Progress = fraction of pickup/dropoff checkpoints already completed (2 per passenger).
+  const totalCheckpoints = totalCount * 2;
+  const completedCheckpoints = passengers.reduce(
+    (sum, p) => sum + (p.status !== 'waiting_pickup' ? 1 : 0) + (p.status === 'dropped_off' ? 1 : 0),
+    0
+  );
+  const mapProgress = totalCheckpoints > 0 ? completedCheckpoints / totalCheckpoints : phase === 'arrived' ? 1 : 0;
 
   const cfg = {
     start: {
       statusLabel: 'Sẵn sàng', badgeBg: '#EEF2F0', badgeFg: '#5B6B64', badgeDot: '#8A9993',
-      headline: 'Bắt đầu chuyến đi', etaBig: '07:00', etaUnit: 'khởi hành',
-      metrics: [['Điểm đón đầu', '3,4 km'], ['Khách', '1 người'], ['Tổng chặng', '27,4 km']],
-      cta: 'Bắt đầu chuyến',
-      railTop: ['FPT University · đón Lan', '07:25', '#101B17', '#0F9D76'],
-      pickupLabel: 'Điểm đón Lan', pickupPin: '#0F9D76', pickupLabelColor: '#101B17',
-      dropLabel: 'Bến Thành', dropLabelColor: '#8A9993',
-      passengerSub: 'Đã xác nhận · đóng góp 35.000 ₫',
+      headline: 'Chưa có khách trên chuyến', etaBig: '07:00', etaUnit: 'khởi hành',
+      metrics: [['Điểm đón đầu', '3,4 km'], ['Khách', `${totalCount} người`], ['Tổng chặng', '27,4 km']],
+      railTop: ['FPT University · đón khách', '07:25', '#101B17', '#0F9D76'],
       iconBg: '#F4F7F5', iconFg: '#8A9993'
     },
     toPickup: {
       statusLabel: 'Đang tới điểm đón', badgeBg: '#DDF1F4', badgeFg: '#0A6E7A', badgeDot: '#0A6E7A',
-      headline: `Đón Lan sau ${minutesToPickup} phút`, etaBig: `07:2${Math.min(9, minutesToPickup)}`, etaUnit: 'giờ đón dự kiến',
-      metrics: [['Cách khách', '2,1 km'], ['Giờ đón', '07:25'], ['Trả khách', '08:00']],
-      cta: 'Đã đón khách',
+      headline: `Còn ${waitingCount} khách chờ đón`, etaBig: '07:25', etaUnit: 'giờ đón dự kiến',
+      metrics: [['Còn phải đón', `${waitingCount} người`], ['Đã đón', `${onBoardCount + droppedCount} người`], ['Trả khách', '08:00']],
       railTop: ['FPT University · Cổng 2', '07:25', '#101B17', '#0F9D76'],
-      pickupLabel: `Lan · ${minutesToPickup} phút`, pickupPin: '#0F9D76', pickupLabelColor: '#0B7A5C',
-      dropLabel: 'Bến Thành', dropLabelColor: '#8A9993',
-      passengerSub: 'Đang chờ tại Cổng 2 · 4.9 ★',
       iconBg: '#DDF1F4', iconFg: '#0A6E7A'
     },
     onboard: {
       statusLabel: 'Khách đã lên xe', badgeBg: '#DDF3EA', badgeFg: '#0B7A5C', badgeDot: '#0F9D76',
-      headline: 'Đang tới điểm trả khách', etaBig: '08:00', etaUnit: 'dự kiến tới nơi',
-      metrics: [['Còn lại', '11,8 km'], ['Thời gian', '26 phút'], ['Điểm trả', 'Bến Thành']],
-      cta: 'Kết thúc chuyến',
-      railTop: ['Đã đón lúc 07:25', 'xong', '#8A9993', '#C3CDC9'],
-      pickupLabel: 'Đã đón 07:25', pickupPin: '#C3CDC9', pickupLabelColor: '#8A9993',
-      dropLabel: 'Điểm trả · 08:00', dropLabelColor: '#101B17',
-      passengerSub: 'Trên xe · đóng góp 35.000 ₫ tiền mặt',
+      headline: `Đang chở ${onBoardCount} khách tới điểm trả`, etaBig: '08:00', etaUnit: 'dự kiến tới nơi',
+      metrics: [['Trên xe', `${onBoardCount} người`], ['Đã trả', `${droppedCount} người`], ['Điểm trả', 'Bến Thành']],
+      railTop: ['Đã đón xong', 'xong', '#8A9993', '#C3CDC9'],
       iconBg: '#DDF3EA', iconFg: '#0B7A5C'
     },
     arrived: {
       statusLabel: 'Đã tới nơi', badgeBg: '#DDF3EA', badgeFg: '#0B7A5C', badgeDot: '#0F9D76',
-      headline: 'Hoàn thành chuyến với Lan', etaBig: '08:00', etaUnit: 'đã tới nơi',
+      headline: 'Đã đón trả xong tất cả khách', etaBig: '08:00', etaUnit: 'đã tới nơi',
       metrics: [['Quãng đường', '14 km'], ['Thời gian', '35 phút'], ['Thu tiền mặt', '35.000 ₫']],
-      cta: 'Xác nhận hoàn thành',
-      railTop: ['Đã đón lúc 07:25', 'xong', '#8A9993', '#C3CDC9'],
-      pickupLabel: 'Đã đón 07:25', pickupPin: '#C3CDC9', pickupLabelColor: '#8A9993',
-      dropLabel: 'Đã trả khách', dropLabelColor: '#0B7A5C',
-      passengerSub: 'Đã xuống xe · đánh giá chuyến đi',
+      railTop: ['Đã đón xong', 'xong', '#8A9993', '#C3CDC9'],
       iconBg: '#DDF3EA', iconFg: '#0B7A5C'
     }
   }[phase];
 
-  const handleAdvance = () => {
-    if (phase === 'start') {
-      setPhase('toPickup');
-      notify?.('Đã bắt đầu hành trình!');
-    } else if (phase === 'toPickup') {
-      setPhase('onboard');
-      notify?.('Hành khách Lan đã lên xe!');
-    } else if (phase === 'onboard') {
-      setPhase('arrived');
-      notify?.('Đã đến điểm trả khách!');
-    } else if (phase === 'arrived') {
-      if (activeTrip?.id) {
-        completeTrip?.(activeTrip.id);
-      }
-      navigate('/shared/trip-complete');
+  const handleCompleteTrip = () => {
+    if (!allDone) return;
+    if (activeTrip?.id) {
+      completeTrip(activeTrip.id);
     }
+    notify?.('Đã hoàn tất chuyến đi!');
+    navigate('/shared/trip-complete');
   };
 
   return (
     <div className="flex-1 flex flex-col bg-[#E9EFEC] overflow-hidden relative select-none">
-      {/* MAP BACKGROUND */}
-      <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,#E4EBE8_0_8px,#EDF2F0_8px_16px)]">
-        {/* Road Grid lines */}
-        <div className="absolute left-0 right-0 top-[300px] h-3.5 bg-[#DCE5E1]" />
-        <div className="absolute left-0 right-0 top-[470px] h-2.5 bg-[#DCE5E1]" />
-        <div className="absolute top-0 bottom-0 left-[104px] width-3 bg-[#DCE5E1]" />
-        <div className="absolute top-0 bottom-0 left-[286px] width-2 bg-[#DCE5E1]" />
-        <div className="absolute left-[150px] top-[344px] w-[118px] h-[92px] rounded-2xl bg-[#DFEDE6]" />
-
-        {/* Polylines */}
-        <svg viewBox="0 0 390 844" className="absolute inset-0 w-full h-full" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points={j(donePoints)} stroke="#C3CDC9" strokeWidth="6" strokeDasharray="2 11" />
-          <polyline points={j(livePoints)} stroke="#0F9D76" strokeWidth="8" />
-        </svg>
-
-        {/* DRIVER CAR PIN WITH PULSE */}
-        <div
-          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center transition-all duration-700"
-          style={{ left: `${carAt[0]}px`, top: `${carAt[1]}px` }}
-        >
-          <span className="absolute w-11 h-11 rounded-full bg-[#0F9D76]/30 animate-[rs-pulse2_2.2s_ease-out_infinite]" />
-          <div className="relative w-8 h-8 rounded-full bg-[#0F9D76] border-4 border-white shadow-[0_4px_12px_rgba(15,157,118,0.45)] flex items-center justify-center">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#FFFFFF">
-              <path d="M5 15.5v2a1 1 0 0 0 1 1h1.5a1 1 0 0 0 1-1v-1h7v1a1 1 0 0 0 1 1H18a1 1 0 0 0 1-1v-2l-1.4-5a2 2 0 0 0-1.9-1.4H8.3A2 2 0 0 0 6.4 10.5z" />
-            </svg>
-          </div>
-        </div>
-
-        {/* PICKUP PIN */}
-        <div
-          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-10"
-          style={{ left: '212px', top: '398px' }}
-        >
-          <span
-            className="px-2.5 py-1.5 rounded-xl bg-white shadow-[0_5px_16px_rgba(16,27,23,0.16)] text-[11.5px] font-bold whitespace-nowrap"
-            style={{ color: cfg.pickupLabelColor }}
-          >
-            {cfg.pickupLabel}
-          </span>
-          <span
-            className="w-5.5 h-5.5 rounded-full border-4 border-white shadow-[0_4px_12px_rgba(16,27,23,0.22)]"
-            style={{ backgroundColor: cfg.pickupPin }}
-          />
-        </div>
-
-        {/* DROPOFF PIN */}
-        <div
-          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-10"
-          style={{ left: '318px', top: '172px' }}
-        >
-          <span
-            className="px-2.5 py-1.5 rounded-xl bg-white shadow-[0_5px_16px_rgba(16,27,23,0.16)] text-[11.5px] font-bold whitespace-nowrap"
-            style={{ color: cfg.dropLabelColor }}
-          >
-            {cfg.dropLabel}
-          </span>
-          <span className="w-5 h-5 rounded-md bg-[#EE7A22] border-4 border-white shadow-[0_4px_12px_rgba(16,27,23,0.22)]" />
-        </div>
-      </div>
+      {/* MAP — real stops from this trip, driver marker animates by actual pickup/dropoff progress */}
+      <LiveRouteMap points={mapPoints} progress={mapProgress} />
 
       {/* TOP STATUS CARD (Answer at a glance) */}
       <div className="relative z-20 m-4 mt-2 bg-white rounded-3xl p-4 shadow-[0_8px_26px_rgba(16,27,23,0.14)] flex flex-col gap-3.5">
@@ -229,34 +178,76 @@ export const LiveTracking = () => {
       <div className="relative z-20 bg-white rounded-t-[32px] p-4 pb-8 shadow-[0_-10px_32px_rgba(16,27,23,0.14)] flex flex-col gap-3.5">
         <div className="w-11 h-1.5 rounded-full bg-[#DFE7E3] self-center" />
 
-        {/* Passenger Info Row */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-base flex items-center justify-center shrink-0 border border-[#BDE7D5]">
-            LA
-          </div>
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-bold text-[#101B17]">Lan</span>
-              <ShieldCheck className="w-4 h-4 text-[#0F9D76] shrink-0" />
-            </div>
-            <span className="text-xs text-[#8A9993] truncate">{cfg.passengerSub}</span>
-          </div>
+        {/* Passenger List — real pickup/dropoff per passenger, each with its own action */}
+        <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto rs-scroll">
+          {passengers.length === 0 ? (
+            <div className="text-center text-xs text-[#8A9993] py-2">Chưa có hành khách nào trên chuyến này.</div>
+          ) : (
+            passengers.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 bg-[#F7FAF9] rounded-2xl p-3">
+                <div className="w-11 h-11 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-sm flex items-center justify-center shrink-0 border border-[#BDE7D5]">
+                  {p.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-[#101B17] truncate">{p.name}</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#0F9D76] shrink-0" />
+                  </div>
+                  <span className="text-[11px] text-[#8A9993] truncate block">
+                    {p.pickupPoint} → {p.dropoffPoint}
+                  </span>
+                </div>
 
-          <div className="flex gap-2 shrink-0">
-            <a
-              href="tel:0901234567"
-              className="w-12 h-12 rounded-2xl border border-[#E4EAE7] bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-[#0B7A5C] transition-colors"
-            >
-              <Phone className="w-4.5 h-4.5" />
-            </a>
-            <button
-              type="button"
-              onClick={() => navigate('/shared/chat/bk_01')}
-              className="w-12 h-12 rounded-2xl bg-[#F1FAF6] hover:bg-[#DDF3EA] flex items-center justify-center text-[#0B7A5C] transition-colors"
-            >
-              <MessageSquare className="w-4.5 h-4.5" />
-            </button>
-          </div>
+                {p.status === 'on_board' ? (
+                  <button
+                    type="button"
+                    onClick={() => confirmPassengerDropoff(activeTrip.id, p.id)}
+                    className="h-10 px-3 rounded-xl bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
+                  >
+                    Đã trả khách
+                  </button>
+                ) : p.status === 'dropped_off' ? (
+                  <span className="h-10 px-3 rounded-xl bg-[#DDF3EA] text-[#0B7A5C] text-[11px] font-bold shrink-0 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" />
+                    Đã xong
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => confirmPassengerPickup(activeTrip.id, p.id)}
+                    className="h-10 px-3 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
+                  >
+                    Đã đón
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Shared contact actions */}
+        <div className="flex gap-2 shrink-0">
+          <a
+            href="tel:0901234567"
+            className="flex-1 h-11 rounded-2xl border border-[#E4EAE7] bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-[#0B7A5C] transition-colors"
+          >
+            <Phone className="w-4 h-4" />
+          </a>
+          <button
+            type="button"
+            onClick={() => navigate('/shared/chat/bk_01')}
+            className="flex-1 h-11 rounded-2xl bg-[#F1FAF6] hover:bg-[#DDF3EA] flex items-center justify-center text-[#0B7A5C] transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowReport(true)}
+            title="Báo cáo sự cố"
+            className="flex-1 h-11 rounded-2xl border border-[#E4EAE7] hover:bg-[#FFF4E9] flex items-center justify-center text-[#8A4A0B] transition-colors"
+          >
+            <Flag className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Stop Progress Rail */}
@@ -282,13 +273,22 @@ export const LiveTracking = () => {
           </div>
         </div>
 
-        {/* ONE CTA AT A TIME */}
+        {/* Trip only finishes once every passenger has actually been dropped off */}
         <button
           type="button"
-          onClick={handleAdvance}
-          className="h-[60px] rounded-[20px] bg-[#0F9D76] hover:bg-[#0B8A66] text-white font-bold text-[16.5px] cursor-pointer shadow-[0_8px_20px_rgba(15,157,118,0.30)] active:scale-[0.99] transition-all flex items-center justify-center"
+          onClick={handleCompleteTrip}
+          disabled={!allDone}
+          className={`h-[60px] rounded-[20px] font-bold text-[16.5px] shadow-[0_8px_20px_rgba(15,157,118,0.30)] active:scale-[0.99] transition-all flex items-center justify-center ${
+            allDone
+              ? 'bg-[#0F9D76] hover:bg-[#0B8A66] text-white cursor-pointer'
+              : 'bg-[#EEF2F0] text-[#8A9993] cursor-not-allowed shadow-none'
+          }`}
         >
-          {cfg.cta}
+          {allDone
+            ? 'Hoàn tất chuyến đi'
+            : waitingCount > 0
+              ? `Còn ${waitingCount} khách chưa đón`
+              : `Đang chở ${onBoardCount} khách tới điểm trả`}
         </button>
       </div>
 
@@ -323,6 +323,14 @@ export const LiveTracking = () => {
           </div>
         </div>
       )}
+
+      {/* Report Modal */}
+      <ReportModal
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        reportedName={passengers.length === 1 ? passengers[0].name : `${passengers.length} hành khách trên chuyến`}
+        tripCode={activeTrip?.id}
+      />
     </div>
   );
 };

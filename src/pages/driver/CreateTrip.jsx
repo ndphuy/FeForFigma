@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { 
-  MapPin, 
-  Calendar, 
-  Clock, 
-  Car, 
-  DollarSign, 
-  Check, 
-  ChevronRight, 
-  ChevronLeft, 
-  Plus, 
-  Trash2, 
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Car,
+  DollarSign,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  Plus,
+  Minus,
+  Trash2,
   Sparkles,
   Info,
   ArrowRight,
   ShieldCheck
 } from 'lucide-react';
+import { RouteMapPreview } from '../../components/RouteMapPreview';
 
 export const CreateTrip = () => {
   const navigate = useNavigate();
@@ -41,7 +43,8 @@ export const CreateTrip = () => {
   const [selectedVehId, setSelectedVehId] = useState(activeVehicle?.id || 'veh_01');
   const chosenVehicle = vehicles.find(v => v.id === selectedVehId) || activeVehicle;
 
-  const [seats, setSeats] = useState(chosenVehicle?.passengerCapacity || 3);
+  const maxSeats = chosenVehicle?.passengerCapacity || 3;
+  const [seats, setSeats] = useState(maxSeats);
   const [ratePerKm, setRatePerKm] = useState(5000); // 5.000 đ/km
   const distanceKm = 18.5;
 
@@ -187,6 +190,14 @@ export const CreateTrip = () => {
               </div>
             </div>
 
+            <RouteMapPreview
+              points={[
+                { label: origin, type: 'origin' },
+                { label: destination, type: 'destination' },
+              ]}
+              meta="Xem trước lộ trình"
+            />
+
             {/* AI Recommendation */}
             <div className="bg-[#F1FAF6] border border-[#BDE7D5] rounded-2xl p-3.5 flex gap-2.5 items-start">
               <span className="px-1.5 py-0.5 rounded-md bg-[#0F9D76] text-white text-[9px] font-bold tracking-wider shrink-0 mt-0.5">AI</span>
@@ -247,6 +258,15 @@ export const CreateTrip = () => {
                 </button>
               </div>
             </div>
+
+            <RouteMapPreview
+              points={[
+                { label: origin, type: 'origin' },
+                ...stops.map((s) => ({ label: s.name, type: 'stop' })),
+                { label: destination, type: 'destination' },
+              ]}
+              meta={`${stops.length + 2} điểm trên tuyến`}
+            />
           </div>
         )}
 
@@ -331,18 +351,22 @@ export const CreateTrip = () => {
             <div className="flex flex-col gap-2.5">
               {vehicles.map((v) => {
                 const isSelected = selectedVehId === v.id;
+                const isPending = v.verificationStatus === 'pending_review';
                 return (
                   <div
                     key={v.id}
                     onClick={() => {
+                      if (isPending) return;
                       setSelectedVehId(v.id);
                       setActiveVehicle(v.id);
                       setSeats(v.passengerCapacity || 1);
                     }}
-                    className={`p-3.5 rounded-2xl border-[1.5px] transition-all cursor-pointer bg-white flex items-start justify-between gap-2.5 ${
-                      isSelected
-                        ? 'border-[#0F9D76] bg-[#F1FAF6]/50 shadow-xs'
-                        : 'border-[#E4EAE7] hover:border-[#BDE7D5]'
+                    className={`p-3.5 rounded-2xl border-[1.5px] transition-all bg-white flex items-start justify-between gap-2.5 ${
+                      isPending
+                        ? 'border-[#E4EAE7] opacity-60 cursor-not-allowed'
+                        : isSelected
+                          ? 'border-[#0F9D76] bg-[#F1FAF6]/50 shadow-xs cursor-pointer'
+                          : 'border-[#E4EAE7] hover:border-[#BDE7D5] cursor-pointer'
                     }`}
                   >
                     <div className="flex items-start gap-3 min-w-0">
@@ -360,7 +384,11 @@ export const CreateTrip = () => {
                     </div>
 
                     <div className="flex flex-col items-end gap-1 shrink-0 mt-1">
-                      {isSelected ? (
+                      {isPending ? (
+                        <span className="px-2.5 py-1 rounded-full bg-[#FFF4E9] text-[#B45812] text-[10px] font-bold whitespace-nowrap">
+                          Chờ duyệt
+                        </span>
+                      ) : isSelected ? (
                         <span className="px-2.5 py-1 rounded-full bg-[#0F9D76] text-white text-[10px] font-bold shadow-xs whitespace-nowrap">
                           ✓ Đang chọn
                         </span>
@@ -375,25 +403,33 @@ export const CreateTrip = () => {
 
             {/* Number of seats to offer */}
             <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-2.5">
-              <span className="text-xs font-bold text-[#101B17]">Số ghế mở nhận khách</span>
-              <div className="flex gap-2">
-                {Array.from({ length: chosenVehicle?.passengerCapacity || 3 }).map((_, idx) => {
-                  const num = idx + 1;
-                  return (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => setSeats(num)}
-                      className={`flex-1 h-11 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        seats === num
-                          ? 'bg-[#0F9D76] text-white shadow-xs'
-                          : 'bg-[#F4F7F5] text-[#4B5A54] hover:bg-[#EAEFEA]'
-                      }`}
-                    >
-                      {num} chỗ
-                    </button>
-                  );
-                })}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#101B17]">Số ghế mở nhận khách</span>
+                <span className="text-[10.5px] text-[#8A9993]">Tối đa {maxSeats} chỗ</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSeats((prev) => Math.max(1, prev - 1))}
+                  disabled={seats <= 1}
+                  className="w-12 h-12 rounded-xl bg-[#F4F7F5] hover:bg-[#EAEFEA] disabled:opacity-40 disabled:cursor-not-allowed text-[#101B17] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                >
+                  <Minus className="w-4 h-4 stroke-[2.5px]" />
+                </button>
+
+                <div className="flex-1 h-12 rounded-xl bg-[#F1FAF6] border border-[#BDE7D5] flex items-center justify-center gap-1.5">
+                  <span className="text-lg font-bold font-mono text-[#0F9D76]">{seats}</span>
+                  <span className="text-xs font-semibold text-[#0B7A5C]">chỗ</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSeats((prev) => Math.min(maxSeats, prev + 1))}
+                  disabled={seats >= maxSeats}
+                  className="w-12 h-12 rounded-xl bg-[#F4F7F5] hover:bg-[#EAEFEA] disabled:opacity-40 disabled:cursor-not-allowed text-[#101B17] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5px]" />
+                </button>
               </div>
             </div>
           </div>
@@ -501,6 +537,15 @@ export const CreateTrip = () => {
                 Kiểm tra thông tin chuyến đi trước khi mở nhận khách chia sẻ.
               </p>
             </div>
+
+            <RouteMapPreview
+              points={[
+                { label: origin, type: 'origin' },
+                ...stops.map((s) => ({ label: s.name, type: 'stop' })),
+                { label: destination, type: 'destination' },
+              ]}
+              meta={`${distanceKm} km · ${departureTime}`}
+            />
 
             <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-3">
               <div className="flex justify-between text-xs pb-2 border-b border-[#EEF2F0]">

@@ -23,6 +23,7 @@ export const AppProvider = ({ children }) => {
   const [schedules, setSchedules] = useState(RECURRING_SCHEDULE_PRESETS);
   const [walletTransactions, setWalletTransactions] = useState(MOCK_WALLET_TRANSACTIONS);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [safetyReports, setSafetyReports] = useState([]);
   const [pickupPoints, setPickupPoints] = useState(MOCK_PICKUP_POINTS);
   const [selectedPickupPoint, setSelectedPickupPoint] = useState(MOCK_PICKUP_POINTS[0]);
 
@@ -41,8 +42,10 @@ export const AppProvider = ({ children }) => {
     if (vehicles.length >= 3) return false;
     const newVeh = {
       id: `veh_${Date.now()}`,
-      active: vehicles.length === 0,
-      ...newVehicleData
+      ...newVehicleData,
+      // New vehicles must wait for admin review before they can be activated for trips.
+      verificationStatus: 'pending_review',
+      active: false,
     };
     setVehicles(prev => [...prev, newVeh]);
     return true;
@@ -177,11 +180,13 @@ export const AppProvider = ({ children }) => {
   };
 
   // Request a Booking as Passenger
-  const requestBooking = (tripId, seatsCount = 1, messageText = '') => {
+  const requestBooking = (tripId, seatsCount = 1, messageText = '', overrides = {}) => {
     const targetTrip = trips.find(t => t.id === tripId) || trips[0];
     const newBookingId = `bk_${Date.now()}`;
     const bookingCode = `#RS-${Math.floor(1000 + Math.random() * 9000)}`;
     const pin = String(Math.floor(1000 + Math.random() * 9000));
+    const pickupPoint = overrides.pickupPoint || targetTrip.originDetail || targetTrip.origin;
+    const dropoffPoint = overrides.dropoffPoint || targetTrip.destination;
 
     const newBooking = {
       id: newBookingId,
@@ -192,8 +197,8 @@ export const AppProvider = ({ children }) => {
       passengerPhone: MOCK_USER_PROFILES.passenger.phone,
       passengerTrustScore: MOCK_USER_PROFILES.passenger.trustScore,
       passengerTrips: MOCK_USER_PROFILES.passenger.tripsTaken,
-      pickupPoint: targetTrip.originDetail || targetTrip.origin,
-      dropoffPoint: targetTrip.destination,
+      pickupPoint,
+      dropoffPoint,
       fareVnd: targetTrip.priceVnd * seatsCount,
       seatsCount,
       message: messageText,
@@ -204,7 +209,7 @@ export const AppProvider = ({ children }) => {
       vehiclePlate: targetTrip.vehiclePlate,
       departureTime: targetTrip.departureTime,
       departureDate: targetTrip.departureDate || 'Hôm nay, 12/09',
-      routeText: `${targetTrip.origin} → ${targetTrip.destination} · ${targetTrip.departureTime}`,
+      routeText: `${pickupPoint} → ${dropoffPoint} · ${targetTrip.departureTime}`,
       overlapPercent: targetTrip.matchPercentage || 92,
       detourKm: '+0.5 km',
       detourMin: '+2 phút',
@@ -307,7 +312,57 @@ export const AppProvider = ({ children }) => {
   // Complete entire Trip
   const completeTrip = (tripId) => {
     setTrips(prev => prev.map(t => t.id === tripId ? { ...t, statusText: 'Hoàn thành' } : t));
-    setBookings(prev => prev.map(b => b.tripId === tripId ? { ...b, status: 'completed' } : b));
+    setBookings(prev => prev.map(b => (b.tripId === tripId && b.status === 'confirmed') ? { ...b, status: 'completed' } : b));
+  };
+
+  // Driver cancels a trip that hasn't started yet (SF-14)
+  const cancelTrip = (tripId, reason = '') => {
+    setTrips(prev => prev.map(t => t.id === tripId
+      ? { ...t, statusText: 'Đã huỷ', cancelled: true, cancelReason: reason }
+      : t
+    ));
+    setBookings(prev => prev.map(b => (b.tripId === tripId && (b.status === 'pending' || b.status === 'confirmed'))
+      ? { ...b, status: 'cancelled', cancelReason: reason || 'Tài xế đã huỷ chuyến đi' }
+      : b
+    ));
+  };
+
+  // Driver reschedules a trip's date/time; confirmed passengers must accept or cancel (SF-15, SF-16)
+  const rescheduleTrip = (tripId, { departureDate, departureTime } = {}, reason = '') => {
+    setTrips(prev => prev.map(t => t.id === tripId
+      ? {
+          ...t,
+          departureDate: departureDate || t.departureDate,
+          departureTime: departureTime || t.departureTime,
+          rescheduled: true,
+          rescheduleReason: reason,
+        }
+      : t
+    ));
+    setBookings(prev => prev.map(b => {
+      if (b.tripId !== tripId || b.status !== 'confirmed') return b;
+      return {
+        ...b,
+        status: 'pending_reschedule',
+        previousDepartureDate: b.departureDate,
+        previousDepartureTime: b.departureTime,
+        departureDate: departureDate || b.departureDate,
+        departureTime: departureTime || b.departureTime,
+        rescheduleReason: reason,
+      };
+    }));
+  };
+
+  // Passenger responds to a trip-change notification (SF-16)
+  const acceptReschedule = (bookingId) => {
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'confirmed' } : b));
+  };
+
+  const declineReschedule = (bookingId) => {
+    setBookings(prev => prev.map(b => b.id === bookingId
+      ? { ...b, status: 'cancelled', cancelReason: 'Hành khách huỷ do lịch mới không phù hợp' }
+      : b
+    ));
   };
 
   // Chat message sender with simulated auto-reply
@@ -346,6 +401,48 @@ export const AppProvider = ({ children }) => {
     setSchedules(prev => prev.map(s => s.id === scheduleId ? { ...s, active: !s.active } : s));
   };
 
+  // Restore the whole demo to its initial seed data (used by the demo control bar's Reset button)
+  const resetDemoState = () => {
+    setTrips(INITIAL_TRIPS);
+    setBookings(INITIAL_BOOKINGS);
+    setSchedules(RECURRING_SCHEDULE_PRESETS);
+    setWalletTransactions(MOCK_WALLET_TRANSACTIONS);
+    setMessages(INITIAL_MESSAGES);
+    setSafetyReports([]);
+    setPickupPoints(MOCK_PICKUP_POINTS);
+    setSelectedPickupPoint(MOCK_PICKUP_POINTS[0]);
+    setVehicles(MOCK_DRIVER_VEHICLES);
+    setActiveTripId('trip_001');
+    setActiveBookingId('bk_demo_01');
+    setDriverWallet(MOCK_USER_PROFILES.driver.walletBalance);
+    setPassengerWallet(MOCK_USER_PROFILES.passenger.walletBalance);
+    setSearchParams({
+      origin: 'FPT University HCMC',
+      destination: 'Chợ Bến Thành, Q.1',
+      departureDate: 'Thứ 6, 12/09',
+      departureTime: '07:30 AM',
+      seats: 1,
+    });
+  };
+
+  // Report a user / safety incident (SF-21, SF-22)
+  const submitReport = ({ tripCode, targetName, category, severity = 'low', description = '' }) => {
+    const newReport = {
+      id: `SF-${Date.now().toString().slice(-6)}`,
+      tripCode: tripCode || null,
+      targetName: targetName || '',
+      category,
+      severity,
+      description,
+      reporterRole: currentRole,
+      reporterName: currentUser.name,
+      status: 'open',
+      createdAt: 'Vừa xong',
+    };
+    setSafetyReports(prev => [newReport, ...prev]);
+    return newReport;
+  };
+
   const activeTrip = trips.find(t => t.id === activeTripId) || trips[0];
   const activeBooking = bookings.find(b => b.id === activeBookingId) || bookings[0];
   const pendingBookingsForDriver = bookings.filter(b => b.status === 'pending');
@@ -369,6 +466,8 @@ export const AppProvider = ({ children }) => {
         topUpWallet,
         messages,
         sendMessage,
+        safetyReports,
+        submitReport,
         activeTripId,
         setActiveTripId,
         activeBookingId,
@@ -395,7 +494,12 @@ export const AppProvider = ({ children }) => {
         confirmPassengerPickup,
         confirmPassengerDropoff,
         completeTrip,
+        cancelTrip,
+        rescheduleTrip,
+        acceptReschedule,
+        declineReschedule,
         toggleSchedule,
+        resetDemoState,
       }}
     >
       {children}

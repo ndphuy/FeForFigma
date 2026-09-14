@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Upload, CheckCircle2, ChevronLeft, Car, FileText, Plus, Check, Trash2, ArrowRight, Camera, Image } from 'lucide-react';
+import { ShieldCheck, Upload, CheckCircle2, Clock3, ChevronLeft, Car, FileText, Plus, Check, Trash2, ArrowRight, Camera, Image } from 'lucide-react';
 
 export const KYCVerify = () => {
   const navigate = useNavigate();
@@ -128,11 +128,12 @@ export const KYCVerify = () => {
           <div className="flex flex-col gap-3">
             {vehicles.map((v) => {
               const isActive = v.active;
+              const isPending = v.verificationStatus === 'pending_review';
               return (
                 <div
                   key={v.id}
                   className={`bg-white rounded-3xl p-4 border-[1.5px] transition-all shadow-[0_2px_10px_rgba(16,27,23,0.04)] flex flex-col gap-3 ${
-                    isActive ? 'border-[#0F9D76] bg-[#F1FAF6]/40' : 'border-[#E4EAE7]'
+                    isActive ? 'border-[#0F9D76] bg-[#F1FAF6]/40' : isPending ? 'border-[#F7D9B8]' : 'border-[#E4EAE7]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -157,6 +158,12 @@ export const KYCVerify = () => {
                       <span className="text-[11px] text-[#4B5A54]">
                         {v.typeLabel} · Nhận tối đa {v.passengerCapacity} khách
                       </span>
+                      {isPending && (
+                        <span className="mt-0.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#FFF4E9] px-2 py-0.5 text-[10px] font-bold text-[#B45812] border border-[#F7D9B8]">
+                          <Clock3 className="w-3 h-3" />
+                          Chờ duyệt hồ sơ
+                        </span>
+                      )}
                     </div>
 
                     {/* Right: Active status or Activate button + Delete button */}
@@ -164,6 +171,13 @@ export const KYCVerify = () => {
                       {isActive ? (
                         <span className="px-3 py-1 rounded-full bg-[#0F9D76] text-white text-[11px] font-bold shadow-xs whitespace-nowrap">
                           ✓ Đang sử dụng
+                        </span>
+                      ) : isPending ? (
+                        <span
+                          title="Xe cần được quản trị viên duyệt hồ sơ trước khi có thể dùng để tạo chuyến"
+                          className="h-8 px-3 rounded-xl bg-[#F4F7F5] text-[#8A9993] text-xs font-bold flex items-center whitespace-nowrap cursor-not-allowed"
+                        >
+                          Đang chờ duyệt
                         </span>
                       ) : (
                         <button
@@ -194,10 +208,17 @@ export const KYCVerify = () => {
                       <FileText className="w-3.5 h-3.5 text-[#0B7A5C]" />
                       <span>Cà vẹt xe:</span>
                     </span>
-                    <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0F9D76]" />
-                      <span>Đã tải lên & duyệt hợp lệ</span>
-                    </span>
+                    {isPending ? (
+                      <span className="text-[#B45812] font-semibold flex items-center gap-1">
+                        <Clock3 className="w-3.5 h-3.5 text-[#EE7A22]" />
+                        <span>Đã gửi, đang chờ admin duyệt</span>
+                      </span>
+                    ) : (
+                      <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#0F9D76]" />
+                        <span>Đã tải lên & duyệt hợp lệ</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -337,11 +358,15 @@ export const KYCVerify = () => {
                 </div>
               </div>
 
+              <p className="text-[10.5px] text-[#8A9993] leading-relaxed -mt-1">
+                Xe mới sẽ ở trạng thái "Chờ duyệt" cho đến khi quản trị viên xác thực hồ sơ.
+              </p>
+
               <button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer mt-1"
+                className="w-full h-12 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
               >
-                Lưu phương tiện vào danh sách
+                Gửi hồ sơ để duyệt
               </button>
             </form>
           </div>

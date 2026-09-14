@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Phone, MessageSquare, AlertCircle, Home, Navigation, Crosshair } from 'lucide-react';
+import { ShieldCheck, Phone, MessageSquare, AlertCircle, Home, Navigation, Crosshair, Flag } from 'lucide-react';
 import { SOSModal } from '../../components/SOSModal';
+import { ReportModal } from '../../components/ReportModal';
 
 export const PassengerLiveTracking = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export const PassengerLiveTracking = () => {
   const [etaMinutes, setEtaMinutes] = useState(4);
   const [driverPos, setDriverPos] = useState({ x: 38, y: 55 });
   const [showSOS, setShowSOS] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [rideStep, setRideStep] = useState(1); // 1: Driver arriving, 2: On board, 3: Arrived
 
   useEffect(() => {
@@ -161,6 +163,14 @@ export const PassengerLiveTracking = () => {
               >
                 <MessageSquare className="w-4 h-4" />
               </button>
+              <button
+                type="button"
+                onClick={() => setShowReport(true)}
+                title="Báo cáo sự cố"
+                className="w-10 h-10 rounded-2xl border border-[#E4EAE7] hover:bg-[#FFF4E9] flex items-center justify-center text-[#8A4A0B] transition-colors cursor-pointer"
+              >
+                <Flag className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -168,6 +178,14 @@ export const PassengerLiveTracking = () => {
 
       {/* SOS Modal */}
       {showSOS && <SOSModal onClose={() => setShowSOS(false)} />}
+
+      {/* Report Modal */}
+      <ReportModal
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        reportedName={activeTrip.driverName}
+        tripCode={activeTrip.id}
+      />
     </div>
   );
 };

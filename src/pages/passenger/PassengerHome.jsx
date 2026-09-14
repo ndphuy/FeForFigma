@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { Wallet, ChevronRight, ArrowUpDown, Calendar, Clock, User, Bell, MapPin } from 'lucide-react';
+import { Wallet, ChevronRight, ArrowUpDown, Calendar, Clock, User, Bell, MapPin, CalendarClock } from 'lucide-react';
 
 export const PassengerHome = () => {
   const navigate = useNavigate();
-  const { currentUser, trips, searchParams, setSearchParams, passengerWallet } = useApp();
+  const { currentUser, trips, searchParams, setSearchParams, passengerWallet, activeBooking } = useApp();
+  const hasPendingReschedule = activeBooking?.status === 'pending_reschedule';
   const [origin, setOrigin] = useState(searchParams?.origin || 'FPT University HCMC');
   const [destination, setDestination] = useState(searchParams?.destination || 'Chợ Bến Thành, Q.1');
   const [date, setDate] = useState('Thứ 6, 12/09');
@@ -85,6 +86,24 @@ export const PassengerHome = () => {
             <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </div>
+
+        {/* Reschedule Alert */}
+        {hasPendingReschedule && (
+          <button
+            type="button"
+            onClick={() => navigate(`/passenger/booking-confirm/${activeBooking.tripId}`)}
+            className="bg-[#FFF4E9] border border-[#F7D9B8] rounded-2xl p-3 flex items-center gap-2.5 text-left hover:bg-[#FFEEDB] transition-colors cursor-pointer"
+          >
+            <span className="w-8 h-8 rounded-xl bg-[#EE7A22] text-white flex items-center justify-center shrink-0">
+              <CalendarClock className="w-4 h-4" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-xs font-bold text-[#8A4A0B]">Tài xế đã đổi lịch chuyến của bạn</span>
+              <span className="block text-[11px] text-[#8A4A0B]/80">Bấm để xác nhận lịch mới hoặc huỷ đặt chỗ</span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-[#8A4A0B] shrink-0" />
+          </button>
+        )}
 
         {/* SEARCH CARD */}
         <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_12px_rgba(16,27,23,0.05)] flex flex-col gap-3.5">

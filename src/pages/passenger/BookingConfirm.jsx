@@ -1,15 +1,25 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Phone, MessageSquare, ArrowRight, Home, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Phone, MessageSquare, ArrowRight, Home, CheckCircle2, CalendarClock } from 'lucide-react';
 
 export const BookingConfirm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { trips, bookings } = useApp();
+  const { trips, activeBooking, acceptReschedule, declineReschedule } = useApp();
 
   const trip = trips.find((t) => t.id === id) || trips[0];
-  const booking = bookings.find((b) => b.tripId === trip.id) || bookings[0];
+  const booking = activeBooking;
+  const isPendingReschedule = booking?.status === 'pending_reschedule';
+
+  const handleAcceptReschedule = () => {
+    if (booking) acceptReschedule(booking.id);
+  };
+
+  const handleDeclineReschedule = () => {
+    if (booking) declineReschedule(booking.id);
+    navigate('/passenger/home');
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-[#F4F7F5] overflow-hidden relative">
@@ -46,6 +56,60 @@ export const BookingConfirm = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto rs-scroll p-4 -mt-5 pb-28 flex flex-col gap-3.5 z-10">
+        {/* Reschedule Alert — driver changed the trip, passenger must respond */}
+        {isPendingReschedule && (
+          <div className="bg-white rounded-3xl p-4 border-[1.5px] border-[#F7D9B8] shadow-[0_6px_20px_rgba(16,27,23,0.08)] flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-10 h-10 rounded-2xl bg-[#FFF4E9] text-[#EE7A22] flex items-center justify-center shrink-0">
+                <CalendarClock className="w-5 h-5" />
+              </span>
+              <div className="min-w-0">
+                <span className="block text-sm font-bold text-[#101B17]">Tài xế đã đổi lịch chuyến đi</span>
+                <span className="block text-xs text-[#8A9993]">Vui lòng xác nhận lịch mới hoặc huỷ đặt chỗ</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 bg-[#F7FAF9] rounded-2xl p-3">
+              <div className="flex-1 min-w-0 text-center">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Lịch cũ</span>
+                <span className="block text-xs font-bold text-[#8A9993] line-through font-mono mt-0.5">
+                  {booking.previousDepartureDate} · {booking.previousDepartureTime}
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#8A9993] shrink-0" />
+              <div className="flex-1 min-w-0 text-center">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#0B7A5C]">Lịch mới</span>
+                <span className="block text-xs font-bold text-[#0B7A5C] font-mono mt-0.5">
+                  {booking.departureDate} · {booking.departureTime}
+                </span>
+              </div>
+            </div>
+
+            {booking.rescheduleReason && (
+              <p className="text-[11px] text-[#8A4A0B] bg-[#FFF4E9] border border-[#F7D9B8]/70 rounded-xl p-2.5 leading-relaxed">
+                Lý do từ tài xế: {booking.rescheduleReason}
+              </p>
+            )}
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleDeclineReschedule}
+                className="flex-1 h-11 border border-[#E4EAE7] hover:bg-[#FFF0F0] text-[#C22B35] font-bold text-xs rounded-2xl transition-colors cursor-pointer"
+              >
+                Huỷ đặt chỗ
+              </button>
+              <button
+                type="button"
+                onClick={handleAcceptReschedule}
+                className="flex-1 h-11 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs rounded-2xl shadow-xs transition-colors cursor-pointer"
+              >
+                Đồng ý lịch mới
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Driver & Vehicle Card with Call & Chat Buttons */}
         <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_6px_20px_rgba(16,27,23,0.08)] flex flex-col gap-3.5">
           <div className="flex items-center gap-3">

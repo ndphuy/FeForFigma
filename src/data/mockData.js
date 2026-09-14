@@ -14,6 +14,7 @@ export const MOCK_DRIVER_VEHICLES = [
     seats: 4,
     passengerCapacity: 3,
     active: true,
+    verificationStatus: "verified", // 'verified' | 'pending_review'
     image: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=300&auto=format&fit=crop&q=80"
   },
   {
@@ -26,6 +27,7 @@ export const MOCK_DRIVER_VEHICLES = [
     seats: 2,
     passengerCapacity: 1,
     active: false,
+    verificationStatus: "verified",
     image: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300&auto=format&fit=crop&q=80"
   },
   {
@@ -38,6 +40,7 @@ export const MOCK_DRIVER_VEHICLES = [
     seats: 5,
     passengerCapacity: 4,
     active: false,
+    verificationStatus: "verified",
     image: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=300&auto=format&fit=crop&q=80"
   }
 ];

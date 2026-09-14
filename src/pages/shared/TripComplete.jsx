@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Check, Home, Star, Heart, ThumbsUp } from 'lucide-react';
+import { ShieldCheck, Check, Home, Star, Heart, ThumbsUp, Flag } from 'lucide-react';
+import { ReportModal } from '../../components/ReportModal';
 
 export const TripComplete = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export const TripComplete = () => {
   const [rating, setRating] = useState(5);
   const [selectedChips, setSelectedChips] = useState(['Lái xe an toàn', 'Đúng giờ']);
   const [tipAmount, setTipAmount] = useState(0);
+  const [showReport, setShowReport] = useState(false);
 
   const fare = activeTrip?.priceVnd || 35000;
   const formattedFare = new Intl.NumberFormat('vi-VN').format(fare) + ' ₫';
@@ -141,8 +143,25 @@ export const TripComplete = () => {
               </div>
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowReport(true)}
+            className="mx-auto flex items-center gap-1.5 text-[11px] font-semibold text-[#8A9993] hover:text-[#C22B35] transition-colors"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            Gặp vấn đề với chuyến đi? Báo cáo ngay
+          </button>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        open={showReport}
+        onClose={() => setShowReport(false)}
+        reportedName={currentRole === 'driver' ? 'Lan' : 'Quốc Huy'}
+        tripCode={activeTrip?.id}
+      />
 
       {/* Done CTA */}
       <button

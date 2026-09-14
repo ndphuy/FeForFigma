@@ -58,6 +58,7 @@ export const MobileFrame = ({ children, hideNav = false }) => {
       group: 'Dịch vụ & Tiện ích',
       screens: [
         { name: 'Lịch sử chuyến đi (Trip History)', path: '/shared/trip-history' },
+        { name: 'Lịch sử chi phí (Cost History)', path: '/shared/cost-history' },
         { name: 'Tin nhắn trao đổi (Trip Chat)', path: '/passenger/messages' },
         { name: 'Ví RouteShare & Lịch sử giao dịch', path: '/wallet' },
         { name: 'Nạp tiền qua VietQR (PayOS)', path: '/wallet/top-up' },

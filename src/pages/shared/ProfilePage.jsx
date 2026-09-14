@@ -6,10 +6,11 @@ import {
   Car, 
   Calendar, 
   ChevronRight, 
-  ShieldCheck, 
-  LogOut, 
-  Star, 
-  Wallet 
+  ShieldCheck,
+  LogOut,
+  Star,
+  Wallet,
+  Receipt
 } from 'lucide-react';
 
 export const ProfilePage = () => {
@@ -89,6 +90,19 @@ export const ProfilePage = () => {
             <ChevronRight className="w-4 h-4 text-[#8A9993] shrink-0" />
           </button>
         )}
+
+        {/* Cost History */}
+        <button
+          type="button"
+          onClick={() => navigate('/shared/cost-history')}
+          className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#F1FAF6] transition-colors text-left cursor-pointer"
+        >
+          <div className="flex items-center space-x-3">
+            <Receipt className="w-4.5 h-4.5 text-[#4B5A54]" />
+            <span className="text-xs font-semibold text-[#101B17]">Lịch sử chi phí</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#8A9993]" />
+        </button>
 
         {/* Recurring Commute */}
         <button

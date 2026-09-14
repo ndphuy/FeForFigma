@@ -1,22 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { List, Mail, Plus } from 'lucide-react';
+import { List, Mail, Plus, CalendarClock, Ban } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { CancelTripSheet } from '../../components/CancelTripSheet';
+import { RescheduleTripSheet } from '../../components/RescheduleTripSheet';
 
 const WEEK_DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
+const TODAY_TRIP_STATUS = {
+  'Đang mở': { label: 'Đã xác nhận', bg: 'bg-[#DDF1F4]', fg: 'text-[#0A6E7A]', dot: 'bg-[#0A6E7A]' },
+  'Đã huỷ': { label: 'Đã huỷ chuyến', bg: 'bg-[#FCEBEB]', fg: 'text-[#C22B35]', dot: 'bg-[#C22B35]' },
+  'Hoàn thành': { label: 'Hoàn thành', bg: 'bg-[#DDF3EA]', fg: 'text-[#0B7A5C]', dot: 'bg-[#0F9D76]' },
+};
+
 export const DriverHome = () => {
   const navigate = useNavigate();
-  const { currentUser, bookings, schedules, toggleSchedule } = useApp();
+  const { currentUser, schedules, toggleSchedule, trips, pendingBookingsForDriver } = useApp();
+  const todayTrip = trips.find((t) => t.id === 'trip_001') || trips[0];
+  const [showCancel, setShowCancel] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const canModifyTrip = todayTrip && todayTrip.statusText !== 'Đã huỷ' && todayTrip.statusText !== 'Hoàn thành';
+  const todayStatus = TODAY_TRIP_STATUS[todayTrip?.statusText] || TODAY_TRIP_STATUS['Đang mở'];
   const workSchedule = schedules[0];
   const isScheduleActive = workSchedule?.active ?? true;
-  const bookedPassengers = bookings.slice(0, 2).map((booking) => ({
-    id: booking.passengerId,
-    initials: booking.passengerInitials,
-    shortName: booking.passengerName.split(' ').at(-1)
+  const bookedPassengers = (todayTrip?.passengers || []).map((p) => ({
+    id: p.id,
+    initials: p.initials,
+    shortName: p.name.split(' ').at(-1),
+    fareVnd: p.fareVnd,
   }));
   const bookedSeats = bookedPassengers.length;
-  const totalSeats = 3;
+  const totalSeats = todayTrip?.totalSeats || 3;
+  const bookedTotalVnd = bookedPassengers.reduce((sum, p) => sum + (p.fareVnd || 0), 0);
 
   const toggleWorkSchedule = () => {
     if (workSchedule) toggleSchedule(workSchedule.id);
@@ -73,33 +88,37 @@ export const DriverHome = () => {
           Tạo chuyến đi
         </button>
 
-        <div className="rounded-[22px] bg-[#FFF4E9] border border-[#F7D9B8] p-4 flex items-center gap-3.5">
-          <span className="flex shrink-0">
-            {bookedPassengers.map((passenger, index) => (
-              <span
-                key={passenger.id}
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border-2 border-[#FFF4E9] ${
-                  index === 0 ? 'bg-[#DDF3EA] text-[#0B7A5C]' : '-ml-3.5 bg-white text-[#4B5A54]'
-                }`}
-              >
-                {passenger.initials}
+        {pendingBookingsForDriver.length > 0 && (
+          <div className="rounded-[22px] bg-[#FFF4E9] border border-[#F7D9B8] p-4 flex items-center gap-3.5">
+            <span className="flex shrink-0">
+              {pendingBookingsForDriver.slice(0, 2).map((booking, index) => (
+                <span
+                  key={booking.id}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border-2 border-[#FFF4E9] ${
+                    index === 0 ? 'bg-[#DDF3EA] text-[#0B7A5C]' : '-ml-3.5 bg-white text-[#4B5A54]'
+                  }`}
+                >
+                  {booking.passengerInitials}
+                </span>
+              ))}
+            </span>
+
+            <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+              <span className="text-[14.5px] font-semibold text-[#8A4A0B]">{pendingBookingsForDriver.length} yêu cầu chờ bạn duyệt</span>
+              <span className="text-xs leading-[1.35] text-[#8A4A0B] truncate">
+                {pendingBookingsForDriver[0]?.createdAt || 'Vừa xong'} · chuyến {pendingBookingsForDriver[0]?.departureTime || '07:00'} hôm nay
               </span>
-            ))}
-          </span>
+            </span>
 
-          <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span className="text-[14.5px] font-semibold text-[#8A4A0B]">{bookings.length} yêu cầu chờ bạn duyệt</span>
-            <span className="text-xs leading-[1.35] text-[#8A4A0B]">Gửi 12 phút trước · chuyến 07:00 hôm nay</span>
-          </span>
-
-          <button
-            type="button"
-            onClick={() => navigate('/driver/requests')}
-            className="h-11 px-4 rounded-[14px] bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[13.5px] font-semibold shrink-0 transition-colors"
-          >
-            Duyệt
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => navigate('/driver/requests')}
+              className="h-11 px-4 rounded-[14px] bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[13.5px] font-semibold shrink-0 transition-colors"
+            >
+              Duyệt
+            </button>
+          </div>
+        )}
 
         <section className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
@@ -115,11 +134,13 @@ export const DriverHome = () => {
 
           <div className="bg-white rounded-3xl p-[18px] shadow-[0_4px_16px_rgba(16,27,23,0.07)] flex flex-col gap-3.5">
             <div className="flex items-center justify-between gap-2.5">
-              <span className="h-[30px] px-3 rounded-full bg-[#DDF1F4] text-[#0A6E7A] text-[11.5px] font-semibold inline-flex items-center gap-1.5 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0A6E7A]" />
-                Đã xác nhận
+              <span className={`h-[30px] px-3 rounded-full ${todayStatus.bg} ${todayStatus.fg} text-[11.5px] font-semibold inline-flex items-center gap-1.5 shrink-0`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${todayStatus.dot}`} />
+                {todayStatus.label}
               </span>
-              <span className="text-[12.5px] text-[#8A9993] text-right">Khởi hành sau 1 giờ 19 phút</span>
+              <span className="text-[12.5px] text-[#8A9993] text-right">
+                {todayTrip?.statusText === 'Đã huỷ' ? 'Hành khách đã được thông báo' : 'Khởi hành sau 1 giờ 19 phút'}
+              </span>
             </div>
 
             <div className="flex gap-3.5">
@@ -149,7 +170,7 @@ export const DriverHome = () => {
                   onClick={() => navigate('/shared/cost-breakdown')}
                   className="font-semibold text-[#0B7A5C] shrink-0 hover:underline"
                 >
-                  Chia lại {(45000 * bookedSeats).toLocaleString('de-DE')} ₫
+                  Chia lại {bookedTotalVnd.toLocaleString('vi-VN')} ₫
                 </button>
               </div>
 
@@ -194,6 +215,27 @@ export const DriverHome = () => {
                 Bắt đầu chuyến
               </button>
             </div>
+
+            {canModifyTrip && (
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowReschedule(true)}
+                  className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#4B5A54] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#BDE7D5] hover:text-[#0B7A5C] active:scale-[0.99] transition-all"
+                >
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  Đổi lịch
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCancel(true)}
+                  className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all"
+                >
+                  <Ban className="w-3.5 h-3.5" />
+                  Huỷ chuyến
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -229,7 +271,9 @@ export const DriverHome = () => {
             <span className="w-9 h-9 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center">
               <Mail className="w-4 h-4 stroke-2" />
             </span>
-            <span className="absolute top-2.5 right-2.5 min-w-5 h-5 px-1.5 rounded-full bg-[#EE7A22] text-white text-[11px] font-bold flex items-center justify-center">{bookings.length}</span>
+            {pendingBookingsForDriver.length > 0 && (
+              <span className="absolute top-2.5 right-2.5 min-w-5 h-5 px-1.5 rounded-full bg-[#EE7A22] text-white text-[11px] font-bold flex items-center justify-center">{pendingBookingsForDriver.length}</span>
+            )}
             <span>Yêu cầu đặt<br />chỗ</span>
           </button>
         </section>
@@ -294,6 +338,25 @@ export const DriverHome = () => {
           </div>
         </section>
       </div>
+
+      {todayTrip && (
+        <>
+          <CancelTripSheet
+            open={showCancel}
+            onClose={() => setShowCancel(false)}
+            tripId={todayTrip.id}
+            tripLabel={`${todayTrip.origin} → ${todayTrip.destination} · ${todayTrip.departureTime}`}
+          />
+          <RescheduleTripSheet
+            open={showReschedule}
+            onClose={() => setShowReschedule(false)}
+            tripId={todayTrip.id}
+            tripLabel={`${todayTrip.origin} → ${todayTrip.destination}`}
+            currentDate={todayTrip.departureDate}
+            currentTime={todayTrip.departureTime}
+          />
+        </>
+      )}
     </div>
   );
 };

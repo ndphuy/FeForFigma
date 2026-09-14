@@ -33,6 +33,7 @@ import { PassengerLiveTracking } from './pages/passenger/PassengerLiveTracking';
 
 // Shared Pages
 import { CostBreakdown } from './pages/shared/CostBreakdown';
+import { CostHistory } from './pages/shared/CostHistory';
 import { LiveTracking } from './pages/shared/LiveTracking';
 import { TripChat } from './pages/shared/TripChat';
 import { BoardingVerify } from './pages/shared/BoardingVerify';
@@ -121,6 +122,9 @@ const AppRoutes = () => {
         <Route path="/driver/notifications" element={<NotificationsPage />} />
         <Route path="/passenger/cost-breakdown" element={<CostBreakdown />} />
         <Route path="/shared/cost-breakdown" element={<CostBreakdown />} />
+        <Route path="/shared/cost-history" element={<CostHistory />} />
+        <Route path="/passenger/cost-history" element={<CostHistory />} />
+        <Route path="/driver/cost-history" element={<CostHistory />} />
         <Route path="/shared/live-tracking" element={<LiveTracking />} />
         <Route path="/shared/chat/:id" element={<TripChat />} />
         <Route path="/shared/chat" element={<TripChat />} />

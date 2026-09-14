@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, MessageSquare, Info, ArrowRight } from 'lucide-react';
+import { ShieldCheck, MessageSquare, Info, ArrowRight, MapPin, Minus, Plus } from 'lucide-react';
 
 export const RequestBooking = () => {
   const { id } = useParams();
@@ -9,14 +9,36 @@ export const RequestBooking = () => {
   const { trips, requestBooking, setActiveBookingId } = useApp();
 
   const trip = trips.find((t) => t.id === id) || trips[0];
+  const stops = trip.stops?.length >= 2
+    ? trip.stops
+    : [
+        { id: 'st_o', name: trip.origin, time: trip.departureTime },
+        { id: 'st_d', name: trip.destination, time: '07:48' },
+      ];
+
   const [seats, setSeats] = useState(1);
+  const [pickupIdx, setPickupIdx] = useState(0);
+  const [dropoffIdx, setDropoffIdx] = useState(stops.length - 1);
   const [message, setMessage] = useState('Chào anh, em mang balo nhỏ, đứng ở cổng 2 nhé.');
+
+  const pickupStop = stops[pickupIdx] || stops[0];
+  const dropoffStop = stops[dropoffIdx] || stops[stops.length - 1];
+
+  const handlePickupChange = (idx) => {
+    setPickupIdx(idx);
+    if (dropoffIdx <= idx) {
+      setDropoffIdx(Math.min(idx + 1, stops.length - 1));
+    }
+  };
 
   const totalFare = trip.priceVnd * seats;
   const formattedFare = new Intl.NumberFormat('vi-VN').format(totalFare);
 
   const handleSubmitRequest = () => {
-    const booking = requestBooking(trip.id, seats, message);
+    const booking = requestBooking(trip.id, seats, message, {
+      pickupPoint: pickupStop.name,
+      dropoffPoint: dropoffStop.name,
+    });
     setActiveBookingId(booking.id);
     navigate(`/passenger/booking-pending/${trip.id}`);
   };
@@ -65,17 +87,17 @@ export const RequestBooking = () => {
               <div className="flex justify-between items-start gap-2">
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-[#8A9993] tracking-wider">Điểm đón</span>
-                  <span className="text-xs font-bold text-[#101B17] truncate">{trip.origin}</span>
+                  <span className="text-xs font-bold text-[#101B17] truncate">{pickupStop.name}</span>
                 </div>
-                <span className="text-xs font-bold text-[#101B17] font-mono">{trip.departureTime}</span>
+                <span className="text-xs font-bold text-[#101B17] font-mono">{pickupStop.time}</span>
               </div>
 
               <div className="flex justify-between items-start gap-2">
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-[#8A9993] tracking-wider">Điểm trả</span>
-                  <span className="text-xs font-bold text-[#101B17] truncate">{trip.destination}</span>
+                  <span className="text-xs font-bold text-[#101B17] truncate">{dropoffStop.name}</span>
                 </div>
-                <span className="text-xs font-bold text-[#101B17] font-mono">07:48</span>
+                <span className="text-xs font-bold text-[#101B17] font-mono">{dropoffStop.time}</span>
               </div>
             </div>
           </div>
@@ -109,6 +131,54 @@ export const RequestBooking = () => {
           </span>
         </div>
 
+        {/* Pickup / Dropoff Selection */}
+        <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-3">
+          <div className="flex items-center gap-1.5 text-sm font-bold text-[#101B17]">
+            <MapPin className="w-4 h-4 text-[#0B7A5C]" />
+            <span>Điểm đón & điểm trả của bạn</span>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Điểm đón</span>
+            <div className="flex gap-2 overflow-x-auto rs-scroll pb-0.5">
+              {stops.slice(0, stops.length - 1).map((stop, idx) => (
+                <button
+                  key={stop.id || idx}
+                  type="button"
+                  onClick={() => handlePickupChange(idx)}
+                  className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer ${
+                    pickupIdx === idx
+                      ? 'bg-[#0F9D76] text-white border-[#0F9D76]'
+                      : 'bg-[#F7FAF9] text-[#4B5A54] border-[#E4EAE7] hover:border-[#BDE7D5]'
+                  }`}
+                >
+                  {stop.name} · {stop.time}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Điểm trả</span>
+            <div className="flex gap-2 overflow-x-auto rs-scroll pb-0.5">
+              {stops.map((stop, idx) => (idx > pickupIdx ? (
+                <button
+                  key={stop.id || idx}
+                  type="button"
+                  onClick={() => setDropoffIdx(idx)}
+                  className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer ${
+                    dropoffIdx === idx
+                      ? 'bg-[#EE7A22] text-white border-[#EE7A22]'
+                      : 'bg-[#F7FAF9] text-[#4B5A54] border-[#E4EAE7] hover:border-[#BDE7D5]'
+                  }`}
+                >
+                  {stop.name} · {stop.time}
+                </button>
+              ) : null))}
+            </div>
+          </div>
+        </div>
+
         {/* Number of Seats Selection */}
         <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -116,24 +186,29 @@ export const RequestBooking = () => {
             <span className="text-xs text-[#8A9993]">Tối đa {trip.availableSeats} chỗ</span>
           </div>
 
-          <div className="flex gap-2">
-            {[1, 2, 3].slice(0, trip.availableSeats).map((num) => (
-              <button
-                key={num}
-                type="button"
-                onClick={() => setSeats(num)}
-                className={`flex-1 h-14 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                  seats === num
-                    ? 'bg-[#0F9D76] text-white shadow-xs'
-                    : 'bg-[#F4F7F5] text-[#4B5A54] hover:bg-[#EAEFEA]'
-                }`}
-              >
-                <span className="text-xs font-bold leading-none">{num} chỗ</span>
-                <span className={`text-[10px] font-mono leading-none ${seats === num ? 'text-white/85' : 'text-[#8A9993]'}`}>
-                  {new Intl.NumberFormat('vi-VN').format(trip.priceVnd * num)} ₫
-                </span>
-              </button>
-            ))}
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setSeats((prev) => Math.max(1, prev - 1))}
+              disabled={seats <= 1}
+              className="w-12 h-12 rounded-xl bg-[#F4F7F5] hover:bg-[#EAEFEA] disabled:opacity-40 disabled:cursor-not-allowed text-[#101B17] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            >
+              <Minus className="w-4 h-4 stroke-[2.5px]" />
+            </button>
+
+            <div className="flex-1 h-12 rounded-xl bg-[#F1FAF6] border border-[#BDE7D5] flex items-center justify-center gap-1.5">
+              <span className="text-lg font-bold font-mono text-[#0F9D76]">{seats}</span>
+              <span className="text-xs font-semibold text-[#0B7A5C]">chỗ</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSeats((prev) => Math.min(trip.availableSeats, prev + 1))}
+              disabled={seats >= trip.availableSeats}
+              className="w-12 h-12 rounded-xl bg-[#F4F7F5] hover:bg-[#EAEFEA] disabled:opacity-40 disabled:cursor-not-allowed text-[#101B17] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5px]" />
+            </button>
           </div>
 
           {/* Pricing breakdown info */}
@@ -146,10 +221,14 @@ export const RequestBooking = () => {
               <span>Đơn giá cấu hình:</span>
               <span className="font-semibold text-[#0B7A5C] font-mono">{(trip.ratePerKm || 5000).toLocaleString('vi-VN')} ₫/km</span>
             </div>
+            <div className="flex justify-between">
+              <span>Đơn giá mỗi ghế:</span>
+              <span className="font-semibold text-[#101B17] font-mono">{new Intl.NumberFormat('vi-VN').format(trip.priceVnd)} ₫</span>
+            </div>
             <div className="h-[1px] bg-[#E4EAE7] my-0.5" />
             <div className="flex justify-between items-center text-[#101B17] font-bold">
-              <span>Đơn giá 1 ghế ({seats > 1 ? `${seats} ghế: ${formattedFare} ₫` : '1 ghế'}):</span>
-              <span className="text-[#0F9D76] font-mono">{new Intl.NumberFormat('vi-VN').format(trip.priceVnd)} ₫</span>
+              <span>Tổng cộng ({seats} ghế):</span>
+              <span className="text-[#0F9D76] font-mono text-sm">{formattedFare} ₫</span>
             </div>
           </div>
         </div>
