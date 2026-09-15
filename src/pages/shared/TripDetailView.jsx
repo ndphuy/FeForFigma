@@ -35,7 +35,11 @@ export const TripDetailView = () => {
     activeTrip,
     isWishlisted,
     toggleWishlist,
-    applyDirectDiscount
+    applyDirectDiscount,
+    bookings,
+    currentUser,
+    setActiveTripId,
+    setActiveBookingId
   } = useApp();
 
   const [showCancelSheet, setShowCancelSheet] = useState(false);
@@ -115,6 +119,51 @@ export const TripDetailView = () => {
     }
   ];
 
+  // Passenger's real booking status for THIS trip — drives the bottom CTA and header
+  // badge instead of assuming every trip viewed is already booked.
+  const myBooking = currentRole === 'passenger'
+    ? bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser.id
+        && ['pending', 'confirmed', 'pending_reschedule', 'completed'].includes(b.status))
+    : null;
+
+  const bookingStatusBadge = !myBooking
+    ? { label: 'Chưa đặt chỗ', bg: 'bg-[#F4F7F5]', fg: 'text-[#4B5A54]', border: 'border-[#E4EAE7]' }
+    : myBooking.status === 'pending'
+      ? { label: 'Chờ tài xế duyệt', bg: 'bg-[#FFF4E9]', fg: 'text-[#B45812]', border: 'border-[#F7D9B8]' }
+      : myBooking.status === 'pending_reschedule'
+        ? { label: 'Cần xác nhận lịch mới', bg: 'bg-[#FFF4E9]', fg: 'text-[#B45812]', border: 'border-[#F7D9B8]' }
+        : { label: 'Đã giữ chỗ', bg: 'bg-[#DDF3EA]', fg: 'text-[#0B7A5C]', border: 'border-[#B2E2D0]' };
+
+  const handlePrimaryAction = () => {
+    setActiveTripId(trip.id);
+    if (currentRole === 'driver') {
+      navigate('/driver/active-trip');
+      return;
+    }
+    if (!myBooking) {
+      navigate(`/passenger/request-booking/${trip.id}`);
+    } else if (myBooking.status === 'pending') {
+      setActiveBookingId(myBooking.id);
+      navigate(`/passenger/booking-pending/${trip.id}`);
+    } else if (myBooking.status === 'pending_reschedule') {
+      setActiveBookingId(myBooking.id);
+      navigate(`/passenger/booking-confirm/${trip.id}`);
+    } else {
+      setActiveBookingId(myBooking.id);
+      navigate('/passenger/live-tracking');
+    }
+  };
+
+  const primaryActionLabel = currentRole === 'driver'
+    ? 'Bắt đầu hành trình'
+    : !myBooking
+      ? 'Đặt chỗ ngay'
+      : myBooking.status === 'pending'
+        ? 'Xem trạng thái yêu cầu'
+        : myBooking.status === 'pending_reschedule'
+          ? 'Xem lịch mới cần xác nhận'
+          : 'Theo dõi trực tiếp';
+
   const handleOpenDiscount = (passenger) => {
     setDiscountPassenger(passenger);
     setDiscountPercentVal(20);
@@ -187,13 +236,21 @@ export const TripDetailView = () => {
           </button>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-[#101B17]">Chi tiết chuyến đi</span>
-            <span className="text-[11px] text-[#8A9993] font-mono">#RS-4821 · {trip.departureDate}</span>
+            <span className="text-[11px] text-[#8A9993] font-mono">
+              {myBooking?.bookingCode ? `${myBooking.bookingCode} · ` : ''}{trip.departureDate}
+            </span>
           </div>
         </div>
 
-        <span className="px-2.5 py-1 rounded-full bg-[#DDF3EA] text-[#0B7A5C] text-[11px] font-bold border border-[#B2E2D0]">
-          {currentRole === 'driver' ? 'Chuyến của bạn' : 'Đã giữ chỗ'}
-        </span>
+        {currentRole === 'driver' ? (
+          <span className="px-2.5 py-1 rounded-full bg-[#DDF3EA] text-[#0B7A5C] text-[11px] font-bold border border-[#B2E2D0]">
+            Chuyến của bạn
+          </span>
+        ) : (
+          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${bookingStatusBadge.bg} ${bookingStatusBadge.fg} ${bookingStatusBadge.border}`}>
+            {bookingStatusBadge.label}
+          </span>
+        )}
       </div>
 
       {/* Main Scrollable Content */}
@@ -496,14 +553,14 @@ export const TripDetailView = () => {
         )}
       </div>
 
-      {/* Sticky Bottom Action (Driver: Start Trip; Passenger: Live Tracking) */}
+      {/* Sticky Bottom Action — reflects the passenger's real booking status for this trip */}
       <div className="absolute left-0 right-0 bottom-0 bg-white p-4 border-t border-[#EEF2F0] shadow-2xl z-20">
         <button
           type="button"
-          onClick={() => navigate(currentRole === 'driver' ? '/driver/active-trip' : '/passenger/live-tracking')}
+          onClick={handlePrimaryAction}
           className="w-full h-14 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-[15px] rounded-2xl shadow-[0_8px_20px_rgba(15,157,118,0.28)] flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
         >
-          <span>{currentRole === 'driver' ? 'Bắt đầu hành trình' : 'Theo dõi trực tiếp'}</span>
+          <span>{primaryActionLabel}</span>
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>

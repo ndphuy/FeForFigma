@@ -393,7 +393,20 @@ export const SearchResults = () => {
   const [draftFilters, setDraftFilters] = useState(initialFilters);
   const [isEditing, setIsEditing] = useState(false);
 
-  const sortedTrips = useMemo(() => [...trips].sort((a, b) => {
+  // Filters actually narrow the list now — they used to only relabel the chips.
+  const filteredTrips = useMemo(() => trips.filter((trip) => {
+    if (filters.maxPrice !== 'all' && trip.priceVnd > Number(filters.maxPrice)) return false;
+    if (filters.minRating !== 'all' && (trip.driverTrustScore || 0) < Number(filters.minRating)) return false;
+    if (Number(filters.seats) > (trip.availableSeats || 0)) return false;
+    const walk = parseInt(RESULT_DETAILS[trip.id]?.walk || '200', 10);
+    if (walk > Number(filters.maxWalk)) return false;
+    if (filters.timeFrom && filters.timeTo && trip.departureTime) {
+      if (trip.departureTime < filters.timeFrom || trip.departureTime > filters.timeTo) return false;
+    }
+    return true;
+  }), [trips, filters]);
+
+  const sortedTrips = useMemo(() => [...filteredTrips].sort((a, b) => {
     if (sortBy === 'price') return a.priceVnd - b.priceVnd;
     if (sortBy === 'time') return a.departureTime.localeCompare(b.departureTime);
     if (sortBy === 'walk') {
@@ -402,9 +415,9 @@ export const SearchResults = () => {
       return walkA - walkB;
     }
     return b.matchPercentage - a.matchPercentage;
-  }), [sortBy, trips]);
+  }), [sortBy, filteredTrips]);
 
-  const topMatch = Math.max(...trips.map((trip) => trip.matchPercentage), 0);
+  const topMatch = Math.max(...filteredTrips.map((trip) => trip.matchPercentage), 0);
   const origin = searchFilter.origin || 'Đại học FPT Thành phố Hồ Chí Minh';
   const destination = searchFilter.destination || 'Chợ Bến Thành - Cổng Bắc';
 
