@@ -1,17 +1,188 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigation, Compass, Shield, Check, MapPin, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useMemo, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { Navigation, Compass, Shield } from 'lucide-react';
+
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 /**
- * Unified Urban Map Geometry
- * Standard S-curve path representing HCMC East Corridor (Thủ Đức / Q.9 -> Q.1 / Bến Thành)
+ * Real-world route geometry (lng, lat) approximating the HCMC East Corridor:
+ * Thủ Đức / Suối Tiên -> Xa lộ Hà Nội -> Cầu Sài Gòn -> Mai Chí Thọ -> Hầm Thủ Thiêm -> Bến Thành, Q.1
  */
-const PREVIEW_PATH_D = 'M 55 165 C 120 165, 160 145, 200 135 C 245 125, 290 110, 345 100';
-const BACKDROP_PATH_D = 'M 315 160 C 265 185, 215 220, 165 260 C 120 295, 90 325, 75 345';
-const LIVE_FULLSCREEN_PATH_D = 'M 320 115 C 275 165, 225 215, 180 255 C 140 295, 100 325, 65 345';
+const MAIN_ROUTE_COORDS = [
+  [106.8033, 10.8712], // Suối Tiên, Thủ Đức
+  [106.7797, 10.8046], // Xa lộ Hà Nội, An Phú
+  [106.7508, 10.7910], // Cầu Sài Gòn
+  [106.7295, 10.7828], // Mai Chí Thọ, Thủ Thiêm
+  [106.7075, 10.7795], // Hầm Thủ Thiêm
+  [106.6980, 10.7724], // Chợ Bến Thành, Q.1
+];
+
+// Decorative loop around Q.1 used as a subtle background in 'backdrop' mode
+const BACKDROP_ROUTE_COORDS = [
+  [106.7028, 10.7756], // Nguyễn Huệ
+  [106.7005, 10.7742],
+  [106.6975, 10.7726], // gần Chợ Bến Thành
+  [106.7015, 10.7706], // Khu Bitexco
+];
+
+// Approx bounding box around Phú Mỹ Hưng, Q.7 (matches PickupPicker's static header text),
+// used to place 'picker' mode pins from their legacy logical x/y coordinates.
+const PICKER_BBOX = { minLng: 106.702, maxLng: 106.722, minLat: 10.722, maxLat: 10.738 };
+const LOGICAL_W = 400;
+const LOGICAL_H = 220;
+
+function haversine([lng1, lat1], [lng2, lat2]) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function cumulativeLengths(coords) {
+  const acc = [0];
+  for (let i = 1; i < coords.length; i++) acc.push(acc[i - 1] + haversine(coords[i - 1], coords[i]));
+  return acc;
+}
+
+function pointAtT(coords, cumulative, t) {
+  const total = cumulative[cumulative.length - 1];
+  const target = Math.min(1, Math.max(0, t)) * total;
+  for (let i = 1; i < cumulative.length; i++) {
+    if (target <= cumulative[i] || i === cumulative.length - 1) {
+      const segStart = cumulative[i - 1];
+      const segLen = cumulative[i] - segStart || 1;
+      const segT = Math.min(1, Math.max(0, (target - segStart) / segLen));
+      const [lng0, lat0] = coords[i - 1];
+      const [lng1, lat1] = coords[i];
+      return [lng0 + (lng1 - lng0) * segT, lat0 + (lat1 - lat0) * segT];
+    }
+  }
+  return coords[coords.length - 1];
+}
+
+function sliceAtT(coords, cumulative, t) {
+  const total = cumulative[cumulative.length - 1];
+  const target = Math.min(1, Math.max(0, t)) * total;
+  const slice = [coords[0]];
+  for (let i = 1; i < cumulative.length; i++) {
+    if (cumulative[i] <= target) {
+      slice.push(coords[i]);
+    } else {
+      slice.push(pointAtT(coords, cumulative, t));
+      break;
+    }
+  }
+  return slice;
+}
+
+function xyToLngLat(x, y) {
+  const { minLng, maxLng, minLat, maxLat } = PICKER_BBOX;
+  const lng = minLng + (x / LOGICAL_W) * (maxLng - minLng);
+  const lat = maxLat - (y / LOGICAL_H) * (maxLat - minLat);
+  return [lng, lat];
+}
+
+function createPointMarkerEl({ isOrange, isWaypoint, isPicker, isSafe, isWarning, isSelected, label, onClick }) {
+  const markerBg = isOrange ? 'bg-[#EE7A22]' : isWaypoint ? 'bg-[#0B7A5C]' : 'bg-[#0F9D76]';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'flex flex-col items-center';
+
+  if (isPicker) {
+    const topLabel = document.createElement('div');
+    topLabel.className = `mb-1 px-2 py-0.5 rounded-lg text-[9px] font-bold shadow-xs whitespace-nowrap ${
+      isSelected
+        ? 'bg-[#0F9D76] text-white ring-2 ring-white'
+        : isSafe
+          ? 'bg-white/95 text-[#0B7A5C] border border-[#BDE7D5]'
+          : isWarning
+            ? 'bg-white/95 text-[#C22B35] border border-[#F7D9D9]'
+            : 'bg-white/95 text-[#101B17] border border-[#E4EAE7]'
+    }`;
+    topLabel.textContent = label || '';
+    wrap.appendChild(topLabel);
+  }
+
+  const pinWrap = document.createElement('div');
+  pinWrap.className = 'relative flex items-center justify-center';
+
+  const pulse = document.createElement('span');
+  pulse.className = `absolute w-6 h-6 rounded-full ${markerBg}/20 animate-pulse pointer-events-none`;
+  pinWrap.appendChild(pulse);
+
+  const pin = document.createElement('div');
+  if (isPicker) {
+    pin.className = `w-6 h-6 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[10px] font-bold text-white transition-all ${
+      isSelected
+        ? 'bg-[#0F9D76] ring-4 ring-[#0F9D76]/30 scale-110'
+        : isSafe
+          ? 'bg-[#0F9D76]'
+          : isWarning
+            ? 'bg-[#EE7A22]'
+            : 'bg-[#0B7A5C]'
+    }`;
+    pin.textContent = isSafe ? '✓' : isWarning ? '!' : '●';
+  } else if (isOrange) {
+    pin.className = `h-4.5 w-4.5 rounded-md border-2 border-white ${markerBg} ring-3 ring-[#EE7A22]/25 shadow-[0_2px_8px_rgba(238,122,34,0.35)] flex items-center justify-center text-[7.5px] font-bold text-white shrink-0`;
+    pin.textContent = '■';
+  } else if (isWaypoint) {
+    pin.className = 'h-3.5 w-3.5 rounded-full border-2 border-white bg-white ring-3 ring-[#0F9D76]/30 shadow-xs flex items-center justify-center shrink-0';
+    const dot = document.createElement('span');
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-[#0F9D76]';
+    pin.appendChild(dot);
+  } else {
+    pin.className = `h-4.5 w-4.5 rounded-full border-2 border-white ${markerBg} ring-3 ring-[#0F9D76]/25 shadow-[0_2px_8px_rgba(15,157,118,0.35)] flex items-center justify-center text-[7.5px] font-bold text-white shrink-0`;
+    pin.textContent = '●';
+  }
+  pinWrap.appendChild(pin);
+  wrap.appendChild(pinWrap);
+
+  if (!isPicker && label) {
+    const bottomLabel = document.createElement('div');
+    bottomLabel.className = 'mt-1.5 max-w-[130px] rounded-lg bg-white/95 backdrop-blur-md px-2 py-0.5 text-[9.5px] font-bold text-[#101B17] shadow-[0_2px_8px_rgba(16,27,23,0.12)] border border-[#E4EAE7] flex items-center gap-1 pointer-events-none whitespace-nowrap';
+    const dot2 = document.createElement('span');
+    dot2.className = `w-1.5 h-1.5 rounded-full ${markerBg} shrink-0`;
+    const text = document.createElement('span');
+    text.className = 'truncate';
+    text.textContent = label;
+    bottomLabel.appendChild(dot2);
+    bottomLabel.appendChild(text);
+    wrap.appendChild(bottomLabel);
+  }
+
+  if (isPicker) {
+    wrap.style.cursor = 'pointer';
+    wrap.addEventListener('click', onClick);
+  }
+
+  return wrap;
+}
+
+function createCarMarkerEl() {
+  const wrap = document.createElement('div');
+  wrap.className = 'relative w-8 h-8 flex items-center justify-center';
+  wrap.innerHTML = `
+    <span class="absolute w-12 h-12 -left-2 -top-2 rounded-full bg-[#0F9D76]/25 animate-ping"></span>
+    <span class="absolute w-9 h-9 -left-0.5 -top-0.5 rounded-full bg-[#0F9D76]/30 animate-pulse"></span>
+    <div class="relative w-8 h-8 rounded-full bg-[#0F9D76] border-2 border-white shadow-[0_4px_14px_rgba(15,157,118,0.5)] flex items-center justify-center">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="#FFFFFF">
+        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"></path>
+        <circle cx="7.5" cy="14.5" r="1.5"></circle>
+        <circle cx="16.5" cy="14.5" r="1.5"></circle>
+      </svg>
+    </div>
+  `;
+  return wrap;
+}
 
 /**
- * AppMap — Unified Master Map Component for RouteShare
- * 
+ * AppMap — Unified Master Map Component for RouteShare, backed by a real Mapbox GL map.
+ *
  * @param {'preview' | 'backdrop' | 'live' | 'picker'} mode - Map rendering mode
  * @param {Array} points - Waypoint markers [{ id, label, type, x, y, isSafe, ... }]
  * @param {number} progress - Vehicle progress from 0 to 1 (for 'live' mode)
@@ -35,176 +206,230 @@ export const AppMap = ({
   className = '',
   showControls = true,
 }) => {
-  const pathRef = useRef(null);
-  const [dots, setDots] = useState([]);
-  const [carPos, setCarPos] = useState(null);
-  const [pathLength, setPathLength] = useState(0);
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
+  const carMarkerRef = useRef(null);
 
   const isBackdrop = mode === 'backdrop';
   const isLive = mode === 'live';
   const isPicker = mode === 'picker';
-  const isPreview = mode === 'preview';
   const isFullscreen = isBackdrop || isLive || className.includes('absolute inset-0');
 
-  const activePathD = isBackdrop
-    ? BACKDROP_PATH_D
-    : (isLive || className.includes('absolute inset-0'))
-      ? LIVE_FULLSCREEN_PATH_D
-      : PREVIEW_PATH_D;
+  const routeCoords = isBackdrop ? BACKDROP_ROUTE_COORDS : MAIN_ROUTE_COORDS;
+  const cumulative = useMemo(() => cumulativeLengths(routeCoords), [routeCoords]);
   const clampedProgress = Math.min(1, Math.max(0, progress));
 
-  // Compute Waypoints along SVG Path
-  useEffect(() => {
-    if (!pathRef.current) return;
-    const total = pathRef.current.getTotalLength();
-    setPathLength(total);
-
+  const dots = useMemo(() => {
     if (isPicker) {
-      // In picker mode, predefined coordinate layout if not specified
-      setDots(points.map((p, i) => {
-        const defaultPositions = [
-          { x: 95, y: 145 },
-          { x: 195, y: 105 },
-          { x: 285, y: 75 },
-          { x: 335, y: 55 },
-        ];
-        const pos = p.x !== undefined && p.y !== undefined ? { x: p.x, y: p.y } : (defaultPositions[i % defaultPositions.length] || { x: 200, y: 100 });
-        return { ...p, ...pos, index: i };
+      return points.map((p, i) => ({
+        ...p,
+        lngLat: p.x !== undefined && p.y !== undefined ? xyToLngLat(p.x, p.y) : xyToLngLat(80 + i * 90, 145 - i * 30),
+        index: i,
       }));
-      return;
     }
-
-    if (points.length === 0) {
-      setDots([]);
-      return;
-    }
-
+    if (points.length === 0) return [];
     const n = points.length;
-    setDots(points.map((p, i) => {
-      let t = 0;
+    return points.map((p, i) => {
+      let t;
       if (n === 1) t = 0.5;
       else if (n === 2) t = i === 0 ? 0.05 : 0.95;
       else if (n === 3) t = i === 0 ? 0.05 : i === 1 ? 0.5 : 0.95;
-      else t = 0.05 + (i / (n - 1)) * 0.90;
+      else t = 0.05 + (i / (n - 1)) * 0.9;
+      return { ...p, lngLat: pointAtT(routeCoords, cumulative, t), index: i, total: n };
+    });
+  }, [points, isPicker, routeCoords, cumulative]);
 
-      const pt = pathRef.current.getPointAtLength(t * total);
-      return { ...p, x: pt.x, y: pt.y, index: i, total: n };
-    }));
-
-    // For Live Mode: Calculate Car position along path
-    if (isLive) {
-      if (carPosition) {
-        setCarPos(carPosition);
-      } else {
-        const carPt = pathRef.current.getPointAtLength(clampedProgress * total);
-        setCarPos({ x: carPt.x, y: carPt.y });
-      }
+  const carLngLat = useMemo(() => {
+    if (!isLive) return null;
+    if (carPosition && carPosition.lat !== undefined && carPosition.lng !== undefined) {
+      return [carPosition.lng, carPosition.lat];
     }
-  }, [points, isPicker, isLive, clampedProgress, carPosition, activePathD]);
+    if (carPosition && carPosition.x !== undefined && carPosition.y !== undefined) {
+      return xyToLngLat(carPosition.x, carPosition.y);
+    }
+    return pointAtT(routeCoords, cumulative, clampedProgress);
+  }, [isLive, carPosition, clampedProgress, routeCoords, cumulative]);
 
-  // Container Classes
+  // Initialize the map once
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+    const center = isPicker
+      ? [(PICKER_BBOX.minLng + PICKER_BBOX.maxLng) / 2, (PICKER_BBOX.minLat + PICKER_BBOX.maxLat) / 2]
+      : routeCoords[Math.floor(routeCoords.length / 2)];
+
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style: 'mapbox://styles/mapbox/light-v11',
+      center,
+      zoom: isFullscreen ? 14 : 13,
+      attributionControl: false,
+      interactive: isLive || isPicker,
+      dragRotate: false,
+      pitchWithRotate: false,
+    });
+    map.addControl(new mapboxgl.AttributionControl({ compact: true }));
+    mapRef.current = map;
+
+    map.on('load', () => {
+      try {
+        if (map.getLayer('poi-label')) map.setLayoutProperty('poi-label', 'visibility', 'none');
+        if (map.getLayer('water')) map.setPaintProperty('water', 'fill-color', '#C8E2DC');
+      } catch {
+        // style layer ids may differ across Mapbox style versions — non-critical
+      }
+      map.resize();
+    });
+
+    return () => {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      if (carMarkerRef.current) {
+        carMarkerRef.current.remove();
+        carMarkerRef.current = null;
+      }
+      map.remove();
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep the map sized to its (possibly resizing) container
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(() => mapRef.current?.resize());
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Draw the route polyline (skipped in 'picker' mode, which is a local pin cluster)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || isPicker) return;
+    const draw = () => {
+      const data = { type: 'Feature', geometry: { type: 'LineString', coordinates: routeCoords } };
+      if (!map.getSource('route-glow')) {
+        map.addSource('route-glow', { type: 'geojson', data });
+        map.addLayer({
+          id: 'route-glow',
+          type: 'line',
+          source: 'route-glow',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#BDE7D5', 'line-width': isFullscreen ? 11 : 9, 'line-opacity': 0.9 },
+        });
+      } else {
+        map.getSource('route-glow').setData(data);
+      }
+      if (!map.getSource('route-main')) {
+        map.addSource('route-main', { type: 'geojson', data });
+        map.addLayer({
+          id: 'route-main',
+          type: 'line',
+          source: 'route-main',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#0F9D76', 'line-width': isFullscreen ? 5.5 : 4.5 },
+        });
+      } else if (!isLive) {
+        map.getSource('route-main').setData(data);
+      }
+    };
+    if (map.isStyleLoaded()) draw();
+    else map.once('load', draw);
+  }, [routeCoords, isFullscreen, isLive, isPicker]);
+
+  // Live mode: grow the route-main line to the traveled portion only
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLive) return;
+    const update = () => {
+      const src = map.getSource('route-main');
+      if (!src) return;
+      const slice = sliceAtT(routeCoords, cumulative, clampedProgress);
+      src.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: slice } });
+    };
+    if (map.isStyleLoaded()) update();
+    else map.once('load', update);
+  }, [isLive, clampedProgress, routeCoords, cumulative]);
+
+  // Waypoint markers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    dots.forEach((d, i) => {
+      const isOrigin = d.type === 'origin' || i === 0;
+      const isDestination = d.type === 'destination' || i === dots.length - 1;
+      const isDropoff = d.type === 'dropoff' || isDestination;
+      const isWaypoint = d.type === 'waypoint';
+      const isSafe = d.isSafe || d.type === 'safe';
+      const isWarning = d.type === 'warning';
+      const isSelected = !!selectedPointId && (d.id === selectedPointId || d.name === selectedPointId);
+      const isOrange = (isDropoff && !isOrigin) || isWarning;
+
+      const el = createPointMarkerEl({
+        isOrange,
+        isWaypoint,
+        isPicker,
+        isSafe,
+        isWarning,
+        isSelected,
+        label: d.label || d.name,
+        onClick: () => onSelectPoint(d.id || d),
+      });
+
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat(d.lngLat).addTo(map);
+      markersRef.current.push(marker);
+    });
+  }, [dots, isPicker, selectedPointId, onSelectPoint]);
+
+  // Live driver vehicle marker
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!isLive || !carLngLat) {
+      if (carMarkerRef.current) {
+        carMarkerRef.current.remove();
+        carMarkerRef.current = null;
+      }
+      return;
+    }
+    if (!carMarkerRef.current) {
+      const el = createCarMarkerEl();
+      el.style.transition = 'transform 700ms linear';
+      carMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat(carLngLat).addTo(map);
+    } else {
+      carMarkerRef.current.setLngLat(carLngLat);
+    }
+  }, [isLive, carLngLat]);
+
+  // Frame the route/markers once per mode change (not on every live progress tick)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const fit = () => {
+      const bounds = new mapboxgl.LngLatBounds();
+      if (!isPicker) routeCoords.forEach((c) => bounds.extend(c));
+      dots.forEach((d) => bounds.extend(d.lngLat));
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, { padding: isFullscreen ? 80 : 40, duration: 0, maxZoom: 16 });
+      }
+    };
+    if (map.isStyleLoaded()) fit();
+    else map.once('load', fit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, routeCoords, isPicker]);
+
   const containerClasses = isFullscreen
     ? `absolute inset-0 w-full h-full overflow-hidden bg-[#EBF2EE] select-none ${className}`
     : `${heightClass} w-full shrink-0 rounded-3xl overflow-hidden relative bg-[#EBF2EE] border border-[#D5E2DC] shadow-[0_2px_12px_rgba(16,27,23,0.06)] select-none ${className}`;
 
-  // ViewBox Dimensions
-  const viewBox = isFullscreen ? '0 0 390 844' : '0 0 400 220';
-  const width = isFullscreen ? 390 : 400;
-  const height = isFullscreen ? 844 : 220;
-
   return (
     <div className={containerClasses}>
-      {/* ========================================================================= */}
-      {/* UNIFIED URBAN CANVAS SVG (River, Grid, Corridors, Polyline) */}
-      {/* ========================================================================= */}
-      <svg viewBox={viewBox} className="absolute inset-0 w-full h-full" fill="none">
-        {/* Sông Sài Gòn (Soft winding river) */}
-        {isFullscreen ? (
-          <path
-            d="M -30 190 C 70 230, 150 280, 240 340 C 310 390, 360 450, 420 520"
-            stroke="#C8E2DC"
-            strokeWidth="36"
-            strokeLinecap="round"
-            opacity="0.8"
-          />
-        ) : (
-          <path
-            d="M -20 145 C 70 175, 150 205, 250 240"
-            stroke="#C8E2DC"
-            strokeWidth="28"
-            strokeLinecap="round"
-            opacity="0.8"
-          />
-        )}
-        <text 
-          x={isFullscreen ? 65 : 80} 
-          y={isFullscreen ? 245 : 190} 
-          fill="#88B2A7" 
-          fontSize={isFullscreen ? 9 : 8.5} 
-          fontWeight="700" 
-          fontStyle="italic" 
-          letterSpacing="0.06em"
-        >
-          SÔNG SÀI GÒN
-        </text>
+      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
-        {/* Secondary Urban Road Grid */}
-        {isFullscreen ? (
-          <>
-            <path d="M -20 140 L 420 140" stroke="#DFEBE5" strokeWidth="7" />
-            <path d="M -20 220 L 420 220" stroke="#DFEBE5" strokeWidth="7" />
-            <path d="M -20 300 L 420 300" stroke="#DFEBE5" strokeWidth="7" />
-            <path d="M -20 380 L 420 380" stroke="#DFEBE5" strokeWidth="7" />
-            <path d="M 100 -20 L 100 860" stroke="#DFEBE5" strokeWidth="5" />
-            <path d="M 260 -20 L 260 860" stroke="#DFEBE5" strokeWidth="5" />
-            <path d="M -20 310 C 110 240, 240 160, 410 110" stroke="#D3E3DC" strokeWidth="12" />
-            <path d="M 30 90 C 130 180, 250 280, 390 390" stroke="#D3E3DC" strokeWidth="11" />
-          </>
-        ) : (
-          <>
-            <path d="M 0 65 L 400 65" stroke="#DFEBE5" strokeWidth="5" />
-            <path d="M 0 150 L 400 150" stroke="#DFEBE5" strokeWidth="5" />
-            <path d="M 130 0 L 130 220" stroke="#DFEBE5" strokeWidth="4" />
-            <path d="M 270 0 L 270 220" stroke="#DFEBE5" strokeWidth="4" />
-            <path d="M 0 195 C 130 150, 260 80, 400 20" stroke="#D3E3DC" strokeWidth="10" />
-          </>
-        )}
-
-        {/* Major Road Labels */}
-        <text x={isFullscreen ? 255 : 275} y={isFullscreen ? 155 : 135} fill="#9FB2A9" fontSize={isFullscreen ? 8.5 : 8} fontWeight="700">
-          QL52 (Xa lộ Hà Nội)
-        </text>
-        <text x={isFullscreen ? 55 : 135} y={isFullscreen ? 175 : 55} fill="#9FB2A9" fontSize={isFullscreen ? 8.5 : 8} fontWeight="700">
-          Mai Chí Thọ
-        </text>
-
-        {/* Route Polyline (Glow Outer Line) */}
-        <path
-          d={activePathD}
-          stroke="#BDE7D5"
-          strokeWidth={isFullscreen ? 11 : 9}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.9"
-        />
-
-        {/* Active Route Stroke with Live Progress */}
-        <path
-          ref={pathRef}
-          d={activePathD}
-          stroke="#0F9D76"
-          strokeWidth={isFullscreen ? 5.5 : 4.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeDasharray={isLive && pathLength ? pathLength : undefined}
-          strokeDashoffset={isLive && pathLength ? pathLength * (1 - clampedProgress) : undefined}
-          style={isLive ? { transition: 'stroke-dashoffset 700ms ease' } : undefined}
-        />
-      </svg>
-
-      {/* ========================================================================= */}
-      {/* FLOATING HEADER CONTROLS (Preview & Live Modes) */}
-      {/* ========================================================================= */}
       {showControls && (meta || tag) && (
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-none">
           {meta && (
@@ -222,130 +447,12 @@ export const AppMap = ({
             )}
             <button
               type="button"
+              onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 })}
               className="w-7 h-7 rounded-full bg-white/95 backdrop-blur-md border border-[#D5E2DC] shadow-xs flex items-center justify-center text-[#0B7A5C] hover:bg-[#F1FAF6] transition-colors cursor-pointer"
               title="Định vị la bàn"
             >
               <Compass className="w-3.5 h-3.5" />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* WAYPOINT MARKERS & SMART STAGGERED LABELS */}
-      {/* ========================================================================= */}
-      {dots.map((d, i) => {
-        const isOrigin = d.type === 'origin' || i === 0;
-        const isDestination = d.type === 'destination' || i === dots.length - 1;
-        const isDropoff = d.type === 'dropoff' || isDestination;
-        const isWaypoint = d.type === 'waypoint';
-        const isSafe = d.isSafe || d.type === 'safe';
-        const isWarning = d.type === 'warning';
-        const isSelected = selectedPointId && (d.id === selectedPointId || d.name === selectedPointId);
-
-        const isOrange = (isDropoff && !isOrigin) || isWarning;
-        const markerBg = isOrange ? 'bg-[#EE7A22]' : isWaypoint ? 'bg-[#0B7A5C]' : 'bg-[#0F9D76]';
-        const ringColor = isOrange ? 'ring-[#EE7A22]/25' : isWaypoint ? 'ring-[#0B7A5C]/20' : 'ring-[#0F9D76]/25';
-
-        // Smart dynamic alignment based on X position to prevent edge overflow
-        const xRatio = d.x / width;
-        let horizontalAlign = 'items-center -translate-x-1/2';
-        if (xRatio > 0.65 && !isPicker) {
-          horizontalAlign = 'items-end -translate-x-[85%]';
-        } else if (xRatio < 0.35 && !isPicker) {
-          horizontalAlign = 'items-start -translate-x-[15%]';
-        }
-
-        return (
-          <div
-            key={`${d.id || d.label || d.name || 'pt'}-${i}`}
-            onClick={isPicker ? () => onSelectPoint(d.id || d) : undefined}
-            className={`absolute -translate-y-1/2 flex flex-col z-10 transition-all duration-300 ${horizontalAlign} ${
-              isPicker ? 'cursor-pointer group' : ''
-            }`}
-            style={{ left: `${(d.x / width) * 100}%`, top: `${(d.y / height) * 100}%` }}
-          >
-            {/* Top Label (Used in Picker when selected or for prominent tags) */}
-            {isPicker && (
-              <div
-                className={`mb-1 px-2 py-0.5 rounded-lg text-[9px] font-bold shadow-xs whitespace-nowrap transition-transform group-hover:scale-105 ${
-                  isSelected
-                    ? 'bg-[#0F9D76] text-white ring-2 ring-white'
-                    : isSafe
-                      ? 'bg-white/95 text-[#0B7A5C] border border-[#BDE7D5]'
-                      : isWarning
-                        ? 'bg-white/95 text-[#C22B35] border border-[#F7D9D9]'
-                        : 'bg-white/95 text-[#101B17] border border-[#E4EAE7]'
-                }`}
-              >
-                {d.name || d.label}
-              </div>
-            )}
-
-            {/* Marker Pin Icon */}
-            <div className="relative flex items-center justify-center">
-              <span className={`absolute w-6 h-6 rounded-full ${markerBg}/20 animate-pulse pointer-events-none`} />
-              
-              {isPicker ? (
-                // Picker Pin with Checkmark
-                <div
-                  className={`w-6 h-6 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[10px] font-bold text-white transition-all ${
-                    isSelected
-                      ? 'bg-[#0F9D76] ring-4 ring-[#0F9D76]/30 scale-110'
-                      : isSafe
-                        ? 'bg-[#0F9D76]'
-                        : isWarning
-                          ? 'bg-[#EE7A22]'
-                          : 'bg-[#0B7A5C]'
-                  }`}
-                >
-                  {isSafe ? '✓' : isWarning ? '!' : '●'}
-                </div>
-              ) : isOrange ? (
-                // Dropoff / End Pin (Square Orange)
-                <div className={`h-4.5 w-4.5 rounded-md border-2 border-white ${markerBg} ring-3 ${ringColor} shadow-[0_2px_8px_rgba(238,122,34,0.35)] flex items-center justify-center text-[7.5px] font-bold text-white shrink-0`}>
-                  ■
-                </div>
-              ) : isWaypoint ? (
-                // Waypoint Pin (White ring with dot)
-                <div className="h-3.5 w-3.5 rounded-full border-2 border-white bg-white ring-3 ring-[#0F9D76]/30 shadow-xs flex items-center justify-center shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F9D76]" />
-                </div>
-              ) : (
-                // Origin / Pickup Pin (Circle Emerald)
-                <div className={`h-4.5 w-4.5 rounded-full border-2 border-white ${markerBg} ring-3 ${ringColor} shadow-[0_2px_8px_rgba(15,157,118,0.35)] flex items-center justify-center text-[7.5px] font-bold text-white shrink-0`}>
-                  ●
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Label Tag (Non-picker mode) */}
-            {!isPicker && (d.label || d.name) && (
-              <div className="mt-1 max-w-[155px] rounded-lg bg-white/95 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-[#101B17] shadow-[0_2px_8px_rgba(16,27,23,0.12)] border border-[#E4EAE7] flex items-center gap-1 pointer-events-none whitespace-nowrap">
-                <span className={`w-1.5 h-1.5 rounded-full ${markerBg} shrink-0`} />
-                <span className="truncate">{d.label || d.name}</span>
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {/* ========================================================================= */}
-      {/* LIVE DRIVER VEHICLE PIN WITH PULSING RADAR (Live Mode) */}
-      {/* ========================================================================= */}
-      {isLive && carPos && (
-        <div
-          className="absolute z-20 -translate-x-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center pointer-events-none transition-all duration-700 ease-linear"
-          style={{ left: `${(carPos.x / width) * 100}%`, top: `${(carPos.y / height) * 100}%` }}
-        >
-          <span className="absolute w-12 h-12 rounded-full bg-[#0F9D76]/25 animate-ping" />
-          <span className="absolute w-9 h-9 rounded-full bg-[#0F9D76]/30 animate-pulse" />
-          <div className="relative w-8 h-8 rounded-full bg-[#0F9D76] border-2 border-white shadow-[0_4px_14px_rgba(15,157,118,0.5)] flex items-center justify-center">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="#FFFFFF">
-              <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z" />
-              <circle cx="7.5" cy="14.5" r="1.5" />
-              <circle cx="16.5" cy="14.5" r="1.5" />
-            </svg>
           </div>
         </div>
       )}
