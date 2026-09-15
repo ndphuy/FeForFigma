@@ -19,7 +19,9 @@ import {
   Flag,
   X,
   Check,
-  AlertCircle
+  AlertCircle,
+  Navigation,
+  Shield
 } from 'lucide-react';
 import { RouteMapPreview } from '../../components/RouteMapPreview';
 import { CancelTripSheet } from '../../components/CancelTripSheet';
@@ -54,46 +56,17 @@ export const TripDetailView = () => {
   const [discountAmountVal, setDiscountAmountVal] = useState(15000);
 
   // Match trip from context or fallback
-  const trip = trips.find(t => t.id === id) || activeTrip || {
-    id: id || 'trip_001',
-    driverId: 'drv_01',
-    driverName: 'Nguyễn Quốc Huy',
-    driverInitials: 'QH',
-    driverTrustScore: 4.9,
-    driverTripsCount: 96,
-    driverPhone: '0908 123 456',
-    vehicleModel: 'Honda City',
-    vehiclePlate: '51G-119.02',
-    vehicleColor: 'Trắng ngọc trai',
-    vehicleSeats: 4,
-    vehicleImage: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=300&auto=format&fit=crop&q=80',
-    origin: 'FPT University HCMC (Cổng 2)',
-    destination: 'Chợ Bến Thành, Q.1',
-    distanceKm: 18.5,
-    departureDate: 'Hôm nay, 12/09/2026',
-    departureTime: '07:00',
-    priceVnd: 45000,
-    ratePerKm: 5000,
-    availableSeats: 2,
-    totalSeats: 4,
-    passengers: [
-      {
-        id: 'pas_01',
-        name: 'Lê Minh Anh',
-        initials: 'MA',
-        phone: '0912 345 678',
-        trustScore: 4.8,
-        pickupPoint: 'FPT University · Cổng 2',
-        dropoffPoint: 'Chợ Bến Thành, Q.1',
-        fareVnd: 45000,
-        originalFare: 45000,
-        status: 'confirmed'
-      },
+  const trip = trips.find(t => t.id === id) || (id === 'hist_drv_01' || !id ? trips.find(t => t.id === 'trip_001') : null) || activeTrip || trips[0];
+
+  // Confirmed / active passengers on this trip
+  const passengersList = (trip.passengers && trip.passengers.length > 0)
+    ? trip.passengers
+    : [
       {
         id: 'pas_02',
-        name: 'Trần Thu Thảo',
-        initials: 'TT',
-        phone: '0909 333 444',
+        name: 'Thùy Linh',
+        initials: 'TL',
+        phone: '0988 776 655',
         trustScore: 4.9,
         pickupPoint: 'Ngã 4 Thủ Đức',
         dropoffPoint: 'Hàng Xanh, Bình Thạnh',
@@ -101,29 +74,12 @@ export const TripDetailView = () => {
         originalFare: 35000,
         status: 'confirmed'
       }
-    ]
-  };
+    ];
 
-  const passengersList = trip.passengers?.length > 0 ? trip.passengers : [
-    {
-      id: 'pas_01',
-      name: 'Lê Minh Anh',
-      initials: 'MA',
-      phone: '0912 345 678',
-      trustScore: 4.8,
-      pickupPoint: 'FPT University · Cổng 2',
-      dropoffPoint: 'Chợ Bến Thành, Q.1',
-      fareVnd: 45000,
-      originalFare: 45000,
-      status: 'confirmed'
-    }
-  ];
-
-  // Passenger's real booking status for THIS trip — drives the bottom CTA and header
-  // badge instead of assuming every trip viewed is already booked.
+  // Passenger's real booking status for THIS trip
   const myBooking = currentRole === 'passenger'
     ? bookings.find((b) => b.tripId === trip.id && b.passengerId === currentUser.id
-        && ['pending', 'confirmed', 'pending_reschedule', 'completed'].includes(b.status))
+      && ['pending', 'confirmed', 'pending_reschedule', 'completed'].includes(b.status))
     : null;
 
   const bookingStatusBadge = !myBooking
@@ -185,7 +141,7 @@ export const TripDetailView = () => {
     setDiscountPassenger(null);
   };
 
-  const currentPassengerFare = discountPassenger?.originalFare || discountPassenger?.fareVnd || 45000;
+  const currentPassengerFare = discountPassenger?.originalFare || discountPassenger?.fareVnd || 35000;
   const calculatedDiscountedFare = discountMode === 'percent'
     ? Math.max(0, Math.round(currentPassengerFare * (1 - discountPercentVal / 100)))
     : Math.max(0, currentPassengerFare - discountAmountVal);
@@ -201,26 +157,161 @@ export const TripDetailView = () => {
       .trim() || fallback;
   };
 
-  // Build Dynamic Multi-Stop Map Points for Passenger vs Driver
-  const mapPoints = currentRole === 'passenger' ? [
-    {
-      label: `Điểm đón · ${cleanShortName(trip.origin, 'ĐH FPT')}`,
-      type: 'origin',
-      isPrimary: true
-    },
-    {
-      label: `Điểm trả · ${cleanShortName(trip.destination, 'Bến Thành')}`,
-      type: 'destination',
-      isPrimary: true
+  // =========================================================================
+  // DYNAMIC MAP POINTS GENERATION
+  // - If Passenger view: Origin + Destination
+  // - If Driver view:
+  //   * 1 Passenger (Default = Thùy Linh): Origin -> Đón Thùy Linh -> Trả Thùy Linh -> Destination
+  //   * 2 Passengers (Driver approves Minh Anh): Xuất phát & Đón Minh Anh -> Đón Thùy Linh -> Trả Thùy Linh -> Trả Minh Anh & Kết thúc
+  // =========================================================================
+  const buildMapPoints = () => {
+    if (currentRole === 'passenger') {
+      return [
+        {
+          label: `Điểm đón · ${cleanShortName(trip.origin, 'ĐH FPT')}`,
+          type: 'origin',
+          isPrimary: true
+        },
+        {
+          label: `Điểm trả · ${cleanShortName(trip.destination, 'Bến Thành')}`,
+          type: 'destination',
+          isPrimary: true
+        }
+      ];
     }
-  ] : [
-    { label: `Đón Minh Anh · ${cleanShortName(trip.origin, 'ĐH FPT')}`, type: 'origin' },
-    ...passengersList.flatMap(p => [
-      { label: `Đón ${p.name?.split(' ').slice(-1)[0] || 'Khách'} · ${cleanShortName(p.pickupPoint, 'Đón')}`, type: 'pickup' },
-      { label: `Trả ${p.name?.split(' ').slice(-1)[0] || 'Khách'} · ${cleanShortName(p.dropoffPoint, 'Trả')}`, type: 'dropoff' }
-    ]).slice(0, 2),
-    { label: `Kết thúc · ${cleanShortName(trip.destination, 'Bến Thành')}`, type: 'destination' }
-  ];
+
+    // Driver View
+    const confirmedPassengers = passengersList;
+    const hasMinhAnh = confirmedPassengers.some(p => p.name?.includes('Minh Anh') || p.id === 'pas_01');
+    const hasThuyLinh = confirmedPassengers.some(p => p.name?.includes('Linh') || p.id === 'pas_02');
+
+    // Case 2: Driver approved Minh Anh (Total 2 passengers: Thùy Linh + Minh Anh)
+    if (confirmedPassengers.length >= 2 && hasMinhAnh) {
+      return [
+        { label: 'Xuất phát & Đón Minh Anh · ĐH FPT', type: 'origin' },
+        { label: 'Đón Thùy Linh · Ngã 4 Thủ Đức', type: 'pickup' },
+        { label: 'Trả Thùy Linh · Hàng Xanh', type: 'dropoff' },
+        { label: 'Trả Minh Anh & Kết thúc · Bến Thành', type: 'destination' }
+      ];
+    }
+
+    // Case 1 (Default): 1 Passenger (Thùy Linh)
+    if (hasThuyLinh || confirmedPassengers.length === 1) {
+      const p = confirmedPassengers.find(p => p.name?.includes('Linh') || p.id === 'pas_02') || confirmedPassengers[0];
+      const pName = p?.name?.includes('Linh') ? 'Thùy Linh' : (p?.name || 'Thùy Linh');
+      const pPickup = p?.pickupPoint ? cleanShortName(p.pickupPoint, 'Ngã 4 Thủ Đức') : 'Ngã 4 Thủ Đức';
+      const pDropoff = p?.dropoffPoint ? cleanShortName(p.dropoffPoint, 'Hàng Xanh') : 'Hàng Xanh';
+      return [
+        { label: `Xuất phát · ${cleanShortName(trip.origin, 'ĐH FPT')}`, type: 'origin' },
+        { label: `Đón ${pName} · ${pPickup}`, type: 'pickup' },
+        { label: `Trả ${pName} · ${pDropoff}`, type: 'dropoff' },
+        { label: `Điểm đến · ${cleanShortName(trip.destination, 'Bến Thành')}`, type: 'destination' }
+      ];
+    }
+
+    // Generic fallback if multiple custom passengers
+    return [
+      { label: `Xuất phát · ${cleanShortName(trip.origin, 'ĐH FPT')}`, type: 'origin' },
+      ...confirmedPassengers.flatMap(p => [
+        { label: `Đón ${p.name?.split(' ').slice(-1)[0] || 'Khách'} · ${cleanShortName(p.pickupPoint, 'Đón')}`, type: 'pickup' },
+        { label: `Trả ${p.name?.split(' ').slice(-1)[0] || 'Khách'} · ${cleanShortName(p.dropoffPoint, 'Trả')}`, type: 'dropoff' }
+      ]),
+      { label: `Điểm đến · ${cleanShortName(trip.destination, 'Bến Thành')}`, type: 'destination' }
+    ];
+  };
+
+  const mapPoints = buildMapPoints();
+
+  // =========================================================================
+  // DYNAMIC STOP-BY-STOP ITINERARY FOR DRIVER VIEW
+  // =========================================================================
+  const buildDriverItinerary = () => {
+    const confirmedPassengers = passengersList;
+    const hasMinhAnh = confirmedPassengers.some(p => p.name?.includes('Minh Anh') || p.id === 'pas_01');
+
+    if (confirmedPassengers.length >= 2 && hasMinhAnh) {
+      return [
+        {
+          id: 'stop_1',
+          time: trip.departureTime || '07:00',
+          role: 'Xuất phát & Đón Khách 1',
+          name: trip.origin || 'FPT University HCMC (Cổng 2)',
+          detail: 'Đón Lê Minh Anh',
+          isOrigin: true,
+          badge: 'Đón Minh Anh',
+          badgeColor: 'bg-[#DDF3EA] text-[#0B7A5C]'
+        },
+        {
+          id: 'stop_2',
+          time: '07:15',
+          role: 'Trạm đón Khách 2',
+          name: 'Ngã 4 Thủ Đức (Trạm dừng an toàn)',
+          detail: 'Đón Thùy Linh',
+          badge: 'Đón Thùy Linh',
+          badgeColor: 'bg-[#DDF3EA] text-[#0B7A5C]'
+        },
+        {
+          id: 'stop_3',
+          time: '07:35',
+          role: 'Trạm trả Khách 2',
+          name: 'Hàng Xanh, Bình Thạnh',
+          detail: 'Trả Thùy Linh',
+          badge: 'Trả Thùy Linh',
+          badgeColor: 'bg-[#FFF4E9] text-[#EE7A22]'
+        },
+        {
+          id: 'stop_4',
+          time: '07:48',
+          role: 'Điểm kết thúc & Trả Khách 1',
+          name: trip.destination || 'Chợ Bến Thành, Q.1',
+          detail: 'Trả Lê Minh Anh & Kết thúc hành trình',
+          isDestination: true,
+          badge: 'Trả Minh Anh',
+          badgeColor: 'bg-[#FFF4E9] text-[#EE7A22]'
+        }
+      ];
+    }
+
+    // Default 1 passenger (Thùy Linh)
+    return [
+      {
+        id: 'stop_1',
+        time: trip.departureTime || '07:00',
+        role: 'Xuất phát',
+        name: trip.origin || 'FPT University HCMC (Cổng 2)',
+        detail: 'Bắt đầu hành trình',
+        isOrigin: true
+      },
+      {
+        id: 'stop_2',
+        time: '07:15',
+        role: 'Trạm đón khách',
+        name: 'Ngã 4 Thủ Đức (Trạm dừng an toàn)',
+        detail: 'Đón Thùy Linh',
+        badge: 'Đón Thùy Linh',
+        badgeColor: 'bg-[#DDF3EA] text-[#0B7A5C]'
+      },
+      {
+        id: 'stop_3',
+        time: '07:35',
+        role: 'Trạm trả khách',
+        name: 'Hàng Xanh, Bình Thạnh',
+        detail: 'Trả Thùy Linh',
+        badge: 'Trả Thùy Linh',
+        badgeColor: 'bg-[#FFF4E9] text-[#EE7A22]'
+      },
+      {
+        id: 'stop_4',
+        time: '07:48',
+        role: 'Điểm kết thúc',
+        name: trip.destination || 'Chợ Bến Thành, Q.1',
+        detail: 'Kết thúc chuyến đi',
+        isDestination: true
+      }
+    ];
+  };
+
+  const driverItinerary = buildDriverItinerary();
 
   return (
     <div className="flex-1 flex flex-col bg-[#F4F7F5] overflow-hidden relative">
@@ -235,9 +326,11 @@ export const TripDetailView = () => {
             ‹
           </button>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-[#101B17]">Chi tiết chuyến đi</span>
+            <span className="text-sm font-bold text-[#101B17]">
+              {currentRole === 'driver' ? 'Chi tiết & Lộ trình' : 'Chi tiết chuyến đi'}
+            </span>
             <span className="text-[11px] text-[#8A9993] font-mono">
-              {myBooking?.bookingCode ? `${myBooking.bookingCode} · ` : ''}{trip.departureDate}
+              {myBooking?.bookingCode ? `${myBooking.bookingCode} · ` : '#RS-4821 · '}{trip.departureDate || 'Hôm nay'}
             </span>
           </div>
         </div>
@@ -259,30 +352,47 @@ export const TripDetailView = () => {
         <RouteMapPreview
           points={mapPoints}
           meta={`${trip.distanceKm || 18.5} km · ${trip.departureTime || '07:00'}`}
+          tag={currentRole === 'driver' ? 'Lộ trình chi tiết' : 'Chặng đi của bạn'}
           heightClass="h-60 min-h-[240px] shrink-0"
         />
 
         {/* ========================================================================= */}
-        {/* DRIVER VIEW SPECIFIC SECTION */}
+        {/* DRIVER VIEW SPECIFIC SECTION (Merged Preview & Management Details) */}
         {/* ========================================================================= */}
         {currentRole === 'driver' ? (
           <>
+            {/* Trip Meta Chips */}
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2.5 py-1.5 rounded-full bg-white border border-[#E4EAE7] text-[#4B5A54] text-[11.5px] font-semibold flex items-center gap-1.5">
+                <Car className="w-3.5 h-3.5 text-[#0F9D76]" />
+                {trip.vehicleModel} · <span className="font-mono font-bold text-[#0B7A5C]">{trip.vehiclePlate}</span>
+              </span>
+              <span className="px-2.5 py-1.5 rounded-full bg-white border border-[#E4EAE7] text-[#4B5A54] text-[11.5px] font-semibold flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-[#0B7A5C]" />
+                Còn {Math.max(0, (trip.totalSeats || 4) - passengersList.length)}/{trip.totalSeats || 4} chỗ
+              </span>
+              <span className="px-2.5 py-1.5 rounded-full bg-[#F1FAF6] border border-[#BDE7D5] text-[#0B7A5C] text-[11.5px] font-semibold flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#0F9D76] animate-pulse" />
+                {trip.statusText || 'Đang mở'}
+              </span>
+            </div>
+
             {/* Trip Overview Stats */}
             <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-xs flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#8A9993]">
-                  Thông tin chuyến xe
+                  Tổng quan chi phí & Chỗ ngồi
                 </span>
                 <span className="text-xs font-bold text-[#0F9D76] font-mono">
-                  {trip.vehicleModel} · {trip.vehiclePlate}
+                  {trip.ratePerKm || 5000} ₫/km
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#EEF2F0]">
                 <div className="p-2.5 rounded-2xl bg-[#F7FAF9] border border-[#EEF2F0] flex flex-col">
-                  <span className="text-[10.5px] text-[#8A9993]">Chỗ đã đặt:</span>
+                  <span className="text-[10.5px] text-[#8A9993]">Hành khách đã nhận:</span>
                   <span className="text-sm font-bold text-[#101B17]">
-                    {passengersList.length} / {trip.totalSeats || 4} chỗ
+                    {passengersList.length} / {trip.totalSeats || 4} khách
                   </span>
                 </div>
                 <div className="p-2.5 rounded-2xl bg-[#F1FAF6] border border-[#BDE7D5] flex flex-col">
@@ -290,6 +400,63 @@ export const TripDetailView = () => {
                   <span className="text-sm font-bold font-mono text-[#0F9D76]">
                     {new Intl.NumberFormat('vi-VN').format(passengersList.reduce((s, p) => s + (p.fareVnd || 0), 0))} ₫
                   </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stop-by-stop detailed itinerary timeline */}
+            <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-xs flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#8A9993]">
+                  Lộ trình chi tiết ({driverItinerary.length} trạm)
+                </span>
+                <span className="text-xs font-semibold text-[#0B7A5C] font-mono">
+                  {trip.distanceKm || 18.5} km · {trip.departureTime || '07:00'}–07:48
+                </span>
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <div className="flex flex-col items-center pt-2 gap-1 shrink-0">
+                  {driverItinerary.map((stop, idx) => (
+                    <React.Fragment key={stop.id || idx}>
+                      <span
+                        className={
+                          idx === driverItinerary.length - 1
+                            ? 'w-2.5 h-2.5 rounded-xs bg-[#EE7A22] shrink-0'
+                            : idx === 0
+                              ? 'w-2.5 h-2.5 rounded-full bg-[#0F9D76] shrink-0'
+                              : 'w-2 h-2 rounded-full bg-[#0B7A5C] shrink-0'
+                        }
+                      />
+                      {idx < driverItinerary.length - 1 && (
+                        <span className="w-0.5 flex-1 min-h-[36px] bg-[#DFE7E3]" />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+
+                <div className="flex-1 min-w-0 flex flex-col justify-between gap-3.5">
+                  {driverItinerary.map((stop, idx) => (
+                    <div key={stop.id || idx} className="flex justify-between items-start gap-2">
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] uppercase font-bold text-[#8A9993] tracking-wider">
+                            {stop.role}
+                          </span>
+                          {stop.badge && (
+                            <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-bold ${stop.badgeColor}`}>
+                              {stop.badge}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-[#101B17] truncate">{stop.name}</span>
+                        {stop.detail && (
+                          <span className="text-[11px] text-[#4B5A54] truncate">{stop.detail}</span>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-[#101B17] font-mono shrink-0">{stop.time}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -327,6 +494,10 @@ export const TripDetailView = () => {
                               <span className="text-[10.5px] text-[#EE7A22] font-semibold flex items-center">
                                 ★ {passenger.trustScore || 4.9}
                               </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] font-mono text-[#0B7A5C] font-semibold">
+                              <Phone className="w-3 h-3 text-[#0F9D76]" />
+                              <span>{passenger.phone || '0988 776 655'}</span>
                             </div>
                             <span className="text-[11px] text-[#4B5A54] truncate">
                               Đón: {passenger.pickupPoint}
@@ -388,7 +559,7 @@ export const TripDetailView = () => {
                         <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => navigate('/shared/chat/bk_01')}
+                            onClick={() => navigate('/driver/messages')}
                             className="p-1.5 rounded-lg bg-white border border-[#EEF2F0] text-[#0B7A5C] hover:bg-[#F1FAF6] cursor-pointer"
                             title="Nhắn tin"
                           >
@@ -451,6 +622,10 @@ export const TripDetailView = () => {
                       <span>·</span>
                       <span>{trip.driverTripsCount} chuyến lái</span>
                     </div>
+                    <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#0B7A5C] mt-0.5">
+                      <Phone className="w-3.5 h-3.5 text-[#0F9D76]" />
+                      <span>{trip.driverPhone || '0908 123 456'}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -484,7 +659,7 @@ export const TripDetailView = () => {
             {/* Passenger Route & Pick-up Details */}
             <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-xs flex flex-col gap-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#8A9993]">
-                Điểm đón & Điểm trả của bạn
+                Điểm đón & Điểm trả của bạnn
               </span>
 
               <div className="flex gap-3 p-3 rounded-2xl bg-[#F7FAF9] border border-[#EEF2F0]">
@@ -495,7 +670,7 @@ export const TripDetailView = () => {
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col gap-3 text-xs">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-[#8A9993]">Điểm đón (07:10)</span>
+                    <span className="text-[10px] uppercase font-bold text-[#8A9993]">Điểm đón ({trip.departureTime || '07:00'})</span>
                     <span className="font-bold text-[#101B17] truncate">{trip.origin}</span>
                   </div>
                   <div className="flex flex-col">
@@ -511,17 +686,17 @@ export const TripDetailView = () => {
               <div className="flex items-center justify-between text-xs font-bold text-[#101B17]">
                 <span>Chi phí chia sẻ</span>
                 <span className="text-base font-bold font-mono text-[#0B7A5C]">
-                  {new Intl.NumberFormat('vi-VN').format(trip.priceVnd)} ₫
+                  {new Intl.NumberFormat('vi-VN').format(trip.priceVnd || 45000)} ₫
                 </span>
               </div>
               <div className="pt-2 border-t border-[#EEF2F0] flex flex-col gap-1 text-[11px] text-[#4B5A54]">
                 <div className="flex justify-between">
                   <span>Số km thực tế bạn đi:</span>
-                  <span className="font-mono font-semibold">16.2 km</span>
+                  <span className="font-mono font-semibold">{trip.distanceKm || 18.5} km</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Định mức chia sẻ chi phí:</span>
-                  <span className="font-mono font-semibold">5.000 ₫/km</span>
+                  <span className="font-mono font-semibold">{trip.ratePerKm || 5000} ₫/km</span>
                 </div>
                 <div className="flex justify-between text-[#0B7A5C] font-semibold pt-1 border-t border-[#EEF2F0]">
                   <span>Phí nền tảng (0%):</span>
@@ -534,7 +709,7 @@ export const TripDetailView = () => {
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
-                onClick={() => navigate('/shared/chat/bk_01')}
+                onClick={() => navigate('/passenger/messages')}
                 className="h-12 rounded-2xl bg-[#F1FAF6] hover:bg-[#DDF3EA] text-[#0B7A5C] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4" />

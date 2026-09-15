@@ -295,33 +295,6 @@ export const INITIAL_TRIPS = [
 
 export const INITIAL_BOOKINGS = [
   {
-    id: "bk_demo_01",
-    tripId: "trip_001",
-    passengerId: "pas_01",
-    passengerName: "Minh Anh",
-    passengerInitials: "MA",
-    passengerPhone: "0912 345 678",
-    passengerTrustScore: 4.9,
-    passengerTrips: 38,
-    pickupPoint: "ĐH FPT",
-    dropoffPoint: "Chợ Bến Thành, Q.1",
-    fareVnd: 45000,
-    status: "pending", // 'pending' | 'confirmed' | 'rejected' | 'completed'
-    driverName: "Quốc Huy",
-    driverPhone: "0908 123 456",
-    vehicleModel: "Honda City · Trắng",
-    vehiclePlate: "51G-119.02",
-    departureTime: "07:00",
-    departureDate: "Thứ 6, 12/09",
-    routeText: "FPT University → Chợ Bến Thành · 07:00",
-    overlapPercent: 94,
-    detourKm: "+0.4 km",
-    detourMin: "+2 phút",
-    bookingCode: "#RS-4821",
-    pin: "4821",
-    createdAt: "12 phút trước"
-  },
-  {
     id: "bk_demo_02",
     tripId: "trip_001",
     passengerId: "pas_02",

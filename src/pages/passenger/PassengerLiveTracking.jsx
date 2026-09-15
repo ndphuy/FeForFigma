@@ -108,7 +108,13 @@ export const PassengerLiveTracking = () => {
                 <span className="text-sm font-bold text-[#101B17] truncate">{activeTrip.driverName}</span>
                 <ShieldCheck className="w-4 h-4 text-[#0F9D76] shrink-0" />
               </div>
-              <span className="text-xs text-[#8A9993]">
+              <div className="flex items-center gap-1.5 text-xs text-[#8A9993] mt-0.5">
+                <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-[#0F9D76]" />
+                  {activeTrip.driverPhone || '0908 123 456'}
+                </span>
+              </div>
+              <span className="text-[11px] text-[#8A9993] block mt-0.5">
                 {activeTrip.vehicleModel} · {activeTrip.vehiclePlate}
               </span>
             </div>
@@ -116,8 +122,9 @@ export const PassengerLiveTracking = () => {
             {/* Phone & Chat Buttons */}
             <div className="flex items-center gap-2 shrink-0">
               <a
-                href="tel:0901234567"
+                href={`tel:${activeTrip.driverPhone || '0908123456'}`}
                 className="w-10 h-10 rounded-2xl border border-[#E4EAE7] hover:bg-[#F1FAF6] flex items-center justify-center text-[#0B7A5C] transition-colors"
+                title="Gọi cho tài xế"
               >
                 <Phone className="w-4 h-4" />
               </a>

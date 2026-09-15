@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Check, X, ArrowRight, Clock, MapPin } from 'lucide-react';
+import { ShieldCheck, Check, X, ArrowRight, Clock, MapPin, Phone } from 'lucide-react';
 import { AcceptPassengerSheet } from './AcceptPassengerSheet';
 
 export const BookingRequests = () => {
@@ -125,9 +125,14 @@ export const BookingRequests = () => {
                     <span className="text-xs sm:text-sm font-bold text-[#101B17] truncate">{r.passengerName}</span>
                     <ShieldCheck className="w-4 h-4 text-[#0F9D76] shrink-0" />
                   </div>
-                  <span className="text-[11px] text-[#8A9993]">
-                    <span className="text-[#EE7A22]">★</span> {r.passengerTrustScore || 4.9} · {r.passengerTrips || 38} chuyến
-                  </span>
+                  <div className="flex items-center gap-2 text-[11px] text-[#8A9993] mt-0.5">
+                    <span><span className="text-[#EE7A22]">★</span> {r.passengerTrustScore || 4.9} · {r.passengerTrips || 38} chuyến</span>
+                    <span>•</span>
+                    <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-[#0F9D76]" />
+                      {r.passengerPhone || '0912 345 678'}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs font-bold font-mono text-[#0F9D76] block">

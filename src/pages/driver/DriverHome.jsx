@@ -74,7 +74,9 @@ export const DriverHome = () => {
             <line x1="9" y1="9.5" x2="15" y2="9.5" />
             <line x1="9" y1="14" x2="13" y2="14" />
           </svg>
-          <span className="absolute top-[9px] right-[9px] w-2.5 h-2.5 rounded-full bg-[#EE7A22] border-2 border-white" />
+          {pendingBookingsForDriver.length > 0 && (
+            <span className="absolute top-[9px] right-[9px] w-2.5 h-2.5 rounded-full bg-[#EE7A22] border-2 border-white" />
+          )}
         </button>
       </header>
 
@@ -202,38 +204,29 @@ export const DriverHome = () => {
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
-                onClick={() => navigate('/driver/route-preview')}
-                className="h-[50px] rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#4B5A54] text-sm font-semibold hover:border-[#BDE7D5] hover:bg-[#F7FAF9] active:scale-[0.99] transition-all"
+                onClick={() => navigate('/shared/trip-detail/trip_001')}
+                className="h-[50px] rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#101B17] text-sm font-semibold hover:border-[#BDE7D5] hover:bg-[#F7FAF9] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Xem lộ trình
+                <CalendarClock className="w-4 h-4 text-[#0B7A5C]" />
+                <span>Chi tiết & Lộ trình</span>
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/driver/active-trip')}
-                className="h-[50px] rounded-2xl bg-[#F1FAF6] text-[#0B7A5C] text-sm font-semibold hover:bg-[#DDF3EA] active:scale-[0.99] transition-all"
+                className="h-[50px] rounded-2xl bg-[#0F9D76] text-white text-sm font-semibold hover:bg-[#0B7A5C] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(15,157,118,0.25)] cursor-pointer"
               >
-                Bắt đầu chuyến
+                <span>Bắt đầu chuyến</span>
               </button>
             </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => navigate('/shared/trip-detail/hist_drv_01')}
-                  className="h-11 rounded-2xl border-[1.5px] border-[#BDE7D5] bg-[#F1FAF6] text-[#0B7A5C] text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-[#DDF3EA] active:scale-[0.99] transition-all cursor-pointer"
-                >
-                  <CalendarClock className="w-3.5 h-3.5" />
-                  Chi tiết chuyến đi
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCancel(true)}
-                  className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all cursor-pointer"
-                >
-                  <Ban className="w-3.5 h-3.5" />
-                  Huỷ chuyến
-                </button>
-              </div>
+            <button
+              type="button"
+              onClick={() => setShowCancel(true)}
+              className="h-10 w-full rounded-2xl border border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all cursor-pointer"
+            >
+              <Ban className="w-3.5 h-3.5" />
+              <span>Huỷ chuyến đi</span>
+            </button>
           </div>
         </section>
 

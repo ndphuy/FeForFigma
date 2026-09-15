@@ -121,15 +121,21 @@ export const BookingConfirm = () => {
                 <span className="text-base font-bold text-[#101B17] truncate">{trip.driverName}</span>
                 <ShieldCheck className="w-4 h-4 text-[#0F9D76] shrink-0" />
               </div>
-              <span className="text-xs text-[#8A9993]">
-                <span className="text-[#EE7A22]">★</span> {trip.driverTrustScore} · {trip.driverTripsCount || 96} chuyến
-              </span>
+              <div className="flex items-center gap-1.5 text-xs text-[#8A9993]">
+                <span className="text-[#EE7A22] font-bold">★ {trip.driverTrustScore}</span>
+                <span>·</span>
+                <span>{trip.driverTripsCount || 96} chuyến</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#0B7A5C] mt-0.5">
+                <Phone className="w-3.5 h-3.5 text-[#0F9D76]" />
+                <span>{trip.driverPhone || '0908 123 456'}</span>
+              </div>
             </div>
 
             {/* Quick Actions */}
             <div className="flex items-center gap-1.5 shrink-0">
               <a
-                href="tel:0901234567"
+                href={`tel:${trip.driverPhone || '0908123456'}`}
                 className="w-10 h-10 rounded-2xl border border-[#E4EAE7] hover:bg-[#F1FAF6] flex items-center justify-center text-[#0B7A5C] transition-colors"
                 title="Gọi điện"
               >
@@ -159,15 +165,34 @@ export const BookingConfirm = () => {
           </div>
         </div>
 
-        {/* Boarding PIN / Code */}
-        <div className="bg-[#F1FAF6] border border-[#BDE7D5] rounded-3xl p-4 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-[#0B7A5C] tracking-wider">Mã xác thực lên xe (PIN)</span>
-            <span className="text-xs text-[#4B5A54] mt-0.5">Đọc mã này cho tài xế khi bạn lên xe</span>
+        {/* Contact & Verification Card (No PIN needed) */}
+        <div className="bg-[#F1FAF6] border border-[#BDE7D5] rounded-3xl p-4 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#0F9D76]" />
+              <span className="text-xs font-bold text-[#101B17]">Đối chiếu thông tin khi đón xe</span>
+            </div>
+            <span className="text-[10px] font-bold text-[#0B7A5C] bg-white px-2 py-0.5 rounded-md border border-[#BDE7D5]">
+              Xác thực trực tiếp
+            </span>
           </div>
-          <div className="px-3.5 py-1.5 rounded-2xl bg-[#0F9D76] text-white font-mono font-black text-lg tracking-widest shadow-xs">
-            {booking?.pin || '4821'}
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="p-2.5 rounded-2xl bg-white border border-[#E4EAE7] flex flex-col">
+              <span className="text-[10px] text-[#8A9993]">Tài xế đón:</span>
+              <span className="text-xs font-bold text-[#101B17] truncate">{trip.driverName}</span>
+              <span className="text-[11px] font-mono font-bold text-[#0B7A5C] mt-0.5">{trip.driverPhone || '0908 123 456'}</span>
+            </div>
+            <div className="p-2.5 rounded-2xl bg-white border border-[#E4EAE7] flex flex-col">
+              <span className="text-[10px] text-[#8A9993]">Hành khách:</span>
+              <span className="text-xs font-bold text-[#101B17] truncate">{booking?.passengerName || 'Lê Minh Anh'}</span>
+              <span className="text-[11px] font-mono font-bold text-[#0B7A5C] mt-0.5">{booking?.passengerPhone || '0912 345 678'}</span>
+            </div>
           </div>
+
+          <p className="text-[11px] text-[#4B5A54] leading-relaxed m-0">
+            Tài xế sẽ đối chiếu tên và số điện thoại khi bạn lên xe.
+          </p>
         </div>
 
         {/* Itinerary */}

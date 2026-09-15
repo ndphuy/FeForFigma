@@ -151,7 +151,7 @@ export const AppProvider = ({ children }) => {
 
   // Active Context IDs
   const [activeTripId, setActiveTripId] = useState('trip_001');
-  const [activeBookingId, setActiveBookingId] = useState('bk_demo_01');
+  const [activeBookingId, setActiveBookingId] = useState('bk_demo_02');
 
   // Wallets
   const [driverWallet, setDriverWallet] = useState(MOCK_USER_PROFILES.driver.walletBalance);
@@ -498,7 +498,7 @@ export const AppProvider = ({ children }) => {
     setSelectedPickupPoint(MOCK_PICKUP_POINTS[0]);
     setVehicles(MOCK_DRIVER_VEHICLES);
     setActiveTripId('trip_001');
-    setActiveBookingId('bk_demo_01');
+    setActiveBookingId('bk_demo_02');
     setDriverWallet(MOCK_USER_PROFILES.driver.walletBalance);
     setPassengerWallet(MOCK_USER_PROFILES.passenger.walletBalance);
     setSearchParams({

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, MessageSquare, Info, ArrowRight, MapPin, Minus, Plus } from 'lucide-react';
+import { ShieldCheck, MessageSquare, Info, ArrowRight, MapPin, Minus, Plus, Phone } from 'lucide-react';
 
 export const RequestBooking = () => {
   const { id } = useParams();
@@ -12,9 +12,9 @@ export const RequestBooking = () => {
   const stops = trip.stops?.length >= 2
     ? trip.stops
     : [
-        { id: 'st_o', name: trip.origin, time: trip.departureTime },
-        { id: 'st_d', name: trip.destination, time: '07:48' },
-      ];
+      { id: 'st_o', name: trip.origin, time: trip.departureTime },
+      { id: 'st_d', name: trip.destination, time: '07:48' },
+    ];
 
   const [seats, setSeats] = useState(1);
   const [pickupIdx, setPickupIdx] = useState(0);
@@ -122,61 +122,18 @@ export const RequestBooking = () => {
               <span className="text-sm font-bold text-[#101B17] truncate">{trip.driverName}</span>
               <ShieldCheck className="w-4 h-4 text-[#0F9D76] shrink-0" />
             </div>
-            <span className="text-xs text-[#8A9993]">
-              <span className="text-[#EE7A22]">★</span> {trip.driverTrustScore} · {trip.vehicleModel}
-            </span>
+            <div className="flex items-center gap-2 text-xs text-[#8A9993] mt-0.5">
+              <span><span className="text-[#EE7A22]">★</span> {trip.driverTrustScore} · {trip.vehicleModel}</span>
+              <span>•</span>
+              <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
+                <Phone className="w-3 h-3 text-[#0F9D76]" />
+                {trip.driverPhone || '0908 123 456'}
+              </span>
+            </div>
           </div>
           <span className="text-xs font-mono font-semibold px-2 py-1 rounded-lg bg-[#F4F7F5] text-[#4B5A54] shrink-0">
             {trip.vehiclePlate}
           </span>
-        </div>
-
-        {/* Pickup / Dropoff Selection */}
-        <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-3">
-          <div className="flex items-center gap-1.5 text-sm font-bold text-[#101B17]">
-            <MapPin className="w-4 h-4 text-[#0B7A5C]" />
-            <span>Điểm đón & điểm trả của bạn</span>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Điểm đón</span>
-            <div className="flex gap-2 overflow-x-auto rs-scroll pb-0.5">
-              {stops.slice(0, stops.length - 1).map((stop, idx) => (
-                <button
-                  key={stop.id || idx}
-                  type="button"
-                  onClick={() => handlePickupChange(idx)}
-                  className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer ${
-                    pickupIdx === idx
-                      ? 'bg-[#0F9D76] text-white border-[#0F9D76]'
-                      : 'bg-[#F7FAF9] text-[#4B5A54] border-[#E4EAE7] hover:border-[#BDE7D5]'
-                  }`}
-                >
-                  {stop.name} · {stop.time}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Điểm trả</span>
-            <div className="flex gap-2 overflow-x-auto rs-scroll pb-0.5">
-              {stops.map((stop, idx) => (idx > pickupIdx ? (
-                <button
-                  key={stop.id || idx}
-                  type="button"
-                  onClick={() => setDropoffIdx(idx)}
-                  className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer ${
-                    dropoffIdx === idx
-                      ? 'bg-[#EE7A22] text-white border-[#EE7A22]'
-                      : 'bg-[#F7FAF9] text-[#4B5A54] border-[#E4EAE7] hover:border-[#BDE7D5]'
-                  }`}
-                >
-                  {stop.name} · {stop.time}
-                </button>
-              ) : null))}
-            </div>
-          </div>
         </div>
 
         {/* Number of Seats Selection */}

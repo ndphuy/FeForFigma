@@ -19,14 +19,12 @@ import { DriverHome } from './pages/driver/DriverHome';
 import { CreateTrip } from './pages/driver/CreateTrip';
 import { BookingRequests } from './pages/driver/BookingRequests';
 import { ApprovalModal } from './pages/driver/ApprovalModal';
-import { RoutePreview } from './pages/driver/RoutePreview';
 
 // Passenger Pages
 import { PassengerHome } from './pages/passenger/PassengerHome';
 import { DestinationSearch } from './pages/passenger/DestinationSearch';
 import { SearchResults } from './pages/passenger/SearchResults';
 import { PickupPicker } from './pages/passenger/PickupPicker';
-import { TripDetail } from './pages/passenger/TripDetail';
 import { RequestBooking } from './pages/passenger/RequestBooking';
 import { BookingPending } from './pages/passenger/BookingPending';
 import { BookingConfirm } from './pages/passenger/BookingConfirm';
@@ -37,7 +35,6 @@ import { CostBreakdown } from './pages/shared/CostBreakdown';
 import { CostHistory } from './pages/shared/CostHistory';
 import { LiveTracking } from './pages/shared/LiveTracking';
 import { TripChat } from './pages/shared/TripChat';
-import { BoardingVerify } from './pages/shared/BoardingVerify';
 import { TripComplete } from './pages/shared/TripComplete';
 import { TripHistory } from './pages/shared/TripHistory';
 import { NotificationsPage } from './pages/shared/NotificationsPage';
@@ -103,7 +100,9 @@ const AppRoutes = () => {
         <Route path="/driver/create-trip" element={<CreateTrip />} />
         <Route path="/driver/requests" element={<BookingRequests />} />
         <Route path="/driver/approval" element={<ApprovalModal />} />
-        <Route path="/driver/route-preview" element={<RoutePreview />} />
+        <Route path="/driver/route-preview" element={<TripDetailView />} />
+        <Route path="/driver/trip-detail/:id" element={<TripDetailView />} />
+        <Route path="/driver/trip-detail" element={<TripDetailView />} />
         <Route path="/driver/active-trip" element={<LiveTracking />} />
 
         {/* Passenger Flows */}
@@ -111,7 +110,7 @@ const AppRoutes = () => {
         <Route path="/passenger/destination-search" element={<DestinationSearch />} />
         <Route path="/passenger/results" element={<SearchResults />} />
         <Route path="/passenger/pickup-picker" element={<PickupPicker />} />
-        <Route path="/passenger/trip/:id" element={<TripDetail />} />
+        <Route path="/passenger/trip/:id" element={<TripDetailView />} />
         <Route path="/passenger/trip-detail/:id" element={<TripDetailView />} />
         <Route path="/passenger/request-booking/:id" element={<RequestBooking />} />
         <Route path="/passenger/request-booking" element={<RequestBooking />} />

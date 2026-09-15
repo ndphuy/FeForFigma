@@ -7,7 +7,7 @@ import { Navigation, Compass, Shield, Check, MapPin, AlertTriangle } from 'lucid
  */
 const PREVIEW_PATH_D = 'M 55 165 C 120 165, 160 145, 200 135 C 245 125, 290 110, 345 100';
 const BACKDROP_PATH_D = 'M 315 160 C 265 185, 215 220, 165 260 C 120 295, 90 325, 75 345';
-const LIVE_FULLSCREEN_PATH_D = 'M 315 150 C 265 220, 215 310, 175 420 C 135 520, 95 620, 75 680';
+const LIVE_FULLSCREEN_PATH_D = 'M 320 115 C 275 165, 225 215, 180 255 C 140 295, 100 325, 65 345';
 
 /**
  * AppMap — Unified Master Map Component for RouteShare
@@ -121,7 +121,7 @@ export const AppMap = ({
         {/* Sông Sài Gòn (Soft winding river) */}
         {isFullscreen ? (
           <path
-            d="M -30 250 C 60 320, 115 400, 170 480 C 220 555, 270 635, 330 720"
+            d="M -30 190 C 70 230, 150 280, 240 340 C 310 390, 360 450, 420 520"
             stroke="#C8E2DC"
             strokeWidth="36"
             strokeLinecap="round"
@@ -137,8 +137,8 @@ export const AppMap = ({
           />
         )}
         <text 
-          x={isFullscreen ? 50 : 80} 
-          y={isFullscreen ? 360 : 190} 
+          x={isFullscreen ? 65 : 80} 
+          y={isFullscreen ? 245 : 190} 
           fill="#88B2A7" 
           fontSize={isFullscreen ? 9 : 8.5} 
           fontWeight="700" 
@@ -151,16 +151,14 @@ export const AppMap = ({
         {/* Secondary Urban Road Grid */}
         {isFullscreen ? (
           <>
-            <path d="M -20 180 L 420 180" stroke="#DFEBE5" strokeWidth="8" />
-            <path d="M -20 280 L 420 280" stroke="#DFEBE5" strokeWidth="8" />
-            <path d="M -20 380 L 420 380" stroke="#DFEBE5" strokeWidth="8" />
-            <path d="M -20 500 L 420 500" stroke="#DFEBE5" strokeWidth="8" />
-            <path d="M -20 620 L 420 620" stroke="#DFEBE5" strokeWidth="8" />
-            <path d="M 110 -20 L 110 860" stroke="#DFEBE5" strokeWidth="6" />
-            <path d="M 270 -20 L 270 860" stroke="#DFEBE5" strokeWidth="6" />
-            <path d="M -20 410 C 110 340, 240 230, 410 170" stroke="#D3E3DC" strokeWidth="14" />
-            <path d="M 30 130 C 130 230, 250 350, 390 490" stroke="#D3E3DC" strokeWidth="12" />
-            <path d="M -20 680 C 120 580, 240 450, 410 330" stroke="#D3E3DC" strokeWidth="12" />
+            <path d="M -20 140 L 420 140" stroke="#DFEBE5" strokeWidth="7" />
+            <path d="M -20 220 L 420 220" stroke="#DFEBE5" strokeWidth="7" />
+            <path d="M -20 300 L 420 300" stroke="#DFEBE5" strokeWidth="7" />
+            <path d="M -20 380 L 420 380" stroke="#DFEBE5" strokeWidth="7" />
+            <path d="M 100 -20 L 100 860" stroke="#DFEBE5" strokeWidth="5" />
+            <path d="M 260 -20 L 260 860" stroke="#DFEBE5" strokeWidth="5" />
+            <path d="M -20 310 C 110 240, 240 160, 410 110" stroke="#D3E3DC" strokeWidth="12" />
+            <path d="M 30 90 C 130 180, 250 280, 390 390" stroke="#D3E3DC" strokeWidth="11" />
           </>
         ) : (
           <>
@@ -173,10 +171,10 @@ export const AppMap = ({
         )}
 
         {/* Major Road Labels */}
-        <text x={isFullscreen ? 260 : 275} y={isFullscreen ? 190 : 135} fill="#9FB2A9" fontSize={isFullscreen ? 8.5 : 8} fontWeight="700">
+        <text x={isFullscreen ? 255 : 275} y={isFullscreen ? 155 : 135} fill="#9FB2A9" fontSize={isFullscreen ? 8.5 : 8} fontWeight="700">
           QL52 (Xa lộ Hà Nội)
         </text>
-        <text x={isFullscreen ? 65 : 135} y={isFullscreen ? 220 : 55} fill="#9FB2A9" fontSize={isFullscreen ? 8.5 : 8} fontWeight="700">
+        <text x={isFullscreen ? 55 : 135} y={isFullscreen ? 175 : 55} fill="#9FB2A9" fontSize={isFullscreen ? 8.5 : 8} fontWeight="700">
           Mai Chí Thọ
         </text>
 
@@ -249,15 +247,13 @@ export const AppMap = ({
         const markerBg = isOrange ? 'bg-[#EE7A22]' : isWaypoint ? 'bg-[#0B7A5C]' : 'bg-[#0F9D76]';
         const ringColor = isOrange ? 'ring-[#EE7A22]/25' : isWaypoint ? 'ring-[#0B7A5C]/20' : 'ring-[#0F9D76]/25';
 
-        // Horizontal positioning:
-        const isLeftEdge = i === 0;
-        const isRightEdge = i === dots.length - 1;
-
+        // Smart dynamic alignment based on X position to prevent edge overflow
+        const xRatio = d.x / width;
         let horizontalAlign = 'items-center -translate-x-1/2';
-        if (isLeftEdge && !isPicker) {
-          horizontalAlign = 'items-start -translate-x-1';
-        } else if (isRightEdge && !isPicker) {
+        if (xRatio > 0.65 && !isPicker) {
           horizontalAlign = 'items-end -translate-x-[85%]';
+        } else if (xRatio < 0.35 && !isPicker) {
+          horizontalAlign = 'items-start -translate-x-[15%]';
         }
 
         return (
@@ -287,7 +283,7 @@ export const AppMap = ({
             )}
 
             {/* Marker Pin Icon */}
-            <div className={`relative flex items-center justify-center ${isRightEdge && !isPicker ? 'self-end mr-3' : isLeftEdge && !isPicker ? 'self-start ml-3' : ''}`}>
+            <div className="relative flex items-center justify-center">
               <span className={`absolute w-6 h-6 rounded-full ${markerBg}/20 animate-pulse pointer-events-none`} />
               
               {isPicker ? (
@@ -325,7 +321,7 @@ export const AppMap = ({
 
             {/* Bottom Label Tag (Non-picker mode) */}
             {!isPicker && (d.label || d.name) && (
-              <div className="mt-1.5 max-w-[130px] rounded-lg bg-white/95 backdrop-blur-md px-2 py-0.5 text-[9.5px] font-bold text-[#101B17] shadow-[0_2px_8px_rgba(16,27,23,0.12)] border border-[#E4EAE7] flex items-center gap-1 pointer-events-none whitespace-nowrap">
+              <div className="mt-1 max-w-[155px] rounded-lg bg-white/95 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-[#101B17] shadow-[0_2px_8px_rgba(16,27,23,0.12)] border border-[#E4EAE7] flex items-center gap-1 pointer-events-none whitespace-nowrap">
                 <span className={`w-1.5 h-1.5 rounded-full ${markerBg} shrink-0`} />
                 <span className="truncate">{d.label || d.name}</span>
               </div>

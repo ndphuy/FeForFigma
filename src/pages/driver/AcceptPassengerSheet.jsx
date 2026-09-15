@@ -1,4 +1,5 @@
 import React from 'react';
+import { Phone } from 'lucide-react';
 
 export const AcceptPassengerSheet = ({ request, onClose, onAccept }) => {
   if (!request) return null;
@@ -32,9 +33,14 @@ export const AcceptPassengerSheet = ({ request, onClose, onAccept }) => {
               <span className="text-base font-bold text-[#101B17] leading-tight">
                 Chấp nhận yêu cầu của {name}?
               </span>
-              <span className="text-xs text-[#8A9993]">
-                <span className="text-[#EE7A22]">★</span> {request.passengerTrustScore || '4.9'} · đã xác minh · {request.passengerTrips || 38} chuyến
-              </span>
+              <div className="flex items-center gap-2 text-xs text-[#8A9993]">
+                <span><span className="text-[#EE7A22]">★</span> {request.passengerTrustScore || '4.9'} · {request.passengerTrips || 38} chuyến</span>
+                <span>•</span>
+                <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-[#0F9D76]" />
+                  {request.passengerPhone || '0912 345 678'}
+                </span>
+              </div>
             </div>
           </div>
 

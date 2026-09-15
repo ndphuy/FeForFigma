@@ -29,7 +29,7 @@ The application runs inside a responsive phone mockup (`MobileFrame`: 410×864px
 - **Monospace & Numbers**: `IBM Plex Mono` (400, 500, 600, 700) for prices (`35.000 ₫`), license plates, and metrics.
 - **Layout & Sizing**: Standardized 8px grid system, single-layer scrolling containers, explicit `min-w-0` and truncation handling to prevent horizontal overflows.
 - **Quy tắc Nghiêm ngặt về Icon AI / Nhãn AI**: **TUYỆT ĐỐI KHÔNG SỬ DỤNG icon AI (như Sparkles / lấp lánh) hoặc gắn nhãn "AI" trong toàn bộ project**. Mô hình RouteShare là carpooling thuần túy chia sẻ chi phí dựa trên thuật toán ghép tuyến và định vị hành trình thực tế.
-- **Quy tắc Nghiêm ngặt về Mã PIN Đón Xe**: **ĐÃ XÓA TOÀN BỘ mã PIN đón xe** trên toàn bộ các màn hình (Live Tracking, Trip Detail, Search Results, Confirmation). Quá trình đón xe được xác nhận tự động qua GPS hoặc nút xác nhận trên app của Tài xế.
+- **Quy tắc Nghiêm ngặt về Mã PIN Đón Xe**: **ĐÃ XÓA TOÀN BỘ mã PIN đón xe** trên toàn bộ các màn hình (BoardingPIN, BoardingVerify, Live Tracking, Trip Detail, Search Results, Confirmation). Quá trình đón xe được xác thực trực tiếp giữa Tài xế và Hành khách thông qua **Tên và Số điện thoại** hiển thị rõ ràng trên chi tiết chuyến đi, không cần mã PIN.
 - **Hệ thống Bản đồ Đồng bộ Duy nhất (Master Map Component - `src/components/AppMap.jsx`)**:
   - Toàn bộ hệ thống RouteShare sử dụng duy nhất một **Master Component `AppMap.jsx`** để hiển thị bản đồ, loại bỏ hoàn toàn các inline SVG và mock CSS phân mảnh cũ.
   - Hỗ trợ **4 chế độ linh hoạt (`mode`)**:
@@ -122,11 +122,10 @@ State is centrally managed via `src/context/AppContext.jsx` and backed by `src/d
 │   └── notifications                 # Passenger Notification Center
 │
 ├── driver/
-│   ├── home                          # Driver Home (Quick Publish, Trip Detail CTA & Requests summary)
+│   ├── home                          # Driver Home (Quick Publish, Single Unified "Chi tiết & Lộ trình" CTA & Requests summary)
 │   ├── create-trip                   # Commute Wizard (Single & Recurring, Custom % Wishlist Discount)
 │   ├── requests                      # Booking Requests with Detour Decision Pairs
 │   ├── approval                      # Accept Passenger Sheet (Before/After comparison)
-│   ├── route-preview                 # Full route map preview with stops & stats
 │   ├── active-trip                   # Multi-passenger GPS Navigation & Dynamic Refund
 │   ├── kyc                           # CCCD & GPLX Vehicle Profile (Center Modal & Edit/Delete)
 │   ├── history                       # Driver Trip History & Earnings

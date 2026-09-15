@@ -101,8 +101,42 @@ const notificationSets = {
 
 export const NotificationsPage = () => {
   const navigate = useNavigate();
-  const { currentRole } = useApp();
-  const roleNotifications = notificationSets[currentRole] || notificationSets.passenger;
+  const { currentRole, pendingBookingsForDriver } = useApp();
+
+  const driverNotifications = [
+    ...(pendingBookingsForDriver.length > 0 ? pendingBookingsForDriver.map(b => ({
+      id: `drv_req_${b.id}`,
+      title: 'Yêu cầu đặt chỗ mới',
+      description: `${b.passengerName || 'Minh Anh'} muốn đặt ${b.seatsCount || 1} chỗ trên chuyến FPT University → Chợ Bến Thành.`,
+      time: b.createdAt || 'Vừa xong',
+      icon: Users,
+      iconStyle: 'bg-[#FFF4E9] text-[#D96A16]',
+      unread: true,
+      path: '/driver/requests'
+    })) : []),
+    {
+      id: 'drv_trip_reminder',
+      title: 'Chuẩn bị khởi hành',
+      description: 'Chuyến đi lúc 07:00 đã có hành khách xác nhận chỗ.',
+      time: '25 phút trước',
+      icon: CalendarClock,
+      iconStyle: 'bg-[#EAF2FF] text-[#2F6FCE]',
+      unread: false,
+      path: '/driver/history'
+    },
+    {
+      id: 'drv_verified',
+      title: 'Hồ sơ đã được xác thực',
+      description: 'CCCD và giấy phép lái xe của bạn đang ở trạng thái hợp lệ.',
+      time: '2 ngày trước',
+      icon: ShieldCheck,
+      iconStyle: 'bg-[#F1FAF6] text-[#0F9D76]',
+      unread: false,
+      path: '/profile'
+    }
+  ];
+
+  const roleNotifications = currentRole === 'driver' ? driverNotifications : notificationSets.passenger;
   const [readIds, setReadIds] = useState(() =>
     roleNotifications.filter((item) => !item.unread).map((item) => item.id)
   );
