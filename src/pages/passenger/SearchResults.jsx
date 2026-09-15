@@ -1,13 +1,13 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  PencilLine, 
-  Search, 
-  X, 
-  Heart, 
-  ArrowUpDown, 
+import {
+  ChevronDown,
+  ChevronRight,
+  PencilLine,
+  Search,
+  X,
+  Heart,
+  ArrowUpDown,
   Crosshair,
   CheckCircle2,
   Clock,
@@ -27,7 +27,7 @@ const SORT_OPTIONS = [
 
 const RESULT_DETAILS = {
   trip_001: {
-    pickup: 'KTX ĐH FPT (cổng chính)',
+    pickup: 'ĐH FPT',
     dropoff: 'Chợ Bến Thành - Cổng Bắc',
     pickupTime: '07:20',
     dropoffTime: '08:04',
@@ -53,7 +53,7 @@ const RESULT_DETAILS = {
     ratingCount: 21,
   },
   trip_003: {
-    pickup: 'KTX ĐH FPT (gần cổng phụ)',
+    pickup: 'ĐH FPT ',
     dropoff: 'Chợ Bến Thành',
     pickupTime: '07:48',
     dropoffTime: '08:40',
@@ -81,7 +81,7 @@ const getTime = (value, fallback) => {
 const getTripDetails = (trip) => {
   const reference = RESULT_DETAILS[trip.id] || {};
   return {
-    pickup: reference.pickup || trip.originDetail || `KTX ĐH FPT (${shortLocation(trip.origin)})`,
+    pickup: reference.pickup || trip.originDetail || `ĐH FPT (${shortLocation(trip.origin)})`,
     dropoff: reference.dropoff || trip.destinationDetail || shortLocation(trip.destination),
     pickupTime: reference.pickupTime || getTime(trip.originDetail, trip.departureTime),
     dropoffTime: reference.dropoffTime || getTime(trip.destinationDetail, '08:15'),
@@ -121,7 +121,7 @@ const TripCard = ({ trip, isBestMatch, onOpen }) => {
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center gap-1 text-[11px] text-[#4B5A54] mt-0.5">
             <span className="text-[#EE7A22] font-bold">★ {trip.driverTrustScore || 4.9}</span>
             <span className="text-[#8A9993]">({details.ratingCount} đánh giá)</span>
@@ -462,7 +462,7 @@ export const SearchResults = () => {
     if (touchStartY.current === null) return;
     const currentY = e.touches[0].clientY;
     const diff = touchStartY.current - currentY;
-    
+
     // Swipe Up > 40px -> Expand
     if (diff > 40 && !isExpanded) {
       setIsExpanded(true);
@@ -493,13 +493,6 @@ export const SearchResults = () => {
           >
             ‹
           </button>
-
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0F9D76] text-white font-bold text-xs shadow-xs">
-              R
-            </span>
-            <span className="text-base font-bold tracking-tight text-[#101B17]">RouteShare</span>
-          </div>
 
           <button
             type="button"
@@ -539,19 +532,23 @@ export const SearchResults = () => {
       <AppMap
         mode="backdrop"
         points={[
-          { label: 'ĐH FPT (Đón)', type: 'origin', isPrimary: true },
-          { label: 'Bến Thành (Trả)', type: 'destination', isPrimary: true }
+          { label: shortLocation(origin) ? `${shortLocation(origin)} (Đón)` : 'ĐH FPT (Đón)', type: 'origin', isPrimary: true },
+          { label: shortLocation(destination) ? `${shortLocation(destination)} (Trả)` : 'Bến Thành (Trả)', type: 'destination', isPrimary: true }
         ]}
+        fitBoundsPadding={
+          isExpanded
+            ? { top: 160, bottom: 80, left: 35, right: 35 }
+            : { top: 165, bottom: 440, left: 35, right: 35 }
+        }
       />
 
       {/* 3. Expandable Bottom Sheet */}
-      <div 
-        className={`absolute inset-x-0 bottom-0 z-20 flex flex-col bg-white rounded-t-[28px] shadow-[0_-8px_30px_rgba(16,27,23,0.14)] transition-all duration-300 ease-out border-t border-[#DCE8E2] ${
-          isExpanded ? 'top-[78px] h-[calc(100%-78px)]' : 'top-[50%] h-[50%]'
-        }`}
+      <div
+        className={`absolute inset-x-0 bottom-0 z-20 flex flex-col bg-white rounded-t-[28px] shadow-[0_-8px_30px_rgba(16,27,23,0.14)] transition-all duration-300 ease-out border-t border-[#DCE8E2] ${isExpanded ? 'top-[78px] h-[calc(100%-78px)]' : 'top-[50%] h-[50%]'
+          }`}
       >
         {/* Grab Handle & Drag Area */}
-        <div 
+        <div
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -571,11 +568,10 @@ export const SearchResults = () => {
                 key={option.value}
                 type="button"
                 onClick={() => setSortBy(option.value)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#DDF3EA] text-[#0B7A5C] border border-[#B2E2D0] shadow-2xs'
-                    : 'bg-[#F4F7F5] text-[#4B5A54] border border-[#E4EAE7] hover:bg-[#EBF2EE]'
-                }`}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${isActive
+                  ? 'bg-[#DDF3EA] text-[#0B7A5C] border border-[#B2E2D0] shadow-2xs'
+                  : 'bg-[#F4F7F5] text-[#4B5A54] border border-[#E4EAE7] hover:bg-[#EBF2EE]'
+                  }`}
               >
                 {option.value === 'match' && <span>✨</span>}
                 {option.value === 'walk' && <span>📍</span>}
@@ -583,7 +579,7 @@ export const SearchResults = () => {
               </button>
             );
           })}
-          
+
           <button
             type="button"
             onClick={openEditor}

@@ -205,6 +205,9 @@ export const AppMap = ({
   onSelectPoint = () => {},
   className = '',
   showControls = true,
+  customRouteCoords = null,
+  fitBoundsPadding = null,
+  interactive = true,
 }) => {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -216,7 +219,7 @@ export const AppMap = ({
   const isPicker = mode === 'picker';
   const isFullscreen = isBackdrop || isLive || className.includes('absolute inset-0');
 
-  const routeCoords = isBackdrop ? BACKDROP_ROUTE_COORDS : MAIN_ROUTE_COORDS;
+  const routeCoords = customRouteCoords || MAIN_ROUTE_COORDS;
   const cumulative = useMemo(() => cumulativeLengths(routeCoords), [routeCoords]);
   const clampedProgress = Math.min(1, Math.max(0, progress));
 
@@ -251,6 +254,15 @@ export const AppMap = ({
     return pointAtT(routeCoords, cumulative, clampedProgress);
   }, [isLive, carPosition, clampedProgress, routeCoords, cumulative]);
 
+  // Resolve sensible padding based on mode if not explicitly provided
+  const resolvedPadding = useMemo(() => {
+    if (fitBoundsPadding) return fitBoundsPadding;
+    if (isBackdrop) return { top: 165, bottom: 440, left: 35, right: 35 };
+    if (isLive) return { top: 110, bottom: 220, left: 35, right: 35 };
+    if (isFullscreen) return 80;
+    return 40;
+  }, [fitBoundsPadding, isBackdrop, isLive, isFullscreen]);
+
   // Initialize the map once
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -262,9 +274,9 @@ export const AppMap = ({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/light-v11',
       center,
-      zoom: isFullscreen ? 14 : 13,
+      zoom: isFullscreen ? 13.5 : 13,
       attributionControl: false,
-      interactive: isLive || isPicker,
+      interactive: interactive,
       dragRotate: false,
       pitchWithRotate: false,
     });
@@ -405,7 +417,7 @@ export const AppMap = ({
     }
   }, [isLive, carLngLat]);
 
-  // Frame the route/markers once per mode change (not on every live progress tick)
+  // Frame the route/markers when mode, bounds, or padding changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -414,17 +426,20 @@ export const AppMap = ({
       if (!isPicker) routeCoords.forEach((c) => bounds.extend(c));
       dots.forEach((d) => bounds.extend(d.lngLat));
       if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, { padding: isFullscreen ? 80 : 40, duration: 0, maxZoom: 16 });
+        map.fitBounds(bounds, {
+          padding: resolvedPadding,
+          duration: 350,
+          maxZoom: 15.5,
+        });
       }
     };
     if (map.isStyleLoaded()) fit();
     else map.once('load', fit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, routeCoords, isPicker]);
+  }, [mode, routeCoords, isPicker, dots, resolvedPadding]);
 
   const containerClasses = isFullscreen
     ? `absolute inset-0 w-full h-full overflow-hidden bg-[#EBF2EE] select-none ${className}`
-    : `${heightClass} w-full shrink-0 rounded-3xl overflow-hidden relative bg-[#EBF2EE] border border-[#D5E2DC] shadow-[0_2px_12px_rgba(16,27,23,0.06)] select-none ${className}`;
+    : `${heightClass} w-full shrink-0 overflow-hidden relative bg-[#EBF2EE] select-none ${className.includes('rounded-none') ? '' : 'rounded-3xl'} ${className.includes('border-none') ? '' : 'border border-[#D5E2DC]'} ${className.includes('shadow-none') ? '' : 'shadow-[0_2px_12px_rgba(16,27,23,0.06)]'} ${className}`;
 
   return (
     <div className={containerClasses}>

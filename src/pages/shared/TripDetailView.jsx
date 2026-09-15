@@ -347,20 +347,25 @@ export const TripDetailView = () => {
       </div>
 
       {/* Main Scrollable Content */}
-      <div className="flex-1 overflow-y-auto rs-scroll p-4 pb-28 flex flex-col gap-3.5">
-        {/* Visual Route Map Preview */}
-        <RouteMapPreview
-          points={mapPoints}
-          meta={`${trip.distanceKm || 18.5} km · ${trip.departureTime || '07:00'}`}
-          tag={currentRole === 'driver' ? 'Lộ trình chi tiết' : 'Chặng đi của bạn'}
-          heightClass="h-60 min-h-[240px] shrink-0"
-        />
+      <div className="flex-1 overflow-y-auto rs-scroll pb-28 flex flex-col">
+        {/* Full-bleed Edge-to-Edge Route Map */}
+        <div className="w-full h-64 shrink-0 relative overflow-hidden border-b border-[#D5E2DC]">
+          <RouteMapPreview
+            points={mapPoints}
+            meta={`${trip.distanceKm || 18.5} km · ${trip.departureTime || '07:00'}`}
+            tag={currentRole === 'driver' ? 'Lộ trình chi tiết' : 'Chặng đi của bạn'}
+            heightClass="h-full"
+            className="rounded-none border-none shadow-none"
+          />
+        </div>
 
-        {/* ========================================================================= */}
-        {/* DRIVER VIEW SPECIFIC SECTION (Merged Preview & Management Details) */}
-        {/* ========================================================================= */}
-        {currentRole === 'driver' ? (
-          <>
+        {/* Content Details with padding */}
+        <div className="p-4 flex flex-col gap-3.5">
+          {/* ========================================================================= */}
+          {/* DRIVER VIEW SPECIFIC SECTION (Merged Preview & Management Details) */}
+          {/* ========================================================================= */}
+          {currentRole === 'driver' ? (
+            <>
             {/* Trip Meta Chips */}
             <div className="flex flex-wrap gap-2">
               <span className="px-2.5 py-1.5 rounded-full bg-white border border-[#E4EAE7] text-[#4B5A54] text-[11.5px] font-semibold flex items-center gap-1.5">
@@ -726,6 +731,7 @@ export const TripDetailView = () => {
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Sticky Bottom Action — reflects the passenger's real booking status for this trip */}

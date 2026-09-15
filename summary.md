@@ -31,15 +31,16 @@ The application runs inside a responsive phone mockup (`MobileFrame`: 410×864px
 - **Quy tắc Nghiêm ngặt về Icon AI / Nhãn AI**: **TUYỆT ĐỐI KHÔNG SỬ DỤNG icon AI (như Sparkles / lấp lánh) hoặc gắn nhãn "AI" trong toàn bộ project**. Mô hình RouteShare là carpooling thuần túy chia sẻ chi phí dựa trên thuật toán ghép tuyến và định vị hành trình thực tế.
 - **Quy tắc Nghiêm ngặt về Mã PIN Đón Xe**: **ĐÃ XÓA TOÀN BỘ mã PIN đón xe** trên toàn bộ các màn hình (BoardingPIN, BoardingVerify, Live Tracking, Trip Detail, Search Results, Confirmation). Quá trình đón xe được xác thực trực tiếp giữa Tài xế và Hành khách thông qua **Tên và Số điện thoại** hiển thị rõ ràng trên chi tiết chuyến đi, không cần mã PIN.
 - **Hệ thống Bản đồ Đồng bộ Duy nhất (Master Map Component - `src/components/AppMap.jsx`)**:
-  - Toàn bộ hệ thống RouteShare sử dụng duy nhất một **Master Component `AppMap.jsx`** để hiển thị bản đồ, loại bỏ hoàn toàn các inline SVG và mock CSS phân mảnh cũ.
+  - Toàn bộ hệ thống RouteShare sử dụng duy nhất một **Master Component `AppMap.jsx`** tích hợp **Mapbox GL (`mapbox-gl`)** và GeoJSON route rendering thực tế (với fallback vector chuẩn).
+  - Cấu hình qua biến môi trường `VITE_MAPBOX_TOKEN` trong `.env`.
   - Hỗ trợ **4 chế độ linh hoạt (`mode`)**:
     1. `preview`: Bản đồ thẻ xem trước tuyến đường (dùng trong `RouteMapPreview.jsx`, `TripDetailView.jsx`, `TripDetail.jsx`, `RoutePreview.jsx`, `CreateTrip.jsx`).
     2. `backdrop`: Bản đồ toàn màn hình làm nền tĩnh/tương tác nhẹ phía sau bottom sheet (dùng trong `SearchResults.jsx`).
     3. `live`: Bản đồ theo dõi trực tiếp với xe di chuyển định vị GPS, sóng radar tỏa ra (`animate-ping`) và thanh tiến trình lộ trình (dùng trong `LiveRouteMap.jsx`, `PassengerLiveTracking.jsx`, `LiveTracking.jsx`).
     4. `picker`: Bản đồ tương tác chọn điểm đón an toàn (Safe Pickup Points) với radar vòng an toàn, badge `✓ An toàn`, và callback `onSelectStop` (dùng trong `PickupPicker.jsx`).
   - **Quy chuẩn Đồ họa Bản đồ Đô thị TP.HCM**:
-    - **Nền bản đồ thực tế**: Lưới đường phố sắc nét (`#EBF2EE`, `#DFEAE4`), các trục giao thông chính (`QL52 / Xa lộ Hà Nội`, `Mai Chí Thọ`) và dải sông nước (`Sông Sài Gòn` uốn lượn mềm mại `#C8E2DC`).
-    - **Đường polyline lộ trình**: Màu xanh ngọc thương hiệu `#0F9D76` (nét 3.5-4px) kèm viền sáng mềm bên dưới `#BDE7D5` (nét 7-8px).
+    - **Tọa độ thực tế**: Hành lang phía Đông TP.HCM (Thủ Đức / Suối Tiên $\rightarrow$ Xa lộ Hà Nội $\rightarrow$ Cầu Sài Gòn $\rightarrow$ Mai Chí Thọ $\rightarrow$ Hầm Thủ Thiêm $\rightarrow$ Bến Thành, Q.1) và khu vực Phú Mỹ Hưng, Q.7.
+    - **Đường polyline lộ trình**: Màu xanh ngọc thương hiệu `#0F9D76` (nét 3.5-4px) kèm viền sáng mềm bên dưới `#BDE7D5`.
     - **Marker điểm dừng (Waypoints)**: Điểm đón / Xuất phát = 🟢 Hình tròn xanh ngọc `#0F9D76` (label: `Đón [Tên Khách] · [Tên Trạm]`), Điểm trả / Kết thúc = 🟧 Hình vuông cam `#EE7A22` (label: `Trả [Tên Khách] · [Tên Trạm]`).
     - **Marker Trạm An toàn**: 🛡️ Pin xanh lục kèm vòng radar hào quang và badge `✓ An toàn`.
     - **Backward Compatibility**: `RouteMapPreview.jsx` và `LiveRouteMap.jsx` được tinh gọn thành các wrapper chuẩn gọi trực tiếp `AppMap` với `mode="preview"` và `mode="live"`, đảm bảo tương thích 100% cho toàn bộ project.
