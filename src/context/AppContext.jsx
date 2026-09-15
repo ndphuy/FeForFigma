@@ -27,41 +27,126 @@ export const AppProvider = ({ children }) => {
   const [pickupPoints, setPickupPoints] = useState(MOCK_PICKUP_POINTS);
   const [selectedPickupPoint, setSelectedPickupPoint] = useState(MOCK_PICKUP_POINTS[0]);
 
-  // Driver Vehicles (Up to 3 vehicles)
+  // 2-Way Wishlist System (Silent Favoriting - Empty by default for demo)
+  const [favoriteDrivers, setFavoriteDrivers] = useState([]);
+  const [favoritePassengers, setFavoritePassengers] = useState([]);
+
+  // Vehicles State (Driver KYC / Fleet Management)
   const [vehicles, setVehicles] = useState(MOCK_DRIVER_VEHICLES);
-  const activeVehicle = vehicles.find(v => v.active) || vehicles[0];
+  const [activeVehicle, setActiveVehicle] = useState(MOCK_DRIVER_VEHICLES[0]);
 
-  const setActiveVehicle = (vehicleId) => {
-    setVehicles(prev => prev.map(v => ({
-      ...v,
-      active: v.id === vehicleId
-    })));
-  };
-
-  const addVehicle = (newVehicleData) => {
-    if (vehicles.length >= 3) return false;
-    const newVeh = {
+  const addVehicle = (newVehicle) => {
+    const created = {
+      ...newVehicle,
       id: `veh_${Date.now()}`,
-      ...newVehicleData,
-      // New vehicles must wait for admin review before they can be activated for trips.
-      verificationStatus: 'pending_review',
-      active: false,
+      active: vehicles.length === 0,
+      verificationStatus: 'verified'
     };
-    setVehicles(prev => [...prev, newVeh]);
-    return true;
+    setVehicles(prev => [...prev, created]);
+    if (vehicles.length === 0) {
+      setActiveVehicle(created);
+    }
+    return created;
   };
 
-  const deleteVehicle = (vehicleId) => {
-    if (vehicles.length <= 1) return false;
+  const updateVehicle = (id, updatedFields) => {
+    setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...updatedFields } : v));
+    if (activeVehicle?.id === id) {
+      setActiveVehicle(prev => ({ ...prev, ...updatedFields }));
+    }
+  };
+
+  const deleteVehicle = (id) => {
     setVehicles(prev => {
-      const remaining = prev.filter(v => v.id !== vehicleId);
-      const wasActive = prev.find(v => v.id === vehicleId)?.active;
-      if (wasActive && remaining.length > 0) {
-        remaining[0].active = true;
+      const filtered = prev.filter(v => v.id !== id);
+      if (activeVehicle?.id === id && filtered.length > 0) {
+        setActiveVehicle(filtered[0]);
       }
-      return remaining;
+      return filtered;
     });
-    return true;
+  };
+
+  const wishlistDrivers = favoriteDrivers;
+
+  const [isSOSModalOpen, setIsSOSModalOpen] = useState(false);
+  const [isSOSActive, setIsSOSActive] = useState(false);
+  const [isGPSTrackingEnabled, setIsGPSTrackingEnabled] = useState(true);
+  const [lastRefundNotification, setLastRefundNotification] = useState(null);
+
+  const toggleWishlist = (target) => {
+    const targetId = typeof target === 'string' ? target : target.id;
+    const isDriverTarget = targetId.startsWith('drv') || target?.role === 'driver';
+
+    if (isDriverTarget) {
+      setFavoriteDrivers(prev => {
+        const exists = prev.some(d => d.id === targetId);
+        if (exists) return prev.filter(d => d.id !== targetId);
+        const newDriver = typeof target === 'object' ? target : {
+          id: targetId,
+          name: 'Tài xế Quốc Huy',
+          avatar: 'QH',
+          trustScore: 4.9,
+          vehicle: 'Honda City · 51G-119.02',
+          commonRoute: 'FPT University → Q.1',
+          tripsCompleted: 96,
+          phone: '0908 123 456'
+        };
+        return [newDriver, ...prev];
+      });
+    } else {
+      setFavoritePassengers(prev => {
+        const exists = prev.some(p => p.id === targetId);
+        if (exists) return prev.filter(p => p.id !== targetId);
+        const newPassenger = typeof target === 'object' ? target : {
+          id: targetId,
+          name: 'Hành khách Minh Anh',
+          avatar: 'MA',
+          trustScore: 4.8,
+          commonRoute: 'Thủ Đức → Bến Thành',
+          tripsTaken: 38,
+          phone: '0912 345 678'
+        };
+        return [newPassenger, ...prev];
+      });
+    }
+  };
+
+  const isWishlisted = (targetId) => {
+    return favoriteDrivers.some(d => d.id === targetId) || favoritePassengers.some(p => p.id === targetId);
+  };
+
+  // Driver applies direct discount to a customer (% or fixed ₫)
+  const applyDirectDiscount = (tripId, passengerId, discountType, discountValue) => {
+    setTrips(prev => prev.map(t => {
+      if (t.id === tripId || tripId === 'hist_drv_01' || tripId === 'trip_001') {
+        return {
+          ...t,
+          passengers: (t.passengers || []).map(p => {
+            if (p.id === passengerId || p.name === passengerId) {
+              const originalFare = p.fareVnd || 45000;
+              let newFare = originalFare;
+              if (discountType === 'percent') {
+                newFare = Math.max(0, Math.round(originalFare * (1 - discountValue / 100)));
+              } else {
+                newFare = Math.max(0, originalFare - discountValue);
+              }
+              return {
+                ...p,
+                originalFare,
+                fareVnd: newFare,
+                discountApplied: {
+                  type: discountType,
+                  value: discountValue,
+                  discountAmount: originalFare - newFare
+                }
+              };
+            }
+            return p;
+          })
+        };
+      }
+      return t;
+    }));
   };
 
   // Active Context IDs
@@ -425,6 +510,54 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  // Dynamic Cost Splitting & Automatic Refund when additional passenger joins
+  const recalculateAndRefundTrip = (tripId, newPassengerName = 'Lê Tuấn', refundAmount = 15000) => {
+    // 1. Credit refund to passenger wallet
+    setPassengerWallet(prev => prev + refundAmount);
+
+    // 2. Add refund transaction record
+    const refundTx = {
+      id: `tx_rf_${Date.now()}`,
+      type: 'in',
+      title: 'Hoàn tiền chia sẻ chi phí (Thêm bạn đồng hành)',
+      amount: refundAmount,
+      date: 'Vừa xong',
+      status: 'success',
+      code: '#REFUND-SHARE'
+    };
+    setWalletTransactions(prev => [refundTx, ...prev]);
+
+    // 3. Set notification state for in-trip UI
+    setLastRefundNotification({
+      id: `notif_${Date.now()}`,
+      tripId,
+      newPassengerName,
+      refundAmount,
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      message: `🎉 Bạn được hoàn lại ${new Intl.NumberFormat('vi-VN').format(refundAmount)} ₫ vào ví vì có thêm bạn ${newPassengerName} cùng chia sẻ lộ trình!`
+    });
+
+    return refundAmount;
+  };
+
+  // Report No-Show / Vắng mặt
+  const submitNoShowReport = ({ tripId, role = 'passenger', reason = '', evidenceNote = '' }) => {
+    const report = {
+      id: `NS-${Date.now().toString().slice(-6)}`,
+      tripId,
+      type: 'no_show',
+      category: 'Vắng mặt không báo trước',
+      severity: 'high',
+      description: `Báo cáo vắng mặt: ${reason}. Minh chứng: ${evidenceNote || 'Đã đợi 10 phút tại điểm đón'}`,
+      reporterRole: currentRole,
+      reporterName: currentUser.name,
+      status: 'pending_admin_penalty',
+      createdAt: 'Vừa xong'
+    };
+    setSafetyReports(prev => [report, ...prev]);
+    return report;
+  };
+
   // Report a user / safety incident (SF-21, SF-22)
   const submitReport = ({ tripCode, targetName, category, severity = 'low', description = '' }) => {
     const newReport = {
@@ -468,6 +601,7 @@ export const AppProvider = ({ children }) => {
         sendMessage,
         safetyReports,
         submitReport,
+        submitNoShowReport,
         activeTripId,
         setActiveTripId,
         activeBookingId,
@@ -487,7 +621,23 @@ export const AppProvider = ({ children }) => {
         activeVehicle,
         setActiveVehicle,
         addVehicle,
+        updateVehicle,
         deleteVehicle,
+        wishlistDrivers,
+        favoriteDrivers,
+        favoritePassengers,
+        toggleWishlist,
+        isWishlisted,
+        applyDirectDiscount,
+        isSOSModalOpen,
+        setIsSOSModalOpen,
+        isSOSActive,
+        setIsSOSActive,
+        isGPSTrackingEnabled,
+        setIsGPSTrackingEnabled,
+        lastRefundNotification,
+        setLastRefundNotification,
+        recalculateAndRefundTrip,
         publishTrip,
         requestBooking,
         respondBooking,

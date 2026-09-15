@@ -13,7 +13,8 @@ import {
   Plus,
   Minus,
   Trash2,
-  Sparkles,
+  Heart,
+  TrendingUp,
   Info,
   ArrowRight,
   ShieldCheck
@@ -46,6 +47,8 @@ export const CreateTrip = () => {
   const maxSeats = chosenVehicle?.passengerCapacity || 3;
   const [seats, setSeats] = useState(maxSeats);
   const [ratePerKm, setRatePerKm] = useState(5000); // 5.000 đ/km
+  const [wishlistDiscountPercent, setWishlistDiscountPercent] = useState(10);
+  const [isWishlistDiscountEnabled, setIsWishlistDiscountEnabled] = useState(true);
   const distanceKm = 18.5;
 
   // System configured min / max per km (admin limits)
@@ -198,9 +201,9 @@ export const CreateTrip = () => {
               meta="Xem trước lộ trình"
             />
 
-            {/* AI Recommendation */}
+            {/* Corridor Insight */}
             <div className="bg-[#F1FAF6] border border-[#BDE7D5] rounded-2xl p-3.5 flex gap-2.5 items-start">
-              <span className="px-1.5 py-0.5 rounded-md bg-[#0F9D76] text-white text-[9px] font-bold tracking-wider shrink-0 mt-0.5">AI</span>
+              <TrendingUp className="w-4 h-4 text-[#0F9D76] shrink-0 mt-0.5" />
               <span className="text-xs text-[#0B7A5C] leading-relaxed">
                 Tuyến <strong>Thủ Đức → Quận 1</strong> lúc 07:00 có <strong>14 khách</strong> đang tìm chuyến tuần này.
               </span>
@@ -524,6 +527,42 @@ export const CreateTrip = () => {
                   Hệ thống tự đo số km từ điểm đón đến điểm trả của khách × {ratePerKm.toLocaleString('vi-VN')} ₫/km.
                 </span>
               </div>
+
+              {/* Wishlist Passenger Discount Config */}
+              <div className="p-3.5 rounded-2xl bg-[#FFF8F2] border border-[#F7D9B8] flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#EE7A22]">
+                    <Heart className="w-4 h-4 text-[#EE7A22] fill-[#EE7A22]/20" />
+                    <span>Ưu đãi khách quen (Wishlist)</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isWishlistDiscountEnabled}
+                    onChange={(e) => setIsWishlistDiscountEnabled(e.target.checked)}
+                    className="w-4 h-4 accent-[#EE7A22]"
+                  />
+                </div>
+
+                {isWishlistDiscountEnabled && (
+                  <div className="flex items-center justify-between pt-1 gap-2">
+                    <span className="text-[11px] text-[#8A9993]">Phần trăm giảm cho khách quen:</span>
+                    <div className="flex items-center gap-1.5 w-28">
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={wishlistDiscountPercent}
+                        onChange={(e) => setWishlistDiscountPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
+                        className="w-full px-2.5 py-1 text-xs font-mono font-bold text-[#EE7A22] bg-white border border-[#F7D9B8] rounded-lg outline-none focus:border-[#EE7A22] text-center"
+                      />
+                      <span className="text-xs font-bold text-[#EE7A22]">%</span>
+                    </div>
+                  </div>
+                )}
+                <span className="text-[10px] text-[#8A9993]">
+                  Khách quen đã lưu bạn vào Wishlist sẽ được áp dụng mức giá ưu đãi này khi đặt chỗ (Chủ xe tự quyết định).
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -558,7 +597,7 @@ export const CreateTrip = () => {
               </div>
               <div className="flex justify-between text-xs pb-2 border-b border-[#EEF2F0]">
                 <span className="text-[#8A9993]">Khởi hành:</span>
-                <span className="font-bold text-[#101B17]">{departureDate} · {departureTime}</span>
+                <span className="font-bold text-[#101B17]">{departureDate} · {departureTime} {isRecurring ? '(Lặp lại hàng tuần)' : ''}</span>
               </div>
               <div className="flex justify-between text-xs pb-2 border-b border-[#EEF2F0]">
                 <span className="text-[#8A9993]">Số chỗ mở nhận:</span>
@@ -568,6 +607,12 @@ export const CreateTrip = () => {
                 <span className="text-[#8A9993]">Đơn giá chia sẻ (/km):</span>
                 <span className="font-bold text-[#0F9D76] font-mono">{ratePerKm.toLocaleString('vi-VN')} ₫/km</span>
               </div>
+              {isWishlistDiscountEnabled && (
+                <div className="flex justify-between text-xs pb-2 border-b border-[#EEF2F0]">
+                  <span className="text-[#EE7A22] font-semibold">Ưu đãi Wishlist:</span>
+                  <span className="font-bold text-[#EE7A22] font-mono">Giảm {wishlistDiscountPercent}% cho khách quen</span>
+                </div>
+              )}
               <div className="flex justify-between text-xs">
                 <span className="text-[#8A9993]">Cơ chế tính giá:</span>
                 <span className="font-semibold text-[#101B17] text-right">Km khách thực tế đi × Đơn giá</span>

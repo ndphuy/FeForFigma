@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#F4F7F5; font-family:'Be Vietnam Pro',-apple-system,'Segoe UI',Helvetica,sans-serif; color:#101B17; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#0B7A5C; text-decoration:none; }
+  a:hover { color:#0E9873; text-decoration:underline; }
+  .rs-scroll::-webkit-scrollbar { width:8px; height:8px; }
+  .rs-scroll::-webkit-scrollbar-thumb { background:#DFE7E3; border-radius:999px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:stretch;flex-wrap:wrap">
+
+  <!-- SIDEBAR -->
+  <aside style="flex:0 0 248px;min-width:220px;background:#0F1F1A;padding:20px 14px 24px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:center;gap:11px;padding:0 8px">
+      <span style="width:34px;height:34px;border-radius:11px;background:#0F9D76;display:flex;align-items:center;justify-content:center;flex:none">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="17" r="2.6"></circle><circle cx="17" cy="7" r="2.6"></circle><line x1="9.6" y1="17" x2="17" y2="17"></line><line x1="17" y1="17" x2="17" y2="9.6"></line></svg>
+      </span>
+      <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
+        <span style="font-size:14px;font-weight:700;color:#FFFFFF;letter-spacing:.02em">RouteShare</span>
+        <span style="font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#8AA399">Admin console</span>
+      </span>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="11">
+        <a href="#" style="display:flex;align-items:center;gap:11px;min-height:40px;padding:0 10px;border-radius:10px;text-decoration:none;background:{{ n.bg }}" style-hover="background:rgba(255,255,255,.07)">
+          <span style="width:18px;height:18px;border-radius:{{ n.shape }};background:{{ n.mark }};flex:none"></span>
+          <span style="flex:1;min-width:0;font-size:13.5px;font-weight:{{ n.weight }};color:{{ n.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</span>
+          <span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:{{ n.badgeBg }};color:{{ n.badgeFg }};font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ n.badge }}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:0 4px">
+      <span style="width:32px;height:32px;border-radius:999px;background:#1F3A31;color:#7FDCC0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex:none">TH</span>
+      <span style="flex:1;min-width:0;display:flex;flex-direction:column">
+        <span style="font-size:12.5px;font-weight:600;color:#FFFFFF">Trần Hương</span>
+        <span style="font-size:10.5px;color:#8AA399">Ops lead · quyền xử lý</span>
+      </span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main style="flex:1 1 640px;min-width:0;display:flex;flex-direction:column">
+
+    <header style="background:#FFFFFF;border-bottom:1px solid #E4EAE7;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:3px">
+        <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em">Báo cáo an toàn</h1>
+        <span style="font-size:12.5px;color:#8A9993">{{ headerNote }}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button type="button" style="height:42px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Xuất CSV</button>
+        <button type="button" style="height:42px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Quy tắc leo thang</button>
+        <button type="button" style="height:42px;padding:0 16px;border:none;border-radius:11px;background:#C22B35;color:#FFFFFF;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#A8232C">Sự cố SOS đang mở · {{ sosCount }}</button>
+      </div>
+    </header>
+
+    <!-- SLA strip -->
+    <div style="background:#FFFFFF;border-bottom:1px solid #E4EAE7;padding:14px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+      <sc-for list="{{ sla }}" as="s" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="width:40px;height:40px;border-radius:13px;background:{{ s.bg }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none">{{ s.value }}</span>
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.label }}</span>
+            <span style="font-size:11px;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.note }}</span>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex:1;display:flex;align-items:stretch;flex-wrap:wrap;gap:0">
+
+      <!-- QUEUE -->
+      <section style="flex:1 1 380px;min-width:300px;border-right:1px solid #E4EAE7;display:flex;flex-direction:column;background:#FFFFFF">
+        <div style="padding:14px 18px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #EEF2F0">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1;min-width:0;height:40px;border-radius:11px;background:#F4F7F5;display:flex;align-items:center;gap:10px;padding:0 13px">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#8A9993" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><line x1="16" y1="16" x2="20" y2="20"></line></svg>
+              <span style="font-size:13px;color:#8A9993">Tìm mã báo cáo, mã chuyến, người dùng…</span>
+            </div>
+            <button type="button" style="height:40px;padding:0 13px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;flex:none" style-hover="background:#F7FAF9">Bộ lọc</button>
+          </div>
+          <div class="rs-scroll" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:2px">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+              <button type="button" onClick="{{ f.pick }}" style="flex:none;height:34px;padding:0 13px;border:none;border-radius:999px;display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }};box-shadow:{{ f.ring }}">
+                {{ f.label }}<span style="min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:{{ f.badgeBg }};color:{{ f.badgeFg }};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ f.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="rs-scroll" style="flex:1;overflow-y:auto;max-height:760px">
+          <sc-for list="{{ queue }}" as="q" hint-placeholder-count="6">
+            <button type="button" onClick="{{ q.pick }}" style="width:100%;border:none;border-left:3px solid {{ q.accent }};border-bottom:1px solid #F2F5F4;background:{{ q.bg }};cursor:pointer;font-family:inherit;text-align:left;padding:14px 16px;display:flex;flex-direction:column;gap:9px" style-hover="background:#F7FAF9">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#0B7A5C">{{ q.id }}</span>
+                <span style="padding:4px 9px;border-radius:999px;background:{{ q.sevBg }};color:{{ q.sevFg }};font-size:10px;font-weight:700;letter-spacing:.03em">{{ q.severity }}</span>
+                <span style="flex:1"></span>
+                <span style="font-size:11px;font-weight:600;color:{{ q.slaColor }}">{{ q.sla }}</span>
+              </div>
+              <span style="font-size:14px;font-weight:600;line-height:1.35">{{ q.type }}</span>
+              <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                <span style="width:24px;height:24px;border-radius:999px;background:#EEF2F0;color:#4B5A54;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;flex:none">{{ q.reporterInitials }}</span>
+                <span style="font-size:11.5px;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.line }}</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span style="padding:4px 9px;border-radius:999px;background:#F4F7F5;color:#4B5A54;font-size:10.5px;font-weight:600">{{ q.trip }}</span>
+                <span style="padding:4px 9px;border-radius:999px;background:{{ q.stateBg }};color:{{ q.stateFg }};font-size:10.5px;font-weight:600">{{ q.state }}</span>
+                <span style="padding:4px 9px;border-radius:999px;background:#F4F7F5;color:#8A9993;font-size:10.5px;font-weight:600">{{ q.when }}</span>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="padding:12px 18px;border-top:1px solid #EEF2F0;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span style="font-size:11.5px;color:#8A9993">{{ queueCount }} hồ sơ trong hàng đợi</span>
+          <button type="button" style="height:34px;padding:0 12px;border:1px solid #E4EAE7;border-radius:9px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Nhận 5 hồ sơ tiếp theo</button>
+        </div>
+      </section>
+
+      <!-- DETAIL -->
+      <section class="rs-scroll" style="flex:1 1 520px;min-width:320px;overflow-y:auto;max-height:920px;padding:20px 24px 28px;display:flex;flex-direction:column;gap:14px">
+
+        <!-- case header -->
+        <div style="background:#FFFFFF;border:1px solid {{ caseBorder }};border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+            <span style="width:46px;height:46px;border-radius:15px;background:{{ caseIconBg }};color:{{ caseIconFg }};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex:none">{{ caseMark }}</span>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#0B7A5C">{{ caseId }}</span>
+                <span style="padding:4px 10px;border-radius:999px;background:{{ caseSevBg }};color:{{ caseSevFg }};font-size:10.5px;font-weight:700">{{ caseSeverity }}</span>
+                <span style="padding:4px 10px;border-radius:999px;background:{{ caseStateBg }};color:{{ caseStateFg }};font-size:10.5px;font-weight:700">{{ caseState }}</span>
+              </div>
+              <span style="font-size:18px;font-weight:700;line-height:1.3">{{ caseTitle }}</span>
+              <span style="font-size:12.5px;color:#8A9993">{{ caseMeta }}</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;flex:none">
+              <button type="button" style="height:40px;padding:0 14px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Chuyển cấp</button>
+              <button type="button" style="height:40px;padding:0 14px;border:none;border-radius:11px;background:#0F9D76;color:#FFFFFF;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#0B8A66">Nhận xử lý</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid #EEF2F0;padding-top:13px">
+            <sc-for list="{{ caseChips }}" as="c" hint-placeholder-count="4">
+              <span style="padding:6px 11px;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};font-size:11.5px;font-weight:600">{{ c.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- parties -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+          <sc-for list="{{ parties }}" as="p" hint-placeholder-count="2">
+            <div style="background:#FFFFFF;border:1px solid {{ p.border }};border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <span style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ p.roleColor }}">{{ p.role }}</span>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="width:42px;height:42px;border-radius:999px;background:{{ p.avatarBg }};color:{{ p.avatarFg }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:none">{{ p.initials }}</span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+                  <span style="font-size:11.5px;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.sub }}</span>
+                </span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid #F2F5F4;padding-top:11px">
+                <sc-for list="{{ p.stats }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;justify-content:space-between;gap:10px">
+                    <span style="font-size:12px;color:#8A9993;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.label }}</span>
+                    <span style="font-size:12px;font-weight:600;flex:none;color:{{ s.color }}">{{ s.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" style="flex:1;min-width:96px;height:38px;border:1px solid #E4EAE7;border-radius:10px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Xem hồ sơ</button>
+                <button type="button" style="flex:1;min-width:96px;height:38px;border:1px solid {{ p.actionBorder }};border-radius:10px;background:#FFFFFF;color:{{ p.actionFg }};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#FDECEC">{{ p.action }}</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- description + evidence -->
+        <div style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-size:14.5px;font-weight:600">Nội dung báo cáo</span>
+            <span style="font-size:11.5px;color:#8A9993">{{ reportedAt }}</span>
+          </div>
+          <div style="background:#F7FAF9;border-radius:14px;padding:14px 16px;font-size:13.5px;line-height:1.65;color:#4B5A54">“{{ reportText }}”</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="3">
+              <div style="flex:1;min-width:150px;border:1px solid #EEF2F0;border-radius:14px;padding:12px;display:flex;align-items:center;gap:11px">
+                <span style="width:36px;height:36px;border-radius:11px;background:#F4F7F5;color:#4B5A54;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none">{{ e.mark }}</span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.label }}</span>
+                  <span style="font-size:11px;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.note }}</span>
+                </span>
+                <span style="font-size:11.5px;font-weight:600;color:#0B7A5C;flex:none">Mở</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- trip context -->
+        <div style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-size:14.5px;font-weight:600">Bối cảnh chuyến</span>
+            <a href="#" style="font-size:12.5px;font-weight:600">Mở chuyến {{ tripId }}</a>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap">
+            <div style="flex:1 1 220px;min-width:0;height:140px;border-radius:14px;overflow:hidden;position:relative;background:repeating-linear-gradient(135deg,#E4EBE8 0 8px,#EDF2F0 8px 16px)">
+              <div style="position:absolute;left:0;right:0;top:72px;height:10px;background:#DCE5E1"></div>
+              <svg viewBox="0 0 320 140" width="100%" height="140" preserveAspectRatio="none" style="position:absolute;inset:0" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="26,112 104,84 190,96 292,36" stroke="#0F9D76" stroke-width="5"></polyline>
+              </svg>
+              <span style="position:absolute;left:56%;top:52%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:999px;background:#C22B35;border:3px solid #FFFFFF;box-shadow:0 3px 10px rgba(194,43,53,.4);display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-size:11px;font-weight:700">!</span>
+              <span style="position:absolute;left:10px;bottom:9px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#A6B2AD">vị trí sự việc</span>
+            </div>
+            <div style="flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ tripFacts }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #F4F7F5;padding-bottom:7px">
+                  <span style="font-size:12px;color:#8A9993;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.label }}</span>
+                  <span style="font-size:12.5px;font-weight:600;flex:none;font-family:{{ t.font }}">{{ t.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- timeline -->
+        <div style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <span style="font-size:14.5px;font-weight:600">Nhật ký xử lý</span>
+          <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="4">
+            <div style="display:flex;gap:13px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex:none">
+                <span style="width:22px;height:22px;border-radius:999px;background:{{ t.dotBg }};border:{{ t.dotBorder }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#FFFFFF">{{ t.mark }}</span>
+                <span style="width:2px;flex:1;min-height:{{ t.lineH }};background:{{ t.lineColor }}"></span>
+              </div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-bottom:14px">
+                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <span style="font-size:13px;font-weight:600;color:{{ t.titleColor }}">{{ t.title }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A9993;flex:none">{{ t.when }}</span>
+                </div>
+                <span style="font-size:12px;line-height:1.5;color:#8A9993">{{ t.body }}</span>
+              </div>
+            </div>
+          </sc-for>
+          <div style="border:1.5px solid #E4EAE7;border-radius:14px;padding:13px 15px;font-size:13px;color:#8A9993;min-height:64px">Ghi chú nội bộ — chỉ admin nhìn thấy, được lưu kèm hồ sơ…</div>
+        </div>
+
+        <!-- resolution -->
+        <div style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <span style="font-size:14.5px;font-weight:600">Kết luận hồ sơ</span>
+            <span style="font-size:11.5px;color:#8A9993">Mọi quyết định đều ghi log kèm người thực hiện</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ outcomes }}" as="o" hint-placeholder-count="4">
+              <button type="button" onClick="{{ o.pick }}" style="flex:1;min-width:150px;min-height:76px;border:1.5px solid {{ o.border }};border-radius:14px;background:{{ o.bg }};cursor:pointer;font-family:inherit;text-align:left;padding:13px 14px;display:flex;flex-direction:column;gap:4px" style-hover="border-color:#BDE7D5">
+                <span style="font-size:13px;font-weight:700;color:{{ o.fg }}">{{ o.label }}</span>
+                <span style="font-size:11.5px;line-height:1.45;color:{{ o.noteColor }}">{{ o.note }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid #EEF2F0;padding-top:14px">
+            <button type="button" style="flex:none;height:46px;padding:0 16px;border:1px solid #E4EAE7;border-radius:12px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Yêu cầu thêm thông tin</button>
+            <button type="button" style="flex:none;height:46px;padding:0 16px;border:1px solid #F0C2C2;border-radius:12px;background:#FFFFFF;color:#C22B35;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#FDECEC">Tạm khoá ngay người bị báo</button>
+            <span style="flex:1;min-width:20px"></span>
+            <button type="button" style="flex:none;height:46px;padding:0 22px;border:none;border-radius:12px;background:{{ submitBg }};color:{{ submitFg }};font-family:inherit;font-size:13.5px;font-weight:600;cursor:{{ submitCursor }};box-shadow:{{ submitShadow }}" style-hover="filter:brightness(.95)">{{ submitLabel }}</button>
+          </div>
+          <span style="font-size:11.5px;color:#8A9993">{{ submitNote }}</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;filter&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;open&quot;,&quot;sos&quot;,&quot;overdue&quot;,&quot;mine&quot;,&quot;closed&quot;],&quot;default&quot;:&quot;open&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hàng đợi&quot;},&quot;outcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;verified&quot;,&quot;warning&quot;,&quot;ban&quot;,&quot;dismiss&quot;],&quot;default&quot;:null,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Kết luận&quot;}}">
+class Component extends DCLogic {
+  state = { filter: null, selected: null, outcome: null };
+
+  renderVals() {
+    const p = this.props;
+    const filter = this.state.filter ?? (p.filter ?? 'open');
+    const outcome = this.state.outcome ?? (p.outcome ?? null);
+
+    const nav = [
+      { label: 'Tổng quan', shape: '5px' },
+      { label: 'Người dùng', shape: '999px' },
+      { label: 'Tài xế', shape: '999px' },
+      { label: 'Phương tiện', shape: '4px' },
+      { label: 'Chuyến đi', shape: '5px 5px 5px 1px' },
+      { label: 'Đặt chỗ', shape: '3px' },
+      { label: 'Báo cáo an toàn', shape: '9px 9px 3px 3px', badge: '7', urgent: true, active: true },
+      { label: 'Đánh giá', shape: '2px 9px 2px 9px' },
+      { label: 'Quy tắc chi phí', shape: '6px' },
+      { label: 'Thông báo', shape: '5px 5px 9px 9px', badge: '3' },
+      { label: 'Cài đặt hệ thống', shape: '999px' }
+    ];
+
+    const SEV = {
+      critical: { label: 'Nghiêm trọng', bg: '#FDECEC', fg: '#C22B35', accent: '#C22B35' },
+      high: { label: 'Cao', bg: '#FFF1E4', fg: '#B45812', accent: '#EE7A22' },
+      normal: { label: 'Thường', bg: '#EEF2F0', fg: '#5B6B64', accent: '#C3CDC9' }
+    };
+    const ST = {
+      new: { label: 'Mới', bg: '#FFF1E4', fg: '#B45812' },
+      working: { label: 'Đang xử lý', bg: '#E7F0FB', fg: '#1E5FA8' },
+      waiting: { label: 'Chờ phản hồi', bg: '#EEF2F0', fg: '#5B6B64' },
+      closed: { label: 'Đã đóng', bg: '#E8EFEB', fg: '#44635A' }
+    };
+
+    const defs = [
+      { id: 'SR-1042', sev: 'critical', state: 'working', type: 'Kích hoạt SOS trong chuyến', reporter: 'Nguyễn Minh Anh', ri: 'MA', accused: 'Đỗ Thành An', trip: 'RS-4816', sla: 'Quá hạn 3g', over: true, when: '12/09 07:41', tag: 'sos' },
+      { id: 'SR-1041', sev: 'high', state: 'new', type: 'Lái xe không an toàn', reporter: 'Trần Thuỳ Linh', ri: 'TL', accused: 'Hoàng Tuấn', trip: 'RS-4819', sla: 'Còn 6g', over: false, when: '12/09 07:12', tag: 'driving' },
+      { id: 'SR-1040', sev: 'high', state: 'new', type: 'Đi sai lộ trình đã thoả thuận', reporter: 'Phạm Bảo Ngọc', ri: 'BN', accused: 'Vũ Hải Yến', trip: 'RS-4815', sla: 'Còn 9g', over: false, when: '12/09 06:28', tag: 'route' },
+      { id: 'SR-1039', sev: 'normal', state: 'waiting', type: 'Thu tiền cao hơn mức đề xuất', reporter: 'Lê Quốc Huy', ri: 'QH', accused: 'Đỗ Thành An', trip: 'RS-4811', sla: 'Chờ 18g', over: false, when: '11/09 19:04', tag: 'cost' },
+      { id: 'SR-1038', sev: 'normal', state: 'working', type: 'Hành vi không phù hợp', reporter: 'Nguyễn Minh', ri: 'NM', accused: 'Khách ẩn danh', trip: 'RS-4803', sla: 'Còn 22g', over: false, when: '11/09 17:33', tag: 'behaviour' },
+      { id: 'SR-1037', sev: 'normal', state: 'closed', type: 'Xe không đúng mô tả', reporter: 'Trần Hà My', ri: 'HM', accused: 'Vũ Hải Yến', trip: 'RS-4790', sla: 'Đã đóng', over: false, when: '10/09 08:15', tag: 'vehicle' }
+    ];
+
+    const byFilter = {
+      open: defs.filter(d => d.state !== 'closed'),
+      sos: defs.filter(d => d.tag === 'sos'),
+      overdue: defs.filter(d => d.over),
+      mine: defs.filter(d => d.state === 'working'),
+      closed: defs.filter(d => d.state === 'closed')
+    };
+
+    const list = byFilter[filter] || defs;
+    const selectedId = this.state.selected ?? (list[0] ? list[0].id : defs[0].id);
+    const cur = defs.find(d => d.id === selectedId) || defs[0];
+    const sev = SEV[cur.sev];
+    const st = ST[cur.state];
+
+    const filters = [
+      { id: 'open', label: 'Đang mở' },
+      { id: 'sos', label: 'SOS' },
+      { id: 'overdue', label: 'Quá hạn' },
+      { id: 'mine', label: 'Tôi xử lý' },
+      { id: 'closed', label: 'Đã đóng' }
+    ].map(f => {
+      const on = f.id === filter;
+      return {
+        label: f.label,
+        count: String((byFilter[f.id] || []).length),
+        pick: () => this.setState({ filter: f.id, selected: null, outcome: null }),
+        bg: on ? '#0F9D76' : '#FFFFFF',
+        fg: on ? '#FFFFFF' : '#4B5A54',
+        ring: on ? 'none' : 'inset 0 0 0 1px #E4EAE7',
+        badgeBg: on ? 'rgba(255,255,255,.26)' : '#F4F7F5',
+        badgeFg: on ? '#FFFFFF' : '#8A9993'
+      };
+    });
+
+    const queue = list.map(d => {
+      const s = SEV[d.sev], t = ST[d.state];
+      const on = d.id === selectedId;
+      return {
+        id: d.id, type: d.type, trip: d.trip, when: d.when,
+        severity: s.label, sevBg: s.bg, sevFg: s.fg,
+        accent: on ? '#0F9D76' : s.accent,
+        bg: on ? '#F1FAF6' : '#FFFFFF',
+        state: t.label, stateBg: t.bg, stateFg: t.fg,
+        sla: d.sla, slaColor: d.over ? '#C22B35' : '#8A9993',
+        reporterInitials: d.ri,
+        line: d.reporter + ' → ' + d.accused,
+        pick: () => this.setState({ selected: d.id, outcome: null })
+      };
+    });
+
+    const outcomeDefs = [
+      { id: 'verified', label: 'Xác minh vi phạm', note: 'Ghi vào hồ sơ · trừ điểm uy tín', fg: '#B45812', bg: '#FFF4E9', border: '#F7D9B8' },
+      { id: 'warning', label: 'Cảnh cáo', note: 'Gửi cảnh báo chính thức, chưa hạn chế', fg: '#101B17', bg: '#FFFFFF', border: '#E4EAE7' },
+      { id: 'ban', label: 'Khoá vĩnh viễn', note: 'Chấm dứt tài khoản · cần 2 admin duyệt', fg: '#C22B35', bg: '#FFFBFB', border: '#F0C2C2' },
+      { id: 'dismiss', label: 'Không đủ căn cứ', note: 'Đóng hồ sơ, không ảnh hưởng hai bên', fg: '#4B5A54', bg: '#FFFFFF', border: '#E4EAE7' }
+    ].map(o => {
+      const on = o.id === outcome;
+      return {
+        label: o.label, note: o.note,
+        pick: () => this.setState({ outcome: o.id }),
+        fg: o.fg,
+        noteColor: on ? o.fg : '#8A9993',
+        bg: on ? o.bg : '#FFFFFF',
+        border: on ? o.border : '#EEF2F0'
+      };
+    });
+
+    const chosen = !!outcome;
+    const needsDual = outcome === 'ban';
+
+    return {
+      nav: nav.map(n => ({
+        label: n.label, shape: n.shape,
+        weight: n.active ? '600' : '500',
+        bg: n.active ? 'rgba(15,157,118,.18)' : 'transparent',
+        fg: n.active ? '#FFFFFF' : '#B3C2BB',
+        mark: n.active ? '#2FBF92' : '#4A5F57',
+        badge: n.badge || '',
+        badgeBg: n.badge ? (n.urgent ? '#EE7A22' : 'rgba(255,255,255,.14)') : 'transparent',
+        badgeFg: n.badge ? '#FFFFFF' : 'transparent'
+      })),
+      headerNote: '7 hồ sơ đang mở · 3 quá hạn 24 giờ · cập nhật 09:41',
+      sosCount: '2',
+      sla: [
+        { value: '7', label: 'Hồ sơ đang mở', note: 'trong đó 2 từ SOS', bg: '#FFF1E4', fg: '#B45812' },
+        { value: '3', label: 'Quá hạn SLA', note: 'ngưỡng 24 giờ', bg: '#FDECEC', fg: '#C22B35' },
+        { value: '14', label: 'Người dùng cần xem xét', note: 'điểm dưới 3,5 hoặc huỷ nhiều', bg: '#F4F7F5', fg: '#4B5A54' },
+        { value: '4,2g', label: 'Thời gian phản hồi TB', note: 'mục tiêu dưới 6 giờ', bg: '#DDF3EA', fg: '#0B7A5C' }
+      ],
+      filters, queue,
+      queueCount: String(list.length),
+      caseId: cur.id,
+      caseTitle: cur.type,
+      caseSeverity: sev.label, caseSevBg: sev.bg, caseSevFg: sev.fg,
+      caseState: st.label, caseStateBg: st.bg, caseStateFg: st.fg,
+      caseBorder: cur.sev === 'critical' ? '#F0C2C2' : '#EEF2F0',
+      caseIconBg: cur.sev === 'critical' ? '#FDECEC' : '#FFF1E4',
+      caseIconFg: cur.sev === 'critical' ? '#C22B35' : '#B45812',
+      caseMark: '!',
+      caseMeta: 'Báo cáo bởi ' + cur.reporter + ' · ' + cur.when + ' · chuyến ' + cur.trip,
+      caseChips: [
+        { label: 'SLA: ' + cur.sla, bg: cur.over ? '#FDECEC' : '#F4F7F5', fg: cur.over ? '#C22B35' : '#4B5A54' },
+        { label: 'Người xử lý: Trần Hương', bg: '#F1FAF6', fg: '#0B7A5C' },
+        { label: 'Khu vực: TP.HCM', bg: '#F4F7F5', fg: '#4B5A54' },
+        { label: 'Lần báo cáo thứ 2 về người này', bg: '#FFF1E4', fg: '#B45812' }
+      ],
+      parties: [
+        {
+          role: 'Người báo cáo', roleColor: '#0B7A5C', border: '#EEF2F0',
+          initials: cur.ri, name: cur.reporter, sub: 'Khách · thành viên từ 2026',
+          avatarBg: '#DDF3EA', avatarFg: '#0B7A5C',
+          stats: [
+            { label: 'Chuyến hoàn thành', value: '34', color: '#101B17' },
+            { label: 'Báo cáo đã gửi', value: '1', color: '#101B17' },
+            { label: 'Đánh giá trung bình', value: '4,9', color: '#0B7A5C' }
+          ],
+          action: 'Liên hệ qua hệ thống', actionBorder: '#E4EAE7', actionFg: '#4B5A54'
+        },
+        {
+          role: 'Người bị báo cáo', roleColor: '#C22B35', border: '#F3D6D6',
+          initials: cur.accused.split(' ').map(w => w[0]).slice(-2).join(''), name: cur.accused, sub: 'Tài xế · Hyundai i10 · 51F-••• .77',
+          avatarBg: '#FDECEC', avatarFg: '#C22B35',
+          stats: [
+            { label: 'Chuyến hoàn thành', value: '78', color: '#101B17' },
+            { label: 'Báo cáo bị nhận', value: '2 (30 ngày)', color: '#C22B35' },
+            { label: 'Đánh giá an toàn', value: '4,1', color: '#B45812' }
+          ],
+          action: 'Tạm ngưng đăng chuyến', actionBorder: '#F0C2C2', actionFg: '#C22B35'
+        }
+      ],
+      reportedAt: cur.when,
+      reportText: 'Xe chạy quá tốc độ trên Xa lộ Hà Nội và vượt ẩu hai lần. Tôi có nhắc nhưng tài xế không giảm tốc. Tôi đã bấm SOS và xin xuống sớm ở cầu vượt Linh Trung.',
+      evidence: [
+        { mark: 'GPS', label: 'Nhật ký hành trình', note: '07:25–07:41 · 16 điểm', },
+        { mark: 'IMG', label: '2 ảnh đính kèm', note: 'do người báo tải lên' },
+        { mark: 'CHAT', label: 'Hội thoại trong chuyến', note: '9 tin nhắn · đã lưu' }
+      ],
+      tripId: cur.trip,
+      tripFacts: [
+        { label: 'Mã chuyến', value: cur.trip, font: "'IBM Plex Mono',monospace" },
+        { label: 'Lộ trình', value: 'Thủ Đức → Tân Sơn Nhất', font: 'inherit' },
+        { label: 'Thời điểm sự việc', value: '07:36 · km 8,4', font: "'IBM Plex Mono',monospace" },
+        { label: 'Khách trên xe', value: '2 người', font: 'inherit' },
+        { label: 'Trạng thái chuyến', value: 'Đã huỷ giữa chừng', font: 'inherit' }
+      ],
+      timeline: [
+        { mark: '✓', title: 'Người dùng gửi báo cáo', body: 'Kèm 2 ảnh và nhật ký GPS tự động', when: '07:41', dotBg: '#0F9D76', dotBorder: 'none', titleColor: '#101B17', lineH: '26px', lineColor: '#0F9D76' },
+        { mark: '✓', title: 'Hệ thống gắn mức Nghiêm trọng', body: 'Quy tắc: có kích hoạt SOS trong chuyến', when: '07:41', dotBg: '#0F9D76', dotBorder: 'none', titleColor: '#101B17', lineH: '26px', lineColor: '#0F9D76' },
+        { mark: '✓', title: 'Trần Hương nhận xử lý', body: 'Đã gọi lại người báo cáo, xác nhận an toàn', when: '08:05', dotBg: '#0F9D76', dotBorder: 'none', titleColor: '#101B17', lineH: '26px', lineColor: '#E4EAE7' },
+        { mark: '', title: 'Chờ kết luận', body: 'Đã yêu cầu tài xế giải trình · hạn 13/09 08:00', when: '—', dotBg: '#FFFFFF', dotBorder: '2px solid #DFE7E3', titleColor: '#8A9993', lineH: '0px', lineColor: '#E4EAE7' }
+      ],
+      outcomes: outcomeDefs,
+      submitBg: chosen ? '#0F9D76' : '#EEF2F0',
+      submitFg: chosen ? '#FFFFFF' : '#A6B2AD',
+      submitCursor: chosen ? 'pointer' : 'not-allowed',
+      submitShadow: chosen ? '0 6px 16px rgba(15,157,118,.26)' : 'none',
+      submitLabel: needsDual ? 'Gửi duyệt cấp 2' : 'Lưu kết luận & đóng hồ sơ',
+      submitNote: !chosen
+        ? 'Chọn một kết luận để đóng hồ sơ. Hai bên đều nhận thông báo kết quả, không kèm thông tin liên hệ.'
+        : needsDual
+          ? 'Khoá vĩnh viễn cần admin thứ hai phê duyệt trước khi có hiệu lực.'
+          : 'Kết luận sẽ được gửi tới hai bên và ghi vào hồ sơ người dùng.'
+    };
+  }
+}
+</script>
+</body>
+</html>

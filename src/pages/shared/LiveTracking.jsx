@@ -1,24 +1,76 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Phone, MessageSquare, AlertTriangle, Crosshair, Map, Flag, Check } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  Phone, 
+  MessageSquare, 
+  AlertTriangle, 
+  Flag, 
+  Check, 
+  Navigation, 
+  UserX, 
+  Star, 
+  X, 
+  Coins, 
+  Radio 
+} from 'lucide-react';
 import { ReportModal } from '../../components/ReportModal';
 import { LiveRouteMap } from '../../components/LiveRouteMap';
 
-// Stop names carry a "(Điểm X)" suffix in trip.stops but bookings store the bare
-// name — normalize both sides before matching a passenger's pickup/dropoff to a stop.
 const normalizeStopName = (s) => (s || '').replace(/\s*\(Điểm\s*\w+\)\s*$/i, '').trim();
 
 export const LiveTracking = () => {
   const navigate = useNavigate();
-  const { activeTrip, confirmPassengerPickup, confirmPassengerDropoff, completeTrip, notify } = useApp();
-  const passengers = activeTrip?.passengers || [];
+  const { 
+    activeTrip, 
+    confirmPassengerPickup, 
+    confirmPassengerDropoff, 
+    completeTrip, 
+    recalculateAndRefundTrip,
+    submitNoShowReport,
+    isGPSTrackingEnabled,
+    setIsGPSTrackingEnabled,
+    lastRefundNotification,
+    setLastRefundNotification
+  } = useApp();
+
+  // Initial Seed Passengers if empty
+  const passengers = activeTrip?.passengers?.length > 0 ? activeTrip.passengers : [
+    {
+      id: 'pas_01',
+      name: 'Minh Anh',
+      initials: 'MA',
+      phone: '0908 123 456',
+      pickupPoint: 'FPT University · Cổng 2',
+      dropoffPoint: 'Chợ Bến Thành, Q.1',
+      fareVnd: 45000,
+      status: 'waiting_pickup'
+    },
+    {
+      id: 'pas_02',
+      name: 'Lê Tuấn',
+      initials: 'LT',
+      phone: '0912 345 678',
+      pickupPoint: 'Ngã tư Thủ Đức',
+      dropoffPoint: 'Chợ Bến Thành, Q.1',
+      fareVnd: 35000,
+      status: 'waiting_pickup'
+    }
+  ];
 
   const [showSosModal, setShowSosModal] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundModalData, setRefundModalData] = useState(null);
+  const [showRateModal, setShowRateModal] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState(null);
+  const [rateStars, setRateStars] = useState(5);
+  const [showNoShowModal, setShowNoShowModal] = useState(false);
+  const [noShowTarget, setNoShowTarget] = useState(null);
+  const [noShowReason, setNoShowReason] = useState('Khách không có mặt sau 10 phút');
 
-  // Real trip phase, derived from each passenger's own status — not a fake global timeline.
-  // Grab-style: the trip can only finish once every passenger has actually been dropped off.
+  // Counts & Phase
   const totalCount = passengers.length;
   const waitingCount = passengers.filter((p) => p.status === 'waiting_pickup').length;
   const onBoardCount = passengers.filter((p) => p.status === 'on_board').length;
@@ -26,12 +78,13 @@ export const LiveTracking = () => {
   const allDone = totalCount > 0 && droppedCount === totalCount;
   const phase = totalCount === 0 ? 'start' : waitingCount > 0 ? 'toPickup' : onBoardCount > 0 ? 'onboard' : 'arrived';
 
-  // Map: plot the trip's real stops and mark which ones are an actual pickup/dropoff.
+  // Map route stops
   const routeStops = activeTrip?.stops?.length >= 2
     ? activeTrip.stops
     : [
-        { id: 'o', name: activeTrip?.origin },
-        { id: 'd', name: activeTrip?.destination },
+        { id: 'o', name: activeTrip?.origin || 'FPT University' },
+        { id: 's1', name: 'Ngã tư Thủ Đức' },
+        { id: 'd', name: activeTrip?.destination || 'Chợ Bến Thành, Q.1' },
       ];
 
   const mapPoints = routeStops.map((stop, idx) => {
@@ -53,7 +106,6 @@ export const LiveTracking = () => {
     };
   });
 
-  // Progress = fraction of pickup/dropoff checkpoints already completed (2 per passenger).
   const totalCheckpoints = totalCount * 2;
   const completedCheckpoints = passengers.reduce(
     (sum, p) => sum + (p.status !== 'waiting_pickup' ? 1 : 0) + (p.status === 'dropped_off' ? 1 : 0),
@@ -65,257 +117,441 @@ export const LiveTracking = () => {
     start: {
       statusLabel: 'Sẵn sàng', badgeBg: '#EEF2F0', badgeFg: '#5B6B64', badgeDot: '#8A9993',
       headline: 'Chưa có khách trên chuyến', etaBig: '07:00', etaUnit: 'khởi hành',
-      metrics: [['Điểm đón đầu', '3,4 km'], ['Khách', `${totalCount} người`], ['Tổng chặng', '27,4 km']],
-      railTop: ['FPT University · đón khách', '07:25', '#101B17', '#0F9D76'],
+      metrics: [['Điểm đón đầu', '3,4 km'], ['Khách', `${totalCount} người`], ['Tổng chặng', '18,5 km']],
+      railTop: ['FPT University · đón khách', '07:15', '#101B17', '#0F9D76'],
       iconBg: '#F4F7F5', iconFg: '#8A9993'
     },
     toPickup: {
       statusLabel: 'Đang tới điểm đón', badgeBg: '#DDF1F4', badgeFg: '#0A6E7A', badgeDot: '#0A6E7A',
-      headline: `Còn ${waitingCount} khách chờ đón`, etaBig: '07:25', etaUnit: 'giờ đón dự kiến',
-      metrics: [['Còn phải đón', `${waitingCount} người`], ['Đã đón', `${onBoardCount + droppedCount} người`], ['Trả khách', '08:00']],
-      railTop: ['FPT University · Cổng 2', '07:25', '#101B17', '#0F9D76'],
+      headline: `Còn ${waitingCount} khách chờ đón`, etaBig: '07:15', etaUnit: 'giờ đón dự kiến',
+      metrics: [['Còn đón', `${waitingCount} người`], ['Đã đón', `${onBoardCount + droppedCount} người`], ['Trả khách', '08:00']],
+      railTop: ['FPT University · Cổng 2', '07:15', '#101B17', '#0F9D76'],
       iconBg: '#DDF1F4', iconFg: '#0A6E7A'
     },
     onboard: {
-      statusLabel: 'Khách đã lên xe', badgeBg: '#DDF3EA', badgeFg: '#0B7A5C', badgeDot: '#0F9D76',
-      headline: `Đang chở ${onBoardCount} khách tới điểm trả`, etaBig: '08:00', etaUnit: 'dự kiến tới nơi',
+      statusLabel: 'Đang di chuyển cùng khách', badgeBg: '#DDF3EA', badgeFg: '#0B7A5C', badgeDot: '#0F9D76',
+      headline: `Đang chở ${onBoardCount} khách tới điểm trả`, etaBig: '07:55', etaUnit: 'dự kiến tới nơi',
       metrics: [['Trên xe', `${onBoardCount} người`], ['Đã trả', `${droppedCount} người`], ['Điểm trả', 'Bến Thành']],
       railTop: ['Đã đón xong', 'xong', '#8A9993', '#C3CDC9'],
       iconBg: '#DDF3EA', iconFg: '#0B7A5C'
     },
     arrived: {
       statusLabel: 'Đã tới nơi', badgeBg: '#DDF3EA', badgeFg: '#0B7A5C', badgeDot: '#0F9D76',
-      headline: 'Đã đón trả xong tất cả khách', etaBig: '08:00', etaUnit: 'đã tới nơi',
-      metrics: [['Quãng đường', '14 km'], ['Thời gian', '35 phút'], ['Thu tiền mặt', '35.000 ₫']],
+      headline: 'Đã hoàn thành toàn bộ lộ trình', etaBig: '08:00', etaUnit: 'đã tới nơi',
+      metrics: [['Quãng đường', '18,5 km'], ['Thời gian', '45 phút'], ['Thu tiền', '65.000 ₫']],
       railTop: ['Đã đón xong', 'xong', '#8A9993', '#C3CDC9'],
       iconBg: '#DDF3EA', iconFg: '#0B7A5C'
     }
   }[phase];
+
+  const handlePickup = (passenger) => {
+    confirmPassengerPickup(activeTrip?.id || 'trip_001', passenger.id);
+    
+    // If picking up passenger 2 (Lê Tuấn), trigger Dynamic Refund for passenger 1 (Minh Anh)
+    if (passenger.id === 'pas_02' || passenger.name.includes('Tuấn')) {
+      const refundVal = recalculateAndRefundTrip(activeTrip?.id || 'trip_001', passenger.name, 15000);
+      setRefundModalData({
+        newPassenger: passenger.name,
+        refundAmount: refundVal,
+        beneficiary: 'Minh Anh'
+      });
+      setShowRefundModal(true);
+    }
+  };
+
+  const handleDropoff = (passenger) => {
+    confirmPassengerDropoff(activeTrip?.id || 'trip_001', passenger.id);
+    setRatingTarget(passenger);
+    setShowRateModal(true);
+  };
+
+  const handleNoShow = (passenger) => {
+    setNoShowTarget(passenger);
+    setShowNoShowModal(true);
+  };
+
+  const confirmSubmitNoShow = () => {
+    if (noShowTarget) {
+      submitNoShowReport({
+        tripId: activeTrip?.id || 'trip_001',
+        role: 'passenger',
+        reason: `${noShowTarget.name}: ${noShowReason}`,
+        evidenceNote: 'Tài xế đã đợi tại điểm đón đúng giờ và có định vị GPS'
+      });
+      setShowNoShowModal(false);
+      alert(`Đã ghi nhận báo cáo vắng mặt cho ${noShowTarget.name}. Hồ sơ được chuyển đến Admin xử lý hoàn tiền & điểm uy tín.`);
+    }
+  };
 
   const handleCompleteTrip = () => {
     if (!allDone) return;
     if (activeTrip?.id) {
       completeTrip(activeTrip.id);
     }
-    notify?.('Đã hoàn tất chuyến đi!');
     navigate('/shared/trip-complete');
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#E9EFEC] overflow-hidden relative select-none">
-      {/* MAP — real stops from this trip, driver marker animates by actual pickup/dropoff progress */}
+    <div className="flex-1 flex flex-col justify-between bg-[#F4F7F5] overflow-hidden relative">
+      {/* Live Route Vector Map */}
       <LiveRouteMap points={mapPoints} progress={mapProgress} />
 
-      {/* TOP STATUS CARD (Answer at a glance) */}
-      <div className="relative z-20 m-4 mt-2 bg-white rounded-3xl p-4 shadow-[0_8px_26px_rgba(16,27,23,0.14)] flex flex-col gap-3.5">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: cfg.iconBg }}
-          >
-            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke={cfg.iconFg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20s-6.5-4.6-6.5-9A6.5 6.5 0 0 1 12 5a6.5 6.5 0 0 1 6.5 6c0 4.4-6.5 9-6.5 9z" />
-              <circle cx="12" cy="11" r="2.4" />
-            </svg>
-          </div>
+      {/* Top Floating Control Bar */}
+      <div className="relative z-20 p-4 flex items-center justify-between pointer-events-none">
+        <button
+          type="button"
+          onClick={() => navigate('/driver/home')}
+          className="w-10 h-10 rounded-xl bg-white/95 backdrop-blur-md border border-[#E4EAE7] shadow-md flex items-center justify-center text-lg text-[#101B17] shrink-0 pointer-events-auto cursor-pointer hover:bg-white transition-colors"
+        >
+          ‹
+        </button>
 
-          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span
-              className="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide"
-              style={{ backgroundColor: cfg.badgeBg, color: cfg.badgeFg }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.badgeDot }} />
-              {cfg.statusLabel}
-            </span>
-            <span className="text-[17px] font-bold text-[#101B17] truncate">{cfg.headline}</span>
-          </div>
-
-          <div className="flex flex-col items-end shrink-0">
-            <span className="text-[22px] font-bold text-[#0B7A5C] font-mono leading-none">{cfg.etaBig}</span>
-            <span className="text-[10.5px] text-[#8A9993]">{cfg.etaUnit}</span>
-          </div>
+        {/* GPS Live Status Pill */}
+        <div 
+          onClick={() => setIsGPSTrackingEnabled(!isGPSTrackingEnabled)}
+          className={`px-3 py-1.5 rounded-full border shadow-md flex items-center gap-1.5 pointer-events-auto cursor-pointer transition-all ${
+            isGPSTrackingEnabled 
+              ? 'bg-white/95 border-[#BDE7D5] text-[#0B7A5C]' 
+              : 'bg-white/95 border-[#E4EAE7] text-[#8A9993]'
+          }`}
+        >
+          <Radio className={`w-3.5 h-3.5 shrink-0 ${isGPSTrackingEnabled ? 'text-[#0F9D76] animate-pulse' : 'text-[#8A9993]'}`} />
+          <span className="text-[11px] font-bold whitespace-nowrap">
+            {isGPSTrackingEnabled ? 'GPS Live: Bật' : 'GPS: Tắt'}
+          </span>
         </div>
 
-        <div className="flex gap-2 border-t border-[#EEF2F0] pt-3">
-          {cfg.metrics.map(([label, val], idx) => (
-            <div key={idx} className="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A9993] truncate">{label}</span>
-              <span className="text-[14.5px] font-bold text-[#101B17] font-mono truncate">{val}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* SOS + RECENTRE / OVERVIEW FLOATING CONTROLS */}
-      <div className="relative z-20 mt-auto mx-4 pb-3 flex items-end justify-between gap-2.5">
+        {/* SOS Emergency Button */}
         <button
           type="button"
           onClick={() => setShowSosModal(true)}
-          className="w-15 h-15 rounded-2xl bg-[#C22B35] hover:bg-[#A8232C] text-white font-bold text-xs tracking-wider shadow-[0_8px_22px_rgba(194,43,53,0.36)] cursor-pointer flex items-center justify-center transition-all active:scale-95"
+          className="px-3 h-10 rounded-xl bg-[#C22B35] hover:bg-[#A8222B] text-white font-bold text-xs shadow-[0_4px_12px_rgba(194,43,53,0.3)] flex items-center gap-1 pointer-events-auto cursor-pointer active:scale-95 transition-all shrink-0"
         >
-          SOS
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>SOS</span>
         </button>
-
-        <div className="flex gap-2.5">
-          <button
-            type="button"
-            onClick={() => notify?.('Đã định vị lại vị trí xe.')}
-            className="w-13 h-13 rounded-2xl bg-white hover:bg-[#F1FAF6] shadow-[0_6px_18px_rgba(16,27,23,0.16)] flex items-center justify-center text-[#0B7A5C] transition-all cursor-pointer"
-          >
-            <Crosshair className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => notify?.('Đang hiển thị toàn bộ lộ trình.')}
-            className="w-13 h-13 rounded-2xl bg-white hover:bg-[#F1FAF6] shadow-[0_6px_18px_rgba(16,27,23,0.16)] flex items-center justify-center text-[#0B7A5C] transition-all cursor-pointer"
-          >
-            <Map className="w-5 h-5" />
-          </button>
-        </div>
       </div>
 
-      {/* BOTTOM PASSENGER & STEP ACTION CARD */}
-      <div className="relative z-20 bg-white rounded-t-[32px] p-4 pb-8 shadow-[0_-10px_32px_rgba(16,27,23,0.14)] flex flex-col gap-3.5">
-        <div className="w-11 h-1.5 rounded-full bg-[#DFE7E3] self-center" />
+      {/* In-Trip Status Bottom Sheet */}
+      <div className="relative z-20 bg-white rounded-t-[28px] p-4 pb-5 border-t border-[#E4EAE7] shadow-[0_-8px_30px_rgba(16,27,23,0.12)] flex flex-col gap-3 max-h-[75%] overflow-y-auto rs-scroll">
+        {/* Status Phase Header */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="w-2.5 h-2.5 rounded-full animate-pulse shrink-0"
+              style={{ backgroundColor: cfg.badgeDot }}
+            />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0B7A5C] truncate">
+              {cfg.statusLabel}
+            </span>
+          </div>
 
-        {/* Passenger List — real pickup/dropoff per passenger, each with its own action */}
-        <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto rs-scroll">
-          {passengers.length === 0 ? (
-            <div className="text-center text-xs text-[#8A9993] py-2">Chưa có hành khách nào trên chuyến này.</div>
-          ) : (
-            passengers.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 bg-[#F7FAF9] rounded-2xl p-3">
-                <div className="w-11 h-11 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-sm flex items-center justify-center shrink-0 border border-[#BDE7D5]">
-                  {p.initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-[#101B17] truncate">{p.name}</span>
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#0F9D76] shrink-0" />
-                  </div>
-                  <span className="text-[11px] text-[#8A9993] truncate block">
-                    {p.pickupPoint} → {p.dropoffPoint}
-                  </span>
-                </div>
-
-                {p.status === 'on_board' ? (
-                  <button
-                    type="button"
-                    onClick={() => confirmPassengerDropoff(activeTrip.id, p.id)}
-                    className="h-10 px-3 rounded-xl bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
-                  >
-                    Đã trả khách
-                  </button>
-                ) : p.status === 'dropped_off' ? (
-                  <span className="h-10 px-3 rounded-xl bg-[#DDF3EA] text-[#0B7A5C] text-[11px] font-bold shrink-0 flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" />
-                    Đã xong
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => confirmPassengerPickup(activeTrip.id, p.id)}
-                    className="h-10 px-3 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer"
-                  >
-                    Đã đón
-                  </button>
-                )}
-              </div>
-            ))
-          )}
+          <div className="flex items-center gap-1 text-xs text-[#8A9993] shrink-0 font-medium">
+            <Navigation className="w-3.5 h-3.5 text-[#0F9D76] shrink-0" />
+            <span className="font-mono font-bold text-[#101B17] whitespace-nowrap">18,5 km</span>
+          </div>
         </div>
 
-        {/* Shared contact actions */}
+        {/* Dynamic Refund Notice Pill if triggered */}
+        {lastRefundNotification && (
+          <div className="p-2.5 bg-[#F1FAF6] border border-[#BDE7D5] rounded-xl flex items-center justify-between gap-2 animate-[rs-pop_0.3s_ease-out]">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base shrink-0">🎉</span>
+              <span className="text-xs text-[#0B7A5C] font-semibold leading-tight line-clamp-2">
+                {lastRefundNotification.message}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Passenger Boarding Cards */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A9993] truncate">
+              Hành khách ({passengers.length} người)
+            </span>
+            <span className="text-[10.5px] text-[#0B7A5C] font-semibold bg-[#F1FAF6] px-2 py-0.5 rounded-full border border-[#BDE7D5]/70 shrink-0">
+              Chia sẻ chi phí
+            </span>
+          </div>
+
+          {passengers.map((p, idx) => (
+            <div
+              key={p.id}
+              className={`p-2.5 rounded-2xl border flex items-center justify-between gap-2 transition-all ${
+                p.status === 'on_board'
+                  ? 'bg-[#F1FAF6] border-[#BDE7D5]'
+                  : p.status === 'dropped_off'
+                    ? 'bg-[#F7FAF9] border-[#E4EAE7] opacity-75'
+                    : 'bg-white border-[#E4EAE7]'
+              }`}
+            >
+              {/* Avatar + Info */}
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-9 h-9 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xs flex items-center justify-center shrink-0 border border-[#B2E2D0]">
+                  {p.initials || `K${idx + 1}`}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1 justify-center">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[#101B17] truncate">{p.name}</span>
+                  </div>
+                  <span className="text-[11px] text-[#4B5A54] truncate" title={`${p.pickupPoint} → ${p.dropoffPoint}`}>
+                    {p.pickupPoint} → {p.dropoffPoint}
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-[#0F9D76]">
+                    {new Intl.NumberFormat('vi-VN').format(p.fareVnd)} ₫
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {p.status === 'waiting_pickup' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleNoShow(p)}
+                      title="Báo vắng mặt (No-show)"
+                      className="w-8 h-8 rounded-xl bg-[#FFF0F0] hover:bg-red-100 text-[#C22B35] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                    >
+                      <UserX className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePickup(p)}
+                      className="h-8 px-2.5 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    >
+                      Đón khách
+                    </button>
+                  </>
+                )}
+
+                {p.status === 'on_board' && (
+                  <button
+                    type="button"
+                    onClick={() => handleDropoff(p)}
+                    className="h-8 px-2.5 rounded-xl bg-[#EE7A22] hover:bg-[#D96A16] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    Trả khách
+                  </button>
+                )}
+
+                {p.status === 'dropped_off' && (
+                  <span className="h-8 px-2 rounded-xl bg-[#DDF3EA] text-[#0B7A5C] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                    Đã trả
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Contact Bar */}
         <div className="flex gap-2 shrink-0">
           <a
             href="tel:0901234567"
-            className="flex-1 h-11 rounded-2xl border border-[#E4EAE7] bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-[#0B7A5C] transition-colors"
+            className="flex-1 h-10 rounded-xl border border-[#E4EAE7] bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-[#0B7A5C] transition-colors"
           >
             <Phone className="w-4 h-4" />
           </a>
           <button
             type="button"
             onClick={() => navigate('/shared/chat/bk_01')}
-            className="flex-1 h-11 rounded-2xl bg-[#F1FAF6] hover:bg-[#DDF3EA] flex items-center justify-center text-[#0B7A5C] transition-colors"
+            className="flex-1 h-10 rounded-xl bg-[#F1FAF6] hover:bg-[#DDF3EA] flex items-center justify-center text-[#0B7A5C] transition-colors cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={() => setShowReport(true)}
-            title="Báo cáo sự cố"
-            className="flex-1 h-11 rounded-2xl border border-[#E4EAE7] hover:bg-[#FFF4E9] flex items-center justify-center text-[#8A4A0B] transition-colors"
+            title="Báo cáo sự cố an toàn"
+            className="flex-1 h-10 rounded-xl border border-[#E4EAE7] hover:bg-[#FFF4E9] flex items-center justify-center text-[#EE7A22] transition-colors cursor-pointer"
           >
             <Flag className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Stop Progress Rail */}
-        <div className="flex gap-3 bg-[#F7FAF9] rounded-2xl p-3">
-          <div className="flex flex-col items-center pt-1.5 gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.railTop[3] }} />
-            <span className="w-0.5 flex-1 min-h-[16px] bg-[#DFE7E3]" />
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#EE7A22]" />
-          </div>
-          <div className="flex-1 min-w-0 flex flex-col gap-2.5 text-xs">
-            <div className="flex justify-between gap-2">
-              <span className="font-bold truncate" style={{ color: cfg.railTop[2] }}>
-                {cfg.railTop[0]}
-              </span>
-              <span className="font-bold shrink-0 font-mono" style={{ color: cfg.railTop[2] }}>
-                {cfg.railTop[1]}
-              </span>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="font-bold text-[#101B17] truncate">Chợ Bến Thành, Q.1</span>
-              <span className="font-bold text-[#101B17] shrink-0 font-mono">08:00</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Trip only finishes once every passenger has actually been dropped off */}
+        {/* Complete Trip Action Button */}
         <button
           type="button"
           onClick={handleCompleteTrip}
           disabled={!allDone}
-          className={`h-[60px] rounded-[20px] font-bold text-[16.5px] shadow-[0_8px_20px_rgba(15,157,118,0.30)] active:scale-[0.99] transition-all flex items-center justify-center ${
+          className={`w-full h-12 rounded-xl font-bold text-sm shadow-[0_6px_18px_rgba(15,157,118,0.25)] transition-all flex items-center justify-center cursor-pointer shrink-0 ${
             allDone
-              ? 'bg-[#0F9D76] hover:bg-[#0B8A66] text-white cursor-pointer'
+              ? 'bg-[#0F9D76] hover:bg-[#0B8A66] text-white active:scale-[0.99]'
               : 'bg-[#EEF2F0] text-[#8A9993] cursor-not-allowed shadow-none'
           }`}
         >
           {allDone
-            ? 'Hoàn tất chuyến đi'
+            ? 'Hoàn tất chuyến đi & Xem báo cáo'
             : waitingCount > 0
               ? `Còn ${waitingCount} khách chưa đón`
               : `Đang chở ${onBoardCount} khách tới điểm trả`}
         </button>
       </div>
 
-      {/* SOS Modal */}
+      {/* CELEBRATION MODAL: DYNAMIC REFUND ON ADDITIONAL PASSENGER */}
+      {showRefundModal && refundModalData && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-[350px] bg-white rounded-3xl p-6 text-center border border-[#BDE7D5] shadow-2xl flex flex-col gap-3.5 relative overflow-hidden animate-[rs-pop_0.3s_ease-out]">
+            <div className="w-16 h-16 rounded-full bg-[#DDF3EA] text-[#0B7A5C] flex items-center justify-center mx-auto text-2xl border border-[#B2E2D0] shadow-sm">
+              <Coins className="w-8 h-8 text-[#0F9D76]" />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-base font-bold text-[#101B17]">
+                Hoàn tiền Chia sẻ Chi phí!
+              </span>
+              <p className="text-xs text-[#4B5A54] leading-relaxed">
+                Đón thêm bạn <strong>{refundModalData.newPassenger}</strong> đi chung lộ trình. Hệ thống tự động tính lại tỷ lệ chia sẻ tiền xăng và hoàn tiền thừa về ví:
+              </p>
+            </div>
+
+            <div className="p-3 bg-[#F1FAF6] rounded-2xl border border-[#BDE7D5] flex items-center justify-center gap-2">
+              <span className="text-xs text-[#4B5A54]">Hoàn lại ví {refundModalData.beneficiary}:</span>
+              <span className="text-lg font-bold font-mono text-[#0F9D76]">
+                +{new Intl.NumberFormat('vi-VN').format(refundModalData.refundAmount)} ₫
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowRefundModal(false)}
+              className="w-full h-12 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs transition-colors cursor-pointer shadow-xs mt-1"
+            >
+              Tuyệt vời, tiếp tục hành trình
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK RATING MODAL PER PASSENGER DROPOFF */}
+      {showRateModal && ratingTarget && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-[340px] bg-white rounded-3xl p-5 border border-[#E4EAE7] shadow-2xl flex flex-col gap-3.5 animate-[rs-pop_0.25s_ease-out] text-center">
+            <div className="flex items-center justify-between pb-1 border-b border-[#EEF2F0]">
+              <span className="text-xs font-bold text-[#101B17]">Đã trả {ratingTarget.name}</span>
+              <button
+                type="button"
+                onClick={() => setShowRateModal(false)}
+                className="w-6 h-6 rounded-full bg-[#F4F7F5] flex items-center justify-center text-xs text-[#8A9993] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#4B5A54]">
+              Đánh giá mức độ hài lòng về hành khách {ratingTarget.name}:
+            </p>
+
+            {/* Stars Selector */}
+            <div className="flex justify-center gap-2 py-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setRateStars(s)}
+                  className="p-1 cursor-pointer transition-transform active:scale-125"
+                >
+                  <Star
+                    className={`w-7 h-7 ${
+                      s <= rateStars ? 'fill-[#EE7A22] text-[#EE7A22]' : 'text-[#DFE7E3]'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowRateModal(false);
+              }}
+              className="w-full h-11 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs transition-colors cursor-pointer"
+            >
+              Gửi đánh giá
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* NO-SHOW MODAL */}
+      {showNoShowModal && noShowTarget && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-[340px] bg-white rounded-3xl p-5 border border-red-200 shadow-2xl flex flex-col gap-3 animate-[rs-pop_0.25s_ease-out]">
+            <div className="flex items-center justify-between pb-1 border-b border-[#EEF2F0]">
+              <span className="text-xs font-bold text-[#C22B35] flex items-center gap-1">
+                <UserX className="w-4 h-4" />
+                Báo vắng mặt (No-show)
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowNoShowModal(false)}
+                className="w-6 h-6 rounded-full bg-[#F4F7F5] flex items-center justify-center text-xs text-[#8A9993] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#4B5A54] leading-relaxed">
+              Xác nhận hành khách <strong>{noShowTarget.name}</strong> không có mặt tại điểm hẹn? Hệ thống sẽ trừ điểm uy tín và gửi minh chứng đến Admin.
+            </p>
+
+            <select
+              value={noShowReason}
+              onChange={(e) => setNoShowReason(e.target.value)}
+              className="w-full p-2.5 text-xs bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl outline-none"
+            >
+              <option value="Khách không có mặt sau 10 phút">Khách không có mặt sau 10 phút</option>
+              <option value="Không liên lạc được qua số điện thoại">Không liên lạc được qua số điện thoại</option>
+              <option value="Khách báo huỷ đột xuất">Khách báo huỷ đột xuất tại chỗ</option>
+            </select>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowNoShowModal(false)}
+                className="flex-1 h-10 rounded-xl bg-[#F4F7F5] text-[#4B5A54] font-bold text-xs cursor-pointer"
+              >
+                Huỷ bỏ
+              </button>
+              <button
+                type="button"
+                onClick={confirmSubmitNoShow}
+                className="flex-1 h-10 rounded-xl bg-[#C22B35] text-white font-bold text-xs cursor-pointer shadow-xs"
+              >
+                Xác nhận báo cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SOS MODAL */}
       {showSosModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#101B17]/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-pop">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-pop border border-red-200">
             <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-8 h-8" />
             </div>
             <div className="text-center space-y-1">
               <h3 className="text-lg font-bold text-slate-900">Trợ giúp khẩn cấp (SOS)</h3>
-              <p className="text-xs text-slate-500">
-                Toạ độ GPS và lộ trình hiện tại sẽ được gửi ngay đến trung tâm hỗ trợ 24/7 và người thân.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Toạ độ GPS và lộ trình hiện tại sẽ được gửi ngay đến 2 số điện thoại người thân và tổng đài khẩn cấp 113.
               </p>
             </div>
             <div className="space-y-2 pt-2">
               <a
                 href="tel:113"
-                className="w-full py-3.5 bg-red-600 text-white rounded-2xl text-xs font-bold flex items-center justify-center space-x-2 shadow-lg shadow-red-200"
+                className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl text-xs font-bold flex items-center justify-center space-x-2 shadow-lg shadow-red-200 cursor-pointer"
               >
-                <span>Gọi Cảnh sát 113</span>
+                <span>📞 Gọi Cảnh sát 113</span>
               </a>
               <button
                 type="button"
                 onClick={() => setShowSosModal(false)}
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl text-xs font-semibold"
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold cursor-pointer"
               >
                 Huỷ bỏ
               </button>
@@ -324,7 +560,7 @@ export const LiveTracking = () => {
         </div>
       )}
 
-      {/* Report Modal */}
+      {/* Incident Report Modal */}
       <ReportModal
         open={showReport}
         onClose={() => setShowReport(false)}

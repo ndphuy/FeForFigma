@@ -153,11 +153,62 @@ export const MobileFrame = ({ children, hideNav = false }) => {
             <span className="hidden md:inline">Reset</span>
           </button>
         </div>
+
+        {/* 5 SCENARIO QUICK SWITCHER FOR THESIS PRESENTATION */}
+        <div className="w-full pt-2.5 mt-1 border-t border-[#233830] flex items-center justify-between gap-2 overflow-x-auto rs-scroll">
+          <span className="text-[11px] font-bold text-[#3EAF89] uppercase tracking-wider shrink-0 flex items-center gap-1">
+            <span>🎯 Kịch bản Demo:</span>
+          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => {
+                switchRole('driver');
+                navigate('/driver/create-trip');
+              }}
+              className="px-2.5 py-1 rounded-lg bg-[#1F3A31] hover:bg-[#2B4E43] text-xs font-semibold text-[#7FDCC0] border border-[#2B4E43] transition-colors whitespace-nowrap cursor-pointer"
+            >
+              1. Tạo chuyến đa điểm
+            </button>
+            <button
+              onClick={() => {
+                switchRole('passenger');
+                navigate('/passenger/results');
+              }}
+              className="px-2.5 py-1 rounded-lg bg-[#1F3A31] hover:bg-[#2B4E43] text-xs font-semibold text-[#7FDCC0] border border-[#2B4E43] transition-colors whitespace-nowrap cursor-pointer"
+            >
+              2. Tìm chuyến & Điểm đón
+            </button>
+            <button
+              onClick={() => {
+                switchRole('driver');
+                navigate('/driver/active-trip');
+              }}
+              className="px-2.5 py-1 rounded-lg bg-[#0F9D76] hover:bg-[#0B8A66] text-xs font-bold text-white shadow-xs transition-colors whitespace-nowrap cursor-pointer animate-pulse"
+            >
+              3. Live Trip & Hoàn tiền
+            </button>
+            <button
+              onClick={() => {
+                switchRole('driver');
+                navigate('/driver/kyc');
+              }}
+              className="px-2.5 py-1 rounded-lg bg-[#1F3A31] hover:bg-[#2B4E43] text-xs font-semibold text-[#7FDCC0] border border-[#2B4E43] transition-colors whitespace-nowrap cursor-pointer"
+            >
+              4. Quản lý Xe & Modal
+            </button>
+            <button
+              onClick={() => navigate('/admin/overview')}
+              className="px-2.5 py-1 rounded-lg bg-[#1A2A38] hover:bg-[#243A4D] text-xs font-semibold text-[#78B4E8] border border-[#2A445C] transition-colors whitespace-nowrap cursor-pointer"
+            >
+              5. Admin Portal
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* ================= MOBILE DEVICE FRAME (390 x 844) ================= */}
       <div className="relative flex flex-col items-center">
-        <div className="w-[390px] h-[844px] max-h-[844px] bg-white rounded-[46px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_12px_#1e293b,0_0_0_14px_#334155] border-[3px] border-slate-900 overflow-hidden flex flex-col relative z-20">
+        <div className="w-[390px] h-[844px] max-h-[844px] bg-white rounded-[46px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_12px_#1e293b,0_0_0_14px_#334155] border-[3px] border-slate-900 overflow-hidden flex flex-col relative z-20 [transform:translateZ(0)]">
           {/* Dynamic Island */}
           <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-6 bg-slate-950 rounded-full z-50 flex items-center justify-end px-3">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

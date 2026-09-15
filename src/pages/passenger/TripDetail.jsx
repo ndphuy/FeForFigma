@@ -1,12 +1,13 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Star, Car, Users, Info, ArrowRight, Clock, Sparkles } from 'lucide-react';
+import { ShieldCheck, Star, Car, Users, Info, ArrowRight, Clock } from 'lucide-react';
+import { RouteMapPreview } from '../../components/RouteMapPreview';
 
 export const TripDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { trips, setActiveTripId } = useApp();
+  const { trips, setActiveTripId, wishlistDrivers = [], toggleWishlist = () => { } } = useApp();
 
   const trip = trips.find((t) => t.id === id) || trips[0];
 
@@ -16,6 +17,22 @@ export const TripDetail = () => {
   };
 
   const formattedPrice = new Intl.NumberFormat('vi-VN').format(trip.priceVnd);
+
+  const cleanShortName = (str, fallback = '') => {
+    if (!str) return fallback;
+    return str
+      .replace(/\s*\(.*?\)\s*/g, '')
+      .replace(/University/gi, '')
+      .replace(/HCMC/gi, '')
+      .replace(/Chợ/gi, '')
+      .replace(/,.*$/, '')
+      .trim() || fallback;
+  };
+
+  const mapPoints = [
+    { label: `Điểm đón · ${cleanShortName(trip.origin, 'ĐH FPT')}`, type: 'origin', isPrimary: true },
+    { label: `Điểm trả · ${cleanShortName(trip.destination, 'Bến Thành')}`, type: 'destination', isPrimary: true }
+  ];
 
   return (
     <div className="flex-1 flex flex-col bg-[#F4F7F5] overflow-hidden relative">
@@ -37,6 +54,14 @@ export const TripDetail = () => {
 
       {/* Main Scroll Area */}
       <div className="flex-1 overflow-y-auto rs-scroll p-4 pb-28 flex flex-col gap-3.5">
+        {/* Visual Route Map Preview */}
+        <RouteMapPreview
+          points={mapPoints}
+          meta={`${trip.distanceKm || 18.5} km · ${trip.departureTime || '07:00'}`}
+          tag="Chặng đi của bạn"
+          heightClass="h-60 min-h-[240px] shrink-0"
+        />
+
         {/* Driver & Vehicle Card */}
         <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-3.5">
           <div className="flex items-center gap-3.5">
@@ -54,9 +79,18 @@ export const TripDetail = () => {
                 <span>{trip.driverTripsCount || 96} chuyến hoàn thành</span>
               </div>
             </div>
-            <span className="px-2.5 py-1 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] text-xs font-bold font-mono shrink-0">
-              {trip.matchPercentage}% trùng
-            </span>
+
+            <button
+              type="button"
+              onClick={() => toggleWishlist(trip.driverId || 'drv_01')}
+              className={`p-2 rounded-xl flex items-center gap-1 text-xs font-bold transition-all cursor-pointer shrink-0 ${wishlistDrivers.includes(trip.driverId || 'drv_01')
+                  ? 'bg-[#FFF0F0] text-[#C22B35] border border-[#F7D9D9]'
+                  : 'bg-[#F4F7F5] text-[#8A9993] hover:text-[#C22B35]'
+                }`}
+              title="Lưu tài xế yêu thích (Wishlist)"
+            >
+              <span>{wishlistDrivers.includes(trip.driverId || 'drv_01') ? '❤️ Đã lưu' : '🤍 Lưu'}</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-3 pt-3 border-t border-[#EEF2F0]">

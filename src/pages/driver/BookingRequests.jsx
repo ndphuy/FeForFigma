@@ -26,7 +26,7 @@ export const BookingRequests = () => {
   };
 
   return (
-    <div className="w-full flex flex-col bg-[#F4F7F5] pb-6">
+    <div className="w-full flex-1 min-h-full flex flex-col bg-[#F4F7F5] pb-6 relative">
       {/* Header matching Booking Requests */}
       <div className="flex-none bg-white p-4 pb-3 border-b border-[#EEF2F0] flex flex-col gap-2.5">
         <div className="flex items-center gap-2.5">

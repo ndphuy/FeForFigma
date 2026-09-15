@@ -11,18 +11,18 @@ export const AcceptPassengerSheet = ({ request, onClose, onAccept }) => {
   const detourMin = request.detourMin || '+3 phút';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#101B17]/50 backdrop-blur-[2px] transition-all animate-[fadeIn_0.2s_ease-out]">
+    <div className="absolute inset-0 z-50 flex items-end justify-center bg-[#101B17]/50 backdrop-blur-[2px] transition-all animate-[fadeIn_0.2s_ease-out]">
       {/* Backdrop tap to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Sheet Modal */}
-      <div className="relative w-full max-w-[390px] bg-white rounded-t-[32px] shadow-[0_-12px_40px_rgba(16,27,23,0.22)] flex flex-col max-h-[90vh] z-10 animate-[slideUp_0.25s_ease-out]">
+      <div className="relative w-full bg-white rounded-t-[32px] shadow-[0_-12px_40px_rgba(16,27,23,0.22)] flex flex-col max-h-[88%] z-10 animate-[slideUp_0.25s_ease-out] overflow-hidden">
         {/* Handle bar */}
         <div className="flex-none pt-3 pb-1.5 flex justify-center">
           <span className="w-10 h-1 rounded-full bg-[#DFE7E3]" />
         </div>
 
-        <div className="flex-1 overflow-y-auto rs-scroll px-4.5 py-2 flex flex-col gap-3.5">
+        <div className="flex-1 overflow-y-auto rs-scroll px-5 py-2.5 flex flex-col gap-3.5">
           {/* Passenger Header */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-[#DDF3EA] text-[#0B7A5C] flex items-center justify-center text-base font-bold shrink-0 border border-[#BDE7D5]">
@@ -110,7 +110,7 @@ export const AcceptPassengerSheet = ({ request, onClose, onAccept }) => {
         </div>
 
         {/* Buttons */}
-        <div className="flex-none border-t border-[#F2F5F4] p-3.5 pb-5 flex flex-col gap-2">
+        <div className="flex-none border-t border-[#F2F5F4] px-5 py-3.5 pb-6 flex flex-col gap-2">
           <button
             type="button"
             onClick={onAccept}

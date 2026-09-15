@@ -216,26 +216,24 @@ export const DriverHome = () => {
               </button>
             </div>
 
-            {canModifyTrip && (
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setShowReschedule(true)}
-                  className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#4B5A54] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#BDE7D5] hover:text-[#0B7A5C] active:scale-[0.99] transition-all"
+                  onClick={() => navigate('/shared/trip-detail/hist_drv_01')}
+                  className="h-11 rounded-2xl border-[1.5px] border-[#BDE7D5] bg-[#F1FAF6] text-[#0B7A5C] text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-[#DDF3EA] active:scale-[0.99] transition-all cursor-pointer"
                 >
                   <CalendarClock className="w-3.5 h-3.5" />
-                  Đổi lịch
+                  Chi tiết chuyến đi
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCancel(true)}
-                  className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all"
+                  className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all cursor-pointer"
                 >
                   <Ban className="w-3.5 h-3.5" />
                   Huỷ chuyến
                 </button>
               </div>
-            )}
           </div>
         </section>
 
@@ -282,7 +280,7 @@ export const DriverHome = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-[15px] font-semibold text-[#101B17]">Lịch đi làm cố định</h2>
-              <span className="px-2 py-1 rounded-lg bg-[#F1FAF6] text-[#0B7A5C] text-[10px] font-bold tracking-[0.06em]">AI</span>
+              <span className="px-2 py-0.5 rounded-lg bg-[#DDF3EA] text-[#0B7A5C] text-[10.5px] font-semibold">Tự động</span>
             </div>
             <button
               type="button"

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { ShieldCheck, MapPin, AlertTriangle, Check, ArrowRight } from 'lucide-react';
+import { AppMap } from '../../components/AppMap';
 
 export const PickupPicker = () => {
   const navigate = useNavigate();
@@ -24,6 +25,17 @@ export const PickupPicker = () => {
     navigate('/passenger/results');
   };
 
+  // Map points for AppMap in picker mode
+  const mapPoints = filteredPoints.map((pt, idx) => ({
+    id: pt.id,
+    name: pt.name?.split('(')[0]?.trim() || pt.name,
+    label: pt.name?.split('(')[0]?.trim() || pt.name,
+    isSafe: pt.isSafe,
+    type: pt.isSafe ? 'safe' : 'warning',
+    x: idx === 0 ? 80 : idx === 1 ? 175 : idx === 2 ? 260 : 330,
+    y: idx === 0 ? 145 : idx === 1 ? 115 : idx === 2 ? 85 : 60,
+  }));
+
   return (
     <div className="flex-1 flex flex-col bg-[#F4F7F5] overflow-hidden relative">
       {/* Header matching Pickup Location Picker.dc.html */}
@@ -31,7 +43,7 @@ export const PickupPicker = () => {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-11 h-11 border border-[#EEF2F0] rounded-2xl bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-lg text-[#101B17] shrink-0 transition-colors"
+          className="w-11 h-11 border border-[#EEF2F0] rounded-2xl bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-lg text-[#101B17] shrink-0 transition-colors cursor-pointer"
         >
           ‹
         </button>
@@ -44,39 +56,27 @@ export const PickupPicker = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto rs-scroll p-4 pb-28 flex flex-col gap-3.5">
-        {/* Interactive Map Canvas Preview */}
-        <div className="h-56 rounded-3xl overflow-hidden relative bg-[repeating-linear-gradient(135deg,#E4EBE8_0_8px,#EDF2F0_8px_16px)] border border-[#E4EAE7] shadow-inner">
-          <div className="absolute left-0 right-0 top-24 h-3 bg-[#DCE5E1]" />
-          <div className="absolute top-0 bottom-0 left-28 width-2.5 bg-[#DCE5E1]" />
-          <div className="absolute right-12 bottom-10 w-24 h-16 rounded-xl bg-[#DFEDE6]" />
+        {/* Interactive Unified Map Canvas */}
+        <AppMap
+          mode="picker"
+          points={mapPoints}
+          selectedPointId={selectedPointId}
+          onSelectPoint={(pointId) => setSelectedPointId(typeof pointId === 'object' ? pointId.id : pointId)}
+          meta={`${filteredPoints.length} trạm khả dụng`}
+          tag="Trạm an toàn đề xuất"
+          heightClass="h-56"
+        />
 
-          {/* Safe Pickup Pin 1 */}
-          <div className="absolute left-16 top-14 flex flex-col items-center gap-1">
-            <span className="px-2 py-0.5 rounded-lg bg-white shadow-md text-[9.5px] font-bold text-[#0B7A5C] whitespace-nowrap">
-              Cổng R1 (Khuyên dùng)
-            </span>
-            <div className="w-6 h-6 rounded-full bg-[#0F9D76] border-2 border-white shadow-md flex items-center justify-center text-white text-[10px] font-bold">
-              ✓
-            </div>
+        {/* Car vs Motorbike Carpooling Rule Banner */}
+        <div className="bg-[#F1FAF6] p-3 rounded-2xl border border-[#BDE7D5] flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#0B7A5C]">
+            <ShieldCheck className="w-4 h-4 text-[#0F9D76]" />
+            <span>Quy tắc đón khách đi ké:</span>
           </div>
-
-          {/* Safe Pickup Pin 2 */}
-          <div className="absolute right-20 top-28 flex flex-col items-center gap-1">
-            <span className="px-2 py-0.5 rounded-lg bg-white shadow-md text-[9.5px] font-bold text-[#0B7A5C] whitespace-nowrap">
-              Bến xe buýt Crescent
-            </span>
-            <div className="w-5 h-5 rounded-full bg-[#0F9D76] border-2 border-white shadow-md flex items-center justify-center text-white text-[9px]">
-              ✓
-            </div>
-          </div>
-
-          {/* Warning Pin */}
-          <div className="absolute right-10 top-6 flex flex-col items-center gap-1 opacity-80">
-            <span className="px-1.5 py-0.5 rounded bg-white/90 shadow-xs text-[8.5px] font-bold text-[#C22B35]">
-              Cấm dừng
-            </span>
-            <span className="w-3.5 h-3.5 rounded-full bg-[#EE7A22] border border-white shadow-xs" />
-          </div>
+          <p className="text-[11px] text-[#4B5A54] leading-relaxed">
+            • <strong>Ô tô:</strong> Đón tại các trạm dừng an toàn, cố định dọc tuyến của chủ xe.<br />
+            • <strong>Xe máy:</strong> Linh hoạt đón tại các điểm giao cắt thuận tiện cho cả hai bên.
+          </p>
         </div>
 
         {/* Filter Chips */}
@@ -90,7 +90,7 @@ export const PickupPicker = () => {
                 : 'bg-white text-[#4B5A54] border border-[#E4EAE7]'
             }`}
           >
-            Tất cả điểm đón
+            🚗 Trạm dừng Ô tô ({pickupPoints.length})
           </button>
           <button
             type="button"
@@ -101,7 +101,7 @@ export const PickupPicker = () => {
                 : 'bg-white text-[#4B5A54] border border-[#E4EAE7]'
             }`}
           >
-            Tránh cấm dừng đỗ
+            🛵 Điểm đón Xe máy linh hoạt
           </button>
         </div>
 

@@ -23,6 +23,7 @@ import { RoutePreview } from './pages/driver/RoutePreview';
 
 // Passenger Pages
 import { PassengerHome } from './pages/passenger/PassengerHome';
+import { DestinationSearch } from './pages/passenger/DestinationSearch';
 import { SearchResults } from './pages/passenger/SearchResults';
 import { PickupPicker } from './pages/passenger/PickupPicker';
 import { TripDetail } from './pages/passenger/TripDetail';
@@ -41,6 +42,8 @@ import { TripComplete } from './pages/shared/TripComplete';
 import { TripHistory } from './pages/shared/TripHistory';
 import { NotificationsPage } from './pages/shared/NotificationsPage';
 import { ConversationList } from './pages/shared/ConversationList';
+import { TripDetailView } from './pages/shared/TripDetailView';
+import { WishlistPage } from './pages/shared/WishlistPage';
 
 const AppRoutes = () => {
   const { currentRole } = useApp();
@@ -63,9 +66,14 @@ const AppRoutes = () => {
     '/passenger/booking-confirm',
     '/passenger/request-booking',
     '/passenger/pickup-picker',
+    '/passenger/destination-search',
     '/passenger/results',
     '/shared/chat',
     '/shared/trip-complete',
+    '/shared/trip-detail',
+    '/shared/wishlist',
+    '/passenger/wishlist',
+    '/driver/wishlist',
     '/wallet/top-up'
   ];
 
@@ -100,10 +108,11 @@ const AppRoutes = () => {
 
         {/* Passenger Flows */}
         <Route path="/passenger/home" element={<PassengerHome />} />
+        <Route path="/passenger/destination-search" element={<DestinationSearch />} />
         <Route path="/passenger/results" element={<SearchResults />} />
         <Route path="/passenger/pickup-picker" element={<PickupPicker />} />
         <Route path="/passenger/trip/:id" element={<TripDetail />} />
-        <Route path="/passenger/trip-detail/:id" element={<TripDetail />} />
+        <Route path="/passenger/trip-detail/:id" element={<TripDetailView />} />
         <Route path="/passenger/request-booking/:id" element={<RequestBooking />} />
         <Route path="/passenger/request-booking" element={<RequestBooking />} />
         <Route path="/passenger/booking-pending/:id" element={<BookingPending />} />
@@ -112,7 +121,12 @@ const AppRoutes = () => {
         <Route path="/passenger/booking-confirm" element={<BookingConfirm />} />
         <Route path="/passenger/live-tracking" element={<PassengerLiveTracking />} />
 
-        {/* Shared Flows */}
+        {/* Shared Flows & Dedicated Full Views */}
+        <Route path="/shared/trip-detail/:id" element={<TripDetailView />} />
+        <Route path="/shared/trip-detail" element={<TripDetailView />} />
+        <Route path="/shared/wishlist" element={<WishlistPage />} />
+        <Route path="/passenger/wishlist" element={<WishlistPage />} />
+        <Route path="/driver/wishlist" element={<WishlistPage />} />
         <Route path="/shared/trip-history" element={<TripHistory />} />
         <Route path="/passenger/history" element={<TripHistory />} />
         <Route path="/driver/history" element={<TripHistory />} />
@@ -128,7 +142,6 @@ const AppRoutes = () => {
         <Route path="/shared/live-tracking" element={<LiveTracking />} />
         <Route path="/shared/chat/:id" element={<TripChat />} />
         <Route path="/shared/chat" element={<TripChat />} />
-        <Route path="/shared/boarding-pin" element={<BoardingVerify />} />
         <Route path="/shared/trip-complete" element={<TripComplete />} />
 
         {/* Fallback */}

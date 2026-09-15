@@ -98,12 +98,6 @@ export const ReportModal = ({ open, onClose, reportedName, tripCode }) => {
             </div>
 
             <div className="rs-scroll flex-1 overflow-y-auto px-5 pb-4 flex flex-col gap-3">
-              <div className="rounded-2xl bg-[#FFF4E9] border border-[#F7D9B8] px-3.5 py-2.5 flex items-start gap-2.5">
-                <Siren className="w-4 h-4 text-[#EE7A22] shrink-0 mt-0.5" />
-                <span className="text-[11px] text-[#8A4A0B] leading-relaxed">
-                  Đang gặp nguy hiểm ngay lúc này? Dùng nút <strong>SOS khẩn cấp</strong> thay vì gửi báo cáo.
-                </span>
-              </div>
 
               <span className="text-xs font-bold text-[#101B17]">Chọn loại sự cố</span>
               <div className="flex flex-col gap-2">
@@ -115,9 +109,8 @@ export const ReportModal = ({ open, onClose, reportedName, tripCode }) => {
                       key={cat.id}
                       type="button"
                       onClick={() => setCategoryId(cat.id)}
-                      className={`flex items-start gap-3 p-3 rounded-2xl border-[1.5px] text-left transition-all cursor-pointer ${
-                        isSelected ? 'border-[#0F9D76] bg-[#F1FAF6]' : 'border-[#E4EAE7] bg-white hover:border-[#BDE7D5]'
-                      }`}
+                      className={`flex items-start gap-3 p-3 rounded-2xl border-[1.5px] text-left transition-all cursor-pointer ${isSelected ? 'border-[#0F9D76] bg-[#F1FAF6]' : 'border-[#E4EAE7] bg-white hover:border-[#BDE7D5]'
+                        }`}
                     >
                       <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#0F9D76] text-white' : 'bg-[#F4F7F5] text-[#4B5A54]'}`}>
                         <Icon className="w-4 h-4" />

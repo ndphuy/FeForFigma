@@ -1,43 +1,74 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, Upload, CheckCircle2, Clock3, ChevronLeft, Car, FileText, Plus, Check, Trash2, ArrowRight, Camera, Image } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Car, FileText, Plus, Check, Trash2, ArrowRight, Camera, Pencil, X } from 'lucide-react';
 
 export const KYCVerify = () => {
   const navigate = useNavigate();
-  const { vehicles, activeVehicle, setActiveVehicle, addVehicle, deleteVehicle } = useApp();
+  const { vehicles, addVehicle, updateVehicle, deleteVehicle } = useApp();
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newType, setNewType] = useState('car'); // 'car' | 'bike'
-  const [newModel, setNewModel] = useState('');
-  const [newPlate, setNewPlate] = useState('');
-  const [newColor, setNewColor] = useState('');
-  const [newSeats, setNewSeats] = useState(4);
+  // Modal State for Add & Edit Vehicle
+  const [showVehicleModal, setShowVehicleModal] = useState(false);
+  const [editingVehicleId, setEditingVehicleId] = useState(null);
+
+  const [formType, setFormType] = useState('car'); // 'car' | 'bike'
+  const [formModel, setFormModel] = useState('');
+  const [formPlate, setFormPlate] = useState('');
+  const [formColor, setFormColor] = useState('');
+  const [formSeats, setFormSeats] = useState(4);
   const [cavetUploaded, setCavetUploaded] = useState(true);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleAddNewVehicle = (e) => {
-    e.preventDefault();
-    if (!newModel.trim() || !newPlate.trim()) return;
+  const handleOpenAddModal = () => {
+    setEditingVehicleId(null);
+    setFormType('car');
+    setFormModel('');
+    setFormPlate('');
+    setFormColor('');
+    setFormSeats(4);
+    setCavetUploaded(true);
+    setShowVehicleModal(true);
+  };
 
-    addVehicle({
-      model: newModel,
-      plate: newPlate.toUpperCase(),
-      color: newColor || 'Trắng ngọc trai',
-      type: newType,
-      typeLabel: newType === 'car' ? `Ô tô ${newSeats} chỗ (${newSeats === 4 ? 'Sedan' : newSeats === 5 ? 'SUV' : 'MPV'})` : 'Xe máy 1 chỗ',
-      seats: Number(newSeats),
-      passengerCapacity: newType === 'bike' ? 1 : Number(newSeats) - 1,
+  const handleOpenEditModal = (vehicle) => {
+    setEditingVehicleId(vehicle.id);
+    setFormType(vehicle.type || 'car');
+    setFormModel(vehicle.model || '');
+    setFormPlate(vehicle.plate || '');
+    setFormColor(vehicle.color || '');
+    setFormSeats(vehicle.seats || (vehicle.type === 'bike' ? 2 : 4));
+    setCavetUploaded(Boolean(vehicle.hasCavet));
+    setShowVehicleModal(true);
+  };
+
+  const handleSaveVehicle = (e) => {
+    e.preventDefault();
+    if (!formModel.trim() || !formPlate.trim()) return;
+
+    const payload = {
+      model: formModel.trim(),
+      plate: formPlate.trim().toUpperCase(),
+      color: formColor.trim() || 'Trắng ngọc trai',
+      type: formType,
+      typeLabel: formType === 'car' 
+        ? `Ô tô ${formSeats} chỗ (${formSeats === 4 ? 'Sedan' : formSeats === 5 ? 'SUV' : 'MPV'})` 
+        : 'Xe máy 2 chỗ (1 khách ghép)',
+      seats: Number(formSeats),
+      passengerCapacity: formType === 'bike' ? 1 : Number(formSeats) - 1,
       hasCavet: cavetUploaded,
-      image: newType === 'bike' 
+      image: formType === 'bike' 
         ? "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300&auto=format&fit=crop&q=80"
         : "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=300&auto=format&fit=crop&q=80"
-    });
+    };
 
-    setShowAddModal(false);
-    setNewModel('');
-    setNewPlate('');
-    setNewColor('');
+    if (editingVehicleId) {
+      updateVehicle(editingVehicleId, payload);
+    } else {
+      addVehicle(payload);
+    }
+
+    setShowVehicleModal(false);
+    setEditingVehicleId(null);
   };
 
   const handleDelete = (vehicleId) => {
@@ -54,7 +85,7 @@ export const KYCVerify = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-4 bg-[#F4F7F5] overflow-y-auto rs-scroll pb-8">
+    <div className="flex-1 flex flex-col justify-between p-4 bg-[#F4F7F5] overflow-y-auto rs-scroll pb-8 relative">
       <div className="flex flex-col gap-3.5">
         {/* Top Header */}
         <div className="bg-white p-3.5 px-4 rounded-2xl flex items-center justify-between border border-[#EEF2F0] shadow-xs">
@@ -73,7 +104,7 @@ export const KYCVerify = () => {
 
         {/* Legal documents verification status */}
         <div className="bg-white p-4 rounded-3xl border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.04)] flex flex-col gap-2.5">
-          <span className="text-xs font-bold text-[#101B17]">Giấy tờ pháp lý tài xế</span>
+          <span className="text-xs font-bold text-[#101B17]">Giấy tờ pháp lý chủ xe</span>
 
           {/* CCCD */}
           <div className="bg-[#F7FAF9] p-3 rounded-2xl border border-[#EEF2F0] flex items-center justify-between">
@@ -104,18 +135,18 @@ export const KYCVerify = () => {
           </div>
         </div>
 
-        {/* VEHICLES LIST SECTION (Max 3 vehicles - Fixed layout without text squeeze) */}
+        {/* VEHICLES LIST SECTION */}
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between px-1">
             <div className="flex flex-col">
               <span className="text-xs font-bold text-[#101B17]">Danh sách phương tiện ({vehicles.length}/3)</span>
-              <span className="text-[11px] text-[#8A9993]">Chọn 1 xe Đang sử dụng để làm căn cứ tạo chuyến</span>
+              <span className="text-[11px] text-[#8A9993]">Quản lý xe ô tô và xe máy để tạo chuyến đi ké</span>
             </div>
 
             {vehicles.length < 3 && (
               <button
                 type="button"
-                onClick={() => setShowAddModal(true)}
+                onClick={handleOpenAddModal}
                 className="h-8 px-3 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -124,133 +155,126 @@ export const KYCVerify = () => {
             )}
           </div>
 
-          {/* Vehicles list */}
+          {/* Vehicles list cards */}
           <div className="flex flex-col gap-3">
-            {vehicles.map((v) => {
-              const isActive = v.active;
-              const isPending = v.verificationStatus === 'pending_review';
-              return (
-                <div
-                  key={v.id}
-                  className={`bg-white rounded-3xl p-4 border-[1.5px] transition-all shadow-[0_2px_10px_rgba(16,27,23,0.04)] flex flex-col gap-3 ${
-                    isActive ? 'border-[#0F9D76] bg-[#F1FAF6]/40' : isPending ? 'border-[#F7D9B8]' : 'border-[#E4EAE7]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    {/* Left: Icon */}
-                    <div className="w-12 h-12 rounded-2xl bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xl flex items-center justify-center shrink-0 border border-[#B2E2D0]/60 mt-0.5">
-                      {v.type === 'car' ? '🚗' : '🛵'}
-                    </div>
-
-                    {/* Middle: Vehicle details cleanly stacked */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      <span className="text-sm font-bold text-[#101B17] leading-tight block">
-                        {v.model}
-                      </span>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-mono font-bold text-[#0B7A5C] bg-white border border-[#BDE7D5] px-2 py-0.5 rounded-md">
-                          {v.plate}
-                        </span>
-                        <span className="text-xs text-[#8A9993]">
-                          · {v.color}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-[#4B5A54]">
-                        {v.typeLabel} · Nhận tối đa {v.passengerCapacity} khách
-                      </span>
-                      {isPending && (
-                        <span className="mt-0.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#FFF4E9] px-2 py-0.5 text-[10px] font-bold text-[#B45812] border border-[#F7D9B8]">
-                          <Clock3 className="w-3 h-3" />
-                          Chờ duyệt hồ sơ
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Right: Active status or Activate button + Delete button */}
-                    <div className="shrink-0 flex flex-col items-end gap-2">
-                      {isActive ? (
-                        <span className="px-3 py-1 rounded-full bg-[#0F9D76] text-white text-[11px] font-bold shadow-xs whitespace-nowrap">
-                          ✓ Đang sử dụng
-                        </span>
-                      ) : isPending ? (
-                        <span
-                          title="Xe cần được quản trị viên duyệt hồ sơ trước khi có thể dùng để tạo chuyến"
-                          className="h-8 px-3 rounded-xl bg-[#F4F7F5] text-[#8A9993] text-xs font-bold flex items-center whitespace-nowrap cursor-not-allowed"
-                        >
-                          Đang chờ duyệt
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setActiveVehicle(v.id)}
-                          className="h-8 px-3 rounded-xl border border-[#E4EAE7] hover:border-[#0F9D76] hover:bg-[#F1FAF6] text-[#4B5A54] hover:text-[#0B7A5C] text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-                        >
-                          Kích hoạt xe này
-                        </button>
-                      )}
-
-                      {vehicles.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(v.id)}
-                          className="p-1 text-[#8A9993] hover:text-[#C22B35] transition-colors cursor-pointer"
-                          title="Xóa phương tiện này"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+            {vehicles.map((v) => (
+              <div
+                key={v.id}
+                className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.04)] flex flex-col gap-3 transition-all hover:border-[#B2E2D0]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  {/* Left: Icon */}
+                  <div className="w-12 h-12 rounded-2xl bg-[#DDF3EA] text-[#0B7A5C] font-bold text-xl flex items-center justify-center shrink-0 border border-[#B2E2D0]/60 mt-0.5">
+                    {v.type === 'car' ? '🚗' : '🛵'}
                   </div>
 
-                  {/* Cavet Status Bar */}
-                  <div className="pt-2 border-t border-[#EEF2F0] flex items-center justify-between text-[11px]">
-                    <span className="text-[#8A9993] flex items-center gap-1">
-                      <FileText className="w-3.5 h-3.5 text-[#0B7A5C]" />
-                      <span>Cà vẹt xe:</span>
+                  {/* Middle: Vehicle details */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    <span className="text-sm font-bold text-[#101B17] leading-tight block truncate">
+                      {v.model}
                     </span>
-                    {isPending ? (
-                      <span className="text-[#B45812] font-semibold flex items-center gap-1">
-                        <Clock3 className="w-3.5 h-3.5 text-[#EE7A22]" />
-                        <span>Đã gửi, đang chờ admin duyệt</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-mono font-bold text-[#0B7A5C] bg-[#F1FAF6] border border-[#BDE7D5] px-2 py-0.5 rounded-md">
+                        {v.plate}
                       </span>
-                    ) : (
-                      <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#0F9D76]" />
-                        <span>Đã tải lên & duyệt hợp lệ</span>
+                      <span className="text-xs text-[#8A9993]">
+                        · {v.color}
                       </span>
+                    </div>
+                    <span className="text-[11px] text-[#4B5A54]">
+                      {v.typeLabel || (v.type === 'car' ? `Ô tô ${v.seats || 4} chỗ` : 'Xe máy 2 chỗ')} · Nhận tối đa {v.passengerCapacity || (v.type === 'car' ? 3 : 1)} khách
+                    </span>
+                  </div>
+
+                  {/* Right: Clean Action Buttons (Edit & Delete) */}
+                  <div className="shrink-0 flex items-center gap-1.5 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(v)}
+                      className="w-8 h-8 rounded-xl bg-[#F4F7F5] hover:bg-[#DDF3EA] text-[#4B5A54] hover:text-[#0B7A5C] flex items-center justify-center transition-colors cursor-pointer"
+                      title="Chỉnh sửa thông tin xe"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+
+                    {vehicles.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(v.id)}
+                        className="w-8 h-8 rounded-xl bg-[#F4F7F5] hover:bg-[#FFF0F0] text-[#8A9993] hover:text-[#C22B35] flex items-center justify-center transition-colors cursor-pointer"
+                        title="Xóa phương tiện này"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Cavet Status Bar */}
+                <div className="pt-2 border-t border-[#EEF2F0] flex items-center justify-between text-[11px]">
+                  <span className="text-[#8A9993] flex items-center gap-1">
+                    <FileText className="w-3.5 h-3.5 text-[#0B7A5C]" />
+                    <span>Cà vẹt xe:</span>
+                  </span>
+                  <span className="text-[#0B7A5C] font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#0F9D76]" />
+                    <span>Đã tải lên & hợp lệ</span>
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Add Vehicle Modal / Inline Form with Cavet upload */}
-        {showAddModal && (
-          <div className="bg-white rounded-3xl p-5 border border-[#BDE7D5] shadow-xl flex flex-col gap-3.5 animate-[rs-pop_0.3s_ease-out]">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[#101B17]">Thêm phương tiện mới (Xe {vehicles.length + 1}/3)</span>
+      {/* Done & Save CTA Button */}
+      <button
+        type="button"
+        onClick={handleSaveAndExit}
+        className="w-full h-14 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-[15px] rounded-2xl shadow-[0_8px_20px_rgba(15,157,118,0.28)] flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer mt-4"
+      >
+        {savedSuccess ? (
+          <>
+            <Check className="w-5 h-5" />
+            <span>Đã cập nhật hồ sơ phương tiện!</span>
+          </>
+        ) : (
+          <>
+            <span>Xác nhận & Quay lại Tài khoản</span>
+            <ArrowRight className="w-5 h-5" />
+          </>
+        )}
+      </button>
+
+      {/* CENTER MODAL FOR ADD & EDIT VEHICLE */}
+      {showVehicleModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-[360px] bg-white rounded-3xl p-5 border border-[#E4EAE7] shadow-2xl flex flex-col gap-3.5 relative overflow-hidden animate-[rs-pop_0.25s_ease-out]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-2 border-b border-[#EEF2F0]">
+              <span className="text-sm font-bold text-[#101B17]">
+                {editingVehicleId ? 'Cập nhật phương tiện' : `Thêm xe mới (${vehicles.length + 1}/3)`}
+              </span>
               <button
                 type="button"
-                onClick={() => setShowAddModal(false)}
-                className="text-xs text-[#8A9993] hover:text-[#101B17] font-bold cursor-pointer"
+                onClick={() => setShowVehicleModal(false)}
+                className="w-7 h-7 rounded-full bg-[#F4F7F5] hover:bg-[#E4EAE7] text-[#4B5A54] flex items-center justify-center text-xs font-bold cursor-pointer"
               >
-                Huỷ
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddNewVehicle} className="flex flex-col gap-3">
+            <form onSubmit={handleSaveVehicle} className="flex flex-col gap-3">
               {/* Type Switcher */}
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setNewType('car');
-                    setNewSeats(4);
+                    setFormType('car');
+                    setFormSeats(4);
                   }}
                   className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    newType === 'car' ? 'bg-[#0F9D76] text-white' : 'bg-[#F4F7F5] text-[#4B5A54]'
+                    formType === 'car' ? 'bg-[#0F9D76] text-white shadow-xs' : 'bg-[#F4F7F5] text-[#4B5A54]'
                   }`}
                 >
                   🚗 Ô tô (4-7 chỗ)
@@ -258,26 +282,27 @@ export const KYCVerify = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setNewType('bike');
-                    setNewSeats(2);
+                    setFormType('bike');
+                    setFormSeats(2);
                   }}
                   className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    newType === 'bike' ? 'bg-[#0F9D76] text-white' : 'bg-[#F4F7F5] text-[#4B5A54]'
+                    formType === 'bike' ? 'bg-[#0F9D76] text-white shadow-xs' : 'bg-[#F4F7F5] text-[#4B5A54]'
                   }`}
                 >
-                  🛵 Xe máy (1 chỗ ghép)
+                  🛵 Xe máy (1 khách)
                 </button>
               </div>
 
+              {/* Model & Plate */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[10px] font-bold text-[#8A9993] block mb-1">Dòng xe (Model)</label>
                   <input
                     type="text"
                     required
-                    placeholder="VD: Mazda 3, Honda SH..."
-                    value={newModel}
-                    onChange={(e) => setNewModel(e.target.value)}
+                    placeholder="VD: Mazda 3, SH..."
+                    value={formModel}
+                    onChange={(e) => setFormModel(e.target.value)}
                     className="w-full px-3 py-2 text-xs font-semibold bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl outline-none focus:border-[#0F9D76]"
                   />
                 </div>
@@ -287,32 +312,33 @@ export const KYCVerify = () => {
                     type="text"
                     required
                     placeholder="VD: 51K-999.88"
-                    value={newPlate}
-                    onChange={(e) => setNewPlate(e.target.value)}
+                    value={formPlate}
+                    onChange={(e) => setFormPlate(e.target.value)}
                     className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl outline-none focus:border-[#0F9D76] uppercase"
                   />
                 </div>
               </div>
 
+              {/* Color & Seats */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[10px] font-bold text-[#8A9993] block mb-1">Màu sơn</label>
                   <input
                     type="text"
                     placeholder="VD: Đen, Trắng..."
-                    value={newColor}
-                    onChange={(e) => setNewColor(e.target.value)}
+                    value={formColor}
+                    onChange={(e) => setFormColor(e.target.value)}
                     className="w-full px-3 py-2 text-xs font-semibold bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl outline-none focus:border-[#0F9D76]"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-[#8A9993] block mb-1">Tổng số chỗ ngồi</label>
                   <select
-                    value={newSeats}
-                    onChange={(e) => setNewSeats(Number(e.target.value))}
+                    value={formSeats}
+                    onChange={(e) => setFormSeats(Number(e.target.value))}
                     className="w-full px-3 py-2 text-xs font-semibold bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl outline-none focus:border-[#0F9D76]"
                   >
-                    {newType === 'bike' ? (
+                    {formType === 'bike' ? (
                       <option value={2}>2 chỗ (1 tài xế + 1 khách)</option>
                     ) : (
                       <>
@@ -328,26 +354,26 @@ export const KYCVerify = () => {
               {/* Cavet Photo Upload Field */}
               <div className="flex flex-col gap-1.5 pt-1">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993] block">
-                  Chụp / Tải ảnh Giấy đăng ký xe (Cà vẹt)
+                  Giấy đăng ký xe (Cà vẹt)
                 </label>
                 <div 
                   onClick={() => setCavetUploaded(!cavetUploaded)}
-                  className={`p-3 rounded-2xl border-2 border-dashed flex items-center justify-between cursor-pointer transition-colors ${
+                  className={`p-2.5 rounded-2xl border-2 border-dashed flex items-center justify-between cursor-pointer transition-colors ${
                     cavetUploaded 
                       ? 'border-[#0F9D76] bg-[#F1FAF6]' 
                       : 'border-[#E4EAE7] bg-[#F7FAF9] hover:border-[#0F9D76]'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-white border border-[#E4EAE7] text-[#0B7A5C] flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-white border border-[#E4EAE7] text-[#0B7A5C] flex items-center justify-center shrink-0">
                       <Camera className="w-4 h-4" />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs font-bold text-[#101B17]">
-                        {cavetUploaded ? 'Đã đính kèm ảnh cà vẹt xe' : 'Nhấn để chụp / tải ảnh cà vẹt'}
+                        {cavetUploaded ? 'Đã đính kèm ảnh cà vẹt' : 'Chụp / tải ảnh cà vẹt'}
                       </span>
                       <span className="text-[10px] text-[#8A9993]">
-                        {cavetUploaded ? 'cavet_xe_chinhchu.jpg (2.4 MB)' : 'Mặt trước giấy đăng ký có biển số rõ ràng'}
+                        {cavetUploaded ? 'cavet_xe_chinhchu.jpg' : 'Mặt trước giấy đăng ký'}
                       </span>
                     </div>
                   </div>
@@ -358,39 +384,25 @@ export const KYCVerify = () => {
                 </div>
               </div>
 
-              <p className="text-[10.5px] text-[#8A9993] leading-relaxed -mt-1">
-                Xe mới sẽ ở trạng thái "Chờ duyệt" cho đến khi quản trị viên xác thực hồ sơ.
-              </p>
-
-              <button
-                type="submit"
-                className="w-full h-12 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-              >
-                Gửi hồ sơ để duyệt
-              </button>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowVehicleModal(false)}
+                  className="flex-1 h-11 rounded-xl bg-[#F4F7F5] hover:bg-[#E4EAE7] text-[#4B5A54] font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Huỷ bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 h-11 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                >
+                  {editingVehicleId ? 'Lưu thay đổi' : 'Lưu phương tiện'}
+                </button>
+              </div>
             </form>
           </div>
-        )}
-      </div>
-
-      {/* Done & Save CTA (Enlarged prominent button h-14) */}
-      <button
-        type="button"
-        onClick={handleSaveAndExit}
-        className="w-full h-14 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-[15px] rounded-2xl shadow-[0_8px_20px_rgba(15,157,118,0.28)] flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer mt-4"
-      >
-        {savedSuccess ? (
-          <>
-            <Check className="w-5 h-5" />
-            <span>Đã lưu hồ sơ phương tiện!</span>
-          </>
-        ) : (
-          <>
-            <span>Xác nhận & Cập nhật phương tiện</span>
-            <ArrowRight className="w-5 h-5" />
-          </>
-        )}
-      </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -10,7 +10,8 @@ import {
   LogOut,
   Star,
   Wallet,
-  Receipt
+  Receipt,
+  Heart
 } from 'lucide-react';
 
 export const ProfilePage = () => {
@@ -83,7 +84,7 @@ export const ProfilePage = () => {
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-bold text-[#101B17]">Hồ sơ phương tiện ({vehicles.length}/3 xe)</span>
                 <span className="text-[11px] text-[#0B7A5C] truncate">
-                  Đang dùng: {activeVehicle.model} ({activeVehicle.plate})
+                  Quản lý Ô tô ({vehicles.filter(v => v.type === 'car').length}) & Xe máy ({vehicles.filter(v => v.type === 'bike').length})
                 </span>
               </div>
             </div>
@@ -100,6 +101,22 @@ export const ProfilePage = () => {
           <div className="flex items-center space-x-3">
             <Receipt className="w-4.5 h-4.5 text-[#4B5A54]" />
             <span className="text-xs font-semibold text-[#101B17]">Lịch sử chi phí</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#8A9993]" />
+        </button>
+
+        {/* Wishlist Menu Item */}
+        <button
+          type="button"
+          onClick={() => navigate('/shared/wishlist')}
+          className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#F1FAF6] transition-colors text-left cursor-pointer"
+        >
+          <div className="flex items-center space-x-3">
+            <Heart className="w-4.5 h-4.5 text-[#C22B35] fill-[#C22B35]/15" />
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-[#101B17]">Danh sách yêu thích</span>
+              <span className="text-[11px] text-[#8A9993]">Lưu bạn đồng hành quen thuộc</span>
+            </div>
           </div>
           <ChevronRight className="w-4 h-4 text-[#8A9993]" />
         </button>

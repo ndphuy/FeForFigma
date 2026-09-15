@@ -9,8 +9,7 @@ import {
   XCircle,
   Car,
   User,
-  ArrowRight,
-  Sparkles
+  ArrowRight
 } from 'lucide-react';
 
 export const BoardingVerify = () => {
@@ -204,7 +203,7 @@ export const BoardingVerify = () => {
         onClick={handleCompleteRide}
         className="w-full h-[56px] bg-[#0F9D76] hover:bg-[#0B7A5C] active:scale-[0.99] text-white font-bold rounded-[19px] text-sm transition-all shadow-[0_8px_20px_rgba(15,157,118,0.30)] flex items-center justify-center gap-2 mt-4 cursor-pointer"
       >
-        <Sparkles className="w-4 h-4" />
+        <CheckCircle2 className="w-4 h-4" />
         <span>Hoàn tất & Quyết toán chi phí</span>
         <ArrowRight className="w-4 h-4" />
       </button>

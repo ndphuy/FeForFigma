@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { MapPin, Users, Navigation } from 'lucide-react';
+import { AppMap } from '../../components/AppMap';
 
 // Read-only route preview for a trip the driver has ALREADY published (opened from
 // DriverHome's "Xem lộ trình"). This must never publish a trip — that belongs to
@@ -17,6 +18,22 @@ export const RoutePreview = () => {
         { id: 'st_o', name: trip?.origin, role: 'Xuất phát', time: trip?.departureTime, isPassengerStop: true },
         { id: 'st_d', name: trip?.destination, role: 'Điểm kết thúc', time: '07:48', isPassengerStop: true },
       ];
+
+  const cleanShortName = (str, fallback = '') => {
+    if (!str) return fallback;
+    return str
+      .replace(/\s*\(.*?\)\s*/g, '')
+      .replace(/University/gi, '')
+      .replace(/HCMC/gi, '')
+      .replace(/Chợ/gi, '')
+      .replace(/,.*$/, '')
+      .trim() || fallback;
+  };
+
+  const mapPoints = stops.map((s, idx) => ({
+    label: `${idx === 0 ? 'Xuất phát' : idx === stops.length - 1 ? 'Điểm đến' : 'Trạm'} · ${cleanShortName(s.name)}`,
+    type: idx === 0 ? 'origin' : idx === stops.length - 1 ? 'destination' : 'waypoint'
+  }));
 
   return (
     <div className="flex-1 flex flex-col bg-[#F4F7F5] overflow-hidden relative">
@@ -38,19 +55,14 @@ export const RoutePreview = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto rs-scroll p-4 pb-8 flex flex-col gap-3.5">
-        {/* Map Canvas */}
-        <div className="h-48 rounded-3xl overflow-hidden relative bg-[repeating-linear-gradient(135deg,#E4EBE8_0_8px,#EDF2F0_8px_16px)] border border-[#E4EAE7] shadow-inner">
-          <svg viewBox="0 0 340 190" className="absolute inset-0 w-full h-full" fill="none" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M 40 150 C 90 130, 130 115, 170 90 S 250 90, 300 40" stroke="#C3CDC9" strokeWidth="5" strokeDasharray="2 10" />
-            <path d="M 40 150 C 90 130, 130 115, 170 90 S 250 90, 300 40" stroke="#0F9D76" strokeWidth="5" />
-          </svg>
-          <span className="absolute left-[32px] top-[144px] -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-[#0F9D76] border-2 border-white shadow-md" />
-          <span className="absolute left-[300px] top-[40px] -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-sm bg-[#EE7A22] border-2 border-white shadow-md" />
-          <div className="absolute top-3 left-3 bg-white/95 px-2.5 py-1 rounded-full border border-[#E4EAE7] text-[10px] font-bold text-[#0B7A5C] flex items-center gap-1.5">
-            <Navigation className="w-3 h-3" />
-            {trip?.distanceKm} km · dự kiến {trip?.timeRange}
-          </div>
-        </div>
+        {/* Unified Map Canvas */}
+        <AppMap
+          mode="preview"
+          points={mapPoints}
+          meta={`${trip?.distanceKm || 18.5} km · ${trip?.timeRange || '07:00–07:48'}`}
+          tag="Lộ trình đã đăng"
+          heightClass="h-56"
+        />
 
         {/* Trip meta chips */}
         <div className="flex flex-wrap gap-2">

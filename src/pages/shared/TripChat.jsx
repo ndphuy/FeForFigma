@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, Check, MapPin, MessageSquare, Phone, Send, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Check, MapPin, MessageSquare, Phone, Send, ShieldCheck, Heart } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getConversationById } from '../../data/conversations';
 
 const TripChatConversation = ({ conversation, currentRole }) => {
   const navigate = useNavigate();
+  const { isWishlisted = () => false, toggleWishlist = () => {} } = useApp();
   const [inputVal, setInputVal] = useState('');
   const [messages, setMessages] = useState(conversation.messages);
   const [pastRecipientConfirmed, setPastRecipientConfirmed] = useState(conversation.period === 'current');
@@ -93,6 +94,20 @@ const TripChatConversation = ({ conversation, currentRole }) => {
             {conversation.roleLabel} · {conversation.statusLabel}
           </span>
         </div>
+
+        {/* Silent Wishlist Heart Button */}
+        <button
+          type="button"
+          onClick={() => toggleWishlist({ id: conversation.id || 'usr_chat', name: conversation.name, role: conversation.role || (currentRole === 'driver' ? 'passenger' : 'driver'), avatar: conversation.initials, phone: conversation.phone })}
+          className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+            isWishlisted(conversation.id || 'usr_chat')
+              ? 'bg-[#FFF0F0] text-[#C22B35] border-[#F7D9D9]'
+              : 'bg-white text-[#8A9993] hover:text-[#C22B35] border-[#E4EAE7]'
+          }`}
+          title="Lưu vào danh sách yêu thích"
+        >
+          <Heart className={`w-4 h-4 ${isWishlisted(conversation.id || 'usr_chat') ? 'fill-[#C22B35]' : ''}`} />
+        </button>
 
         <a
           href={`tel:${conversation.phone}`}
