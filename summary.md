@@ -106,9 +106,10 @@ State is centrally managed via `src/context/AppContext.jsx` and backed by `src/d
 │   └── top-up                        # VietQR / PayOS simulated payment gateway
 │
 ├── passenger/
-│   ├── home                          # Passenger Home (Search commute with - 1 + stepper, active trips)
+│   ├── home                          # Passenger Home (Search commute, Saved Commute quick search chips, active trips)
+│   ├── schedules                     # Dedicated Passenger Saved Commute Manager & Driver Matching
 │   ├── destination-search            # Pure 2-Input Destination & Pickup Search Page
-│   ├── results                       # Compact Search Results (Fits 2-3 cards/screen, Wishlist toggle)
+│   ├── results                       # Search Results with Recurring 1-Click Monthly Subscription Flow
 │   ├── pickup-picker                 # Safe Pickup Location Picker on interactive map
 │   ├── trip/:id                      # Trip Detail, Itinerary & Booking action
 │   ├── trip-detail/:id               # Dedicated Fullscreen Trip Detail View
@@ -123,7 +124,8 @@ State is centrally managed via `src/context/AppContext.jsx` and backed by `src/d
 │   └── notifications                 # Passenger Notification Center
 │
 ├── driver/
-│   ├── home                          # Driver Home (Quick Publish, Single Unified "Chi tiết & Lộ trình" CTA & Requests summary)
+│   ├── home                          # Driver Home (Quick Publish, Synchronized Daily Commute Carousel & Requests summary)
+│   ├── schedules                     # Dedicated Driver Recurring Schedule Manager (T2-T6, vehicle picker, seats, subscribers)
 │   ├── create-trip                   # Commute Wizard (Single & Recurring, Custom % Wishlist Discount)
 │   ├── requests                      # Booking Requests with Detour Decision Pairs
 │   ├── approval                      # Accept Passenger Sheet (Before/After comparison)
@@ -138,13 +140,12 @@ State is centrally managed via `src/context/AppContext.jsx` and backed by `src/d
 ├── shared/
 │   ├── trip-detail/:id               # Fullscreen Trip Details (Role-adaptive Driver/Passenger views)
 │   ├── wishlist                      # Role-adaptive Danh sách yêu thích
-│   ├── trip-history                  # Trip History with Filter Tabs & Detail Navigation
+│   ├── trip-history                  # Trip History (Single Trips & Recurring Commute Management with Empty State)
 │   ├── cost-breakdown                # Transparent 3-Step Cost Calculation Breakdown
 │   ├── cost-history                  # Financial Ledger (Earnings / Contributions)
 │   ├── chat/:id                      # In-Trip Driver-Passenger Chat Stream with Wishlist toggle
 │   ├── live-tracking                 # Active GPS Map Tracking with SOS Modal & Dynamic Refund
 │   ├── trip-complete                 # 3-Party Economic Settlement, Ratings & Compliments
-│   ├── schedule                      # Recurring Weekly Commute Scheduler
 │   ├── messages                      # In-app Conversation List
 │   └── notifications                 # System & Activity Notifications
 │

@@ -59,7 +59,7 @@ export const PassengerLiveTracking = () => {
 
           <div className="flex flex-col items-end shrink-0">
             <span className="text-xl font-bold text-[#0B7A5C] font-mono leading-none">
-              {rideStep === 1 ? `${etaMinutes}p` : '07:48'}
+              {rideStep === 1 ? `${etaMinutes}p` : '08:00'}
             </span>
             <span className="text-[10px] text-[#8A9993] mt-0.5">
               {rideStep === 1 ? 'dự kiến đón' : 'dự kiến đến'}

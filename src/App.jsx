@@ -8,7 +8,8 @@ import { AdminApp } from './pages/admin/AdminApp';
 import { LoginPage } from './pages/auth/LoginPage';
 import { ProfilePage } from './pages/shared/ProfilePage';
 import { KYCVerify } from './pages/driver/KYCVerify';
-import { RecurringSchedule } from './pages/shared/RecurringSchedule';
+import { DriverSchedules } from './pages/driver/DriverSchedules';
+import { PassengerSchedules } from './pages/passenger/PassengerSchedules';
 
 // Wallet & Payments
 import { WalletDetail } from './pages/shared/WalletDetail';
@@ -58,6 +59,9 @@ const AppRoutes = () => {
     '/auth/login',
     '/shared/live-tracking',
     '/driver/active-trip',
+    '/driver/schedules',
+    '/passenger/schedules',
+    '/driver/kyc',
     '/passenger/live-tracking',
     '/passenger/booking-pending',
     '/passenger/booking-confirm',
@@ -89,7 +93,12 @@ const AppRoutes = () => {
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/driver/kyc" element={<KYCVerify />} />
-        <Route path="/shared/schedule" element={<RecurringSchedule />} />
+        <Route path="/driver/schedules" element={<DriverSchedules />} />
+        <Route path="/passenger/schedules" element={<PassengerSchedules />} />
+        <Route 
+          path="/shared/schedule" 
+          element={<Navigate to={currentRole === 'driver' ? '/driver/schedules' : '/passenger/schedules'} replace />} 
+        />
 
         {/* Wallet Routes */}
         <Route path="/wallet" element={<WalletDetail />} />

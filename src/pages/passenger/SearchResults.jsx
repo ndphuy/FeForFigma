@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ChevronDown,
   ChevronRight,
@@ -13,7 +13,9 @@ import {
   Clock,
   Navigation,
   MapPin,
-  Car
+  Car,
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AppMap } from '../../components/AppMap';
@@ -96,12 +98,18 @@ const getTripDetails = (trip) => {
 };
 
 // Interactive Trip Card matching the user's reference design
-const TripCard = ({ trip, isBestMatch, onOpen }) => {
+const TripCard = ({ trip, isBestMatch, onOpen, isRecurringMode, onSubscribeMonthly, isSubscribed }) => {
   const { isWishlisted, toggleWishlist } = useApp();
   const details = getTripDetails(trip);
   const driverId = trip.driverId || `drv_${(trip.driverName || 'driver').replace(/\s+/g, '_').toLowerCase()}`;
   const isFav = isWishlisted(driverId);
   const initials = details.initials || trip.driverInitials || 'TX';
+
+  const singlePrice = trip.priceVnd || 35000;
+  const monthlyTripsCount = 22;
+  const rawMonthlyTotal = singlePrice * monthlyTripsCount;
+  const discountRate = 0.15; // 15% discount for monthly subscription
+  const discountedMonthlyTotal = Math.round(rawMonthlyTotal * (1 - discountRate));
 
   return (
     <article className="flex flex-col gap-2.5 rounded-2xl bg-white p-3.5 shadow-[0_2px_12px_rgba(16,27,23,0.06)] border border-[#E4EAE7] transition-all hover:border-[#BDE7D5]">
@@ -178,10 +186,24 @@ const TripCard = ({ trip, isBestMatch, onOpen }) => {
         </div>
 
         <div className="flex flex-col items-end justify-center border-l border-[#E4EAE7] pl-2">
-          <span className="text-[14px] font-bold font-mono text-[#0B7A5C] leading-none">
-            {trip.priceVnd.toLocaleString('vi-VN')} ₫
-          </span>
-          <span className="text-[9.5px] text-[#8A9993] mt-1">/người</span>
+          {isRecurringMode ? (
+            <>
+              <span className="text-[13px] font-bold font-mono text-[#0B7A5C] leading-none">
+                {new Intl.NumberFormat('vi-VN').format(discountedMonthlyTotal)} ₫
+              </span>
+              <span className="text-[9px] text-[#8A9993] mt-1 line-through">
+                {new Intl.NumberFormat('vi-VN').format(rawMonthlyTotal)} ₫
+              </span>
+              <span className="text-[8.5px] font-bold text-[#0F9D76]">22 chuyến / tháng</span>
+            </>
+          ) : (
+            <>
+              <span className="text-[14px] font-bold font-mono text-[#0B7A5C] leading-none">
+                {trip.priceVnd.toLocaleString('vi-VN')} ₫
+              </span>
+              <span className="text-[9.5px] text-[#8A9993] mt-1">/người</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -192,14 +214,31 @@ const TripCard = ({ trip, isBestMatch, onOpen }) => {
           <span className="truncate font-medium">Điểm đón: <strong className="font-semibold text-[#101B17]">{details.pickup}</strong></span>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpen}
-          className="h-8 shrink-0 rounded-xl bg-[#0F9D76] px-3.5 text-[11.5px] font-bold text-white shadow-xs hover:bg-[#0B7A5C] transition-all cursor-pointer flex items-center gap-1"
-        >
-          <span>Xem chi tiết chuyến</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center space-x-1.5 shrink-0">
+          {isRecurringMode ? (
+            <button
+              type="button"
+              disabled={isSubscribed}
+              onClick={() => onSubscribeMonthly && onSubscribeMonthly(trip)}
+              className={`h-8 rounded-xl px-3 text-[11.5px] font-bold transition-all flex items-center gap-1 cursor-pointer shadow-xs ${
+                isSubscribed 
+                  ? 'bg-[#DDF3EA] text-[#0B7A5C] border border-[#B2E2D0]' 
+                  : 'bg-[#0F9D76] hover:bg-[#0B7A5C] text-white'
+              }`}
+            >
+              <span>{isSubscribed ? '✓ Đã gửi yêu cầu' : 'Đăng ký trọn gói tháng'}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="h-8 shrink-0 rounded-xl bg-[#0F9D76] px-3.5 text-[11.5px] font-bold text-white shadow-xs hover:bg-[#0B7A5C] transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>Xem chi tiết chuyến</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );
@@ -376,9 +415,17 @@ const SearchEditForm = ({ values, onChange, onCancel, onApply, origin, destinati
 
 export const SearchResults = () => {
   const navigate = useNavigate();
-  const { trips, searchFilter, setSearchParams } = useApp();
+  const location = useLocation();
+  const { trips, searchFilter, setSearchParams, subscribeRecurringCommute, driverSchedules } = useApp();
+  
+  const queryParams = new URLSearchParams(location.search);
+  const isRecurringMode = queryParams.get('mode') === 'recurring';
+  const scheduleId = queryParams.get('scheduleId');
+
   const [sortBy, setSortBy] = useState('match');
   const [isExpanded, setIsExpanded] = useState(false); // 'half' (false) or 'full' (true)
+  const [subscribedTrip, setSubscribedTrip] = useState(null);
+  const [subscribedIds, setSubscribedIds] = useState([]);
   const touchStartY = useRef(null);
 
   const initialFilters = {
@@ -418,8 +465,15 @@ export const SearchResults = () => {
   }), [sortBy, filteredTrips]);
 
   const topMatch = Math.max(...filteredTrips.map((trip) => trip.matchPercentage), 0);
-  const origin = searchFilter.origin || 'Đại học FPT Thành phố Hồ Chí Minh';
-  const destination = searchFilter.destination || 'Chợ Bến Thành - Cổng Bắc';
+  const origin = queryParams.get('origin') || searchFilter.origin || 'Đại học FPT Thành phố Hồ Chí Minh';
+  const destination = queryParams.get('destination') || searchFilter.destination || 'Chợ Bến Thành - Cổng Bắc';
+
+  const handleSubscribeMonthly = (trip) => {
+    const targetDriverSched = driverSchedules[0]?.id || 'dsch_01';
+    subscribeRecurringCommute(targetDriverSched, 'Đăng ký đi chung định kỳ cả tháng (T2-T6)');
+    setSubscribedIds(prev => [...prev, trip.id]);
+    setSubscribedTrip(trip);
+  };
 
   const openEditor = () => {
     setDraftFilters(filters);
@@ -487,8 +541,8 @@ export const SearchResults = () => {
         <div className="flex items-center justify-between px-1">
           <button
             type="button"
-            aria-label="Quay lại trang tìm chuyến"
-            onClick={() => navigate('/passenger/destination-search')}
+            aria-label="Quay lại"
+            onClick={() => navigate(-1)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/90 text-[20px] text-[#101B17] shadow-sm hover:bg-white active:scale-95 transition-all border border-[#E4EAE7]"
           >
             ‹
@@ -519,25 +573,25 @@ export const SearchResults = () => {
 
           <button
             type="button"
+            aria-label="Đổi chiều điểm đón và điểm đến"
             onClick={handleSwapPoints}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F4F7F5] text-[#4B5A54] hover:bg-[#DDF3EA] hover:text-[#0B7A5C] transition-colors cursor-pointer shadow-xs active:scale-95"
-            title="Đổi chiều điểm đón và trả"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F4F7F5] text-[#4B5A54] hover:bg-[#DDF3EA] hover:text-[#0B7A5C] transition-colors border border-[#E4EAE7]"
           >
             <ArrowUpDown className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* 2. Unified Master Map Backdrop */}
+      {/* 2. Map Backdrop Layer */}
       <AppMap
         mode="backdrop"
-        points={[
-          { label: shortLocation(origin) ? `${shortLocation(origin)} (Đón)` : 'ĐH FPT (Đón)', type: 'origin', isPrimary: true },
-          { label: shortLocation(destination) ? `${shortLocation(destination)} (Trả)` : 'Bến Thành (Trả)', type: 'destination', isPrimary: true }
-        ]}
-        fitBoundsPadding={
+        pickupName={origin}
+        dropoffName={destination}
+        pickupAddress={origin}
+        dropoffAddress={destination}
+        padding={
           isExpanded
-            ? { top: 160, bottom: 80, left: 35, right: 35 }
+            ? { top: 90, bottom: 80, left: 35, right: 35 }
             : { top: 165, bottom: 440, left: 35, right: 35 }
         }
       />
@@ -558,6 +612,26 @@ export const SearchResults = () => {
         >
           <div className="h-1.5 w-12 rounded-full bg-[#D8E1DD] group-hover:bg-[#0F9D76] transition-colors" />
         </div>
+
+        {/* Recurring Commute Banner (When in recurring mode) */}
+        {isRecurringMode && (
+          <div className="bg-[#DDF3EA] border border-[#B2E2D0] rounded-2xl p-2.5 mx-3.5 mb-1.5 flex items-center justify-between text-xs shrink-0 shadow-xs">
+            <div className="flex items-center space-x-2 min-w-0">
+              <span className="text-base shrink-0">🔁</span>
+              <div className="min-w-0">
+                <span className="font-bold text-[#0B7A5C] block truncate">Đăng ký đi chung định kỳ cả tháng</span>
+                <p className="text-[10.5px] text-[#4B5A54] truncate">Trọn gói 22 chuyến · Tiết kiệm thêm 15%</p>
+              </div>
+            </div>
+            <button 
+              type="button"
+              onClick={() => navigate('/passenger/schedules')} 
+              className="text-[11px] font-bold text-[#0F9D76] hover:underline shrink-0 pl-2 cursor-pointer"
+            >
+              Lịch đã lưu →
+            </button>
+          </div>
+        )}
 
         {/* Quick Filter Tabs Horizontal Strip */}
         <div className="flex items-center gap-2 overflow-x-auto px-4 py-2 border-b border-[#EEF2F0] rs-scroll shrink-0">
@@ -611,6 +685,9 @@ export const SearchResults = () => {
                 trip={trip}
                 isBestMatch={trip.matchPercentage === topMatch}
                 onOpen={() => navigate(`/shared/trip-detail/${trip.id}`)}
+                isRecurringMode={isRecurringMode}
+                onSubscribeMonthly={handleSubscribeMonthly}
+                isSubscribed={subscribedIds.includes(trip.id)}
               />
             ))
           ) : (
@@ -629,7 +706,51 @@ export const SearchResults = () => {
         </div>
       </div>
 
-      {/* 4. Edit Filter Modal */}
+      {/* 4. Subscription Celebration Modal */}
+      {subscribedTrip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl border border-[#B2E2D0] text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-[#DDF3EA] text-[#0F9D76] font-bold flex items-center justify-center text-2xl mx-auto border border-[#B2E2D0]">
+              🎉
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-[#101B17]">Đã gửi yêu cầu đăng ký định kỳ!</h3>
+              <p className="text-xs text-[#4B5A54] mt-1 leading-relaxed">
+                Yêu cầu đi chung trọn gói <strong>22 chuyến tháng 10</strong> đã được gửi tới <strong>{subscribedTrip.driverName}</strong>.
+              </p>
+            </div>
+
+            <div className="bg-[#F1FAF6] p-3 rounded-2xl border border-[#DDF3EA] text-xs text-left space-y-1">
+              <p className="font-bold text-[#0B7A5C]">Đã tự động cập nhật vào:</p>
+              <p className="text-[#4B5A54]">✓ Trang Lịch trình quen thuộc (/passenger/schedules)</p>
+              <p className="text-[#4B5A54]">✓ Trang chủ & Lịch sử chuyến đi của bạn</p>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setSubscribedTrip(null)}
+                className="flex-1 py-3 bg-[#F4F7F5] hover:bg-[#E4EAE7] text-[#4B5A54] font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Ở lại tìm kiếm
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubscribedTrip(null);
+                  navigate('/passenger/schedules');
+                }}
+                className="flex-1 py-3 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer"
+              >
+                Xem lịch của tôi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Edit Filter Modal */}
       {isEditing && (
         <SearchEditForm
           values={draftFilters}
