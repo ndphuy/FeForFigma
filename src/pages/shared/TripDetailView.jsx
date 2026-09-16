@@ -261,7 +261,7 @@ export const TripDetailView = () => {
         },
         {
           id: 'stop_4',
-          time: '07:48',
+          time: '08:00',
           role: 'Điểm kết thúc & Trả Khách 1',
           name: trip.destination || 'Chợ Bến Thành, Q.1',
           detail: 'Trả Lê Minh Anh & Kết thúc hành trình',
@@ -277,23 +277,23 @@ export const TripDetailView = () => {
       {
         id: 'stop_1',
         time: trip.departureTime || '07:00',
-        role: 'Xuất phát',
-        name: trip.origin || 'FPT University HCMC (Cổng 2)',
-        detail: 'Bắt đầu hành trình',
+        role: 'Điểm xuất phát',
+        name: trip.origin || 'FPT University HCMC',
+        detail: 'Đón tài xế khởi hành',
         isOrigin: true
       },
       {
         id: 'stop_2',
-        time: '07:15',
+        time: '07:20',
         role: 'Trạm đón khách',
-        name: 'Ngã 4 Thủ Đức (Trạm dừng an toàn)',
+        name: 'Ngã 4 Thủ Đức',
         detail: 'Đón Thùy Linh',
         badge: 'Đón Thùy Linh',
         badgeColor: 'bg-[#DDF3EA] text-[#0B7A5C]'
       },
       {
         id: 'stop_3',
-        time: '07:35',
+        time: '07:45',
         role: 'Trạm trả khách',
         name: 'Hàng Xanh, Bình Thạnh',
         detail: 'Trả Thùy Linh',
@@ -302,7 +302,7 @@ export const TripDetailView = () => {
       },
       {
         id: 'stop_4',
-        time: '07:48',
+        time: '08:00',
         role: 'Điểm kết thúc',
         name: trip.destination || 'Chợ Bến Thành, Q.1',
         detail: 'Kết thúc chuyến đi',
@@ -416,7 +416,7 @@ export const TripDetailView = () => {
                   Lộ trình chi tiết ({driverItinerary.length} trạm)
                 </span>
                 <span className="text-xs font-semibold text-[#0B7A5C] font-mono">
-                  {trip.distanceKm || 18.5} km · {trip.departureTime || '07:00'}–07:48
+                  {trip.distanceKm || 18.5} km · {trip.departureTime || '07:00'}–08:00
                 </span>
               </div>
 
@@ -679,7 +679,7 @@ export const TripDetailView = () => {
                     <span className="font-bold text-[#101B17] truncate">{trip.origin}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-[#8A9993]">Điểm trả (07:48)</span>
+                    <span className="text-[10px] uppercase font-bold text-[#8A9993]">Điểm trả (08:00)</span>
                     <span className="font-bold text-[#101B17] truncate">{trip.destination}</span>
                   </div>
                 </div>

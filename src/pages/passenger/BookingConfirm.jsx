@@ -223,7 +223,7 @@ export const BookingConfirm = () => {
                   <span className="text-[10px] uppercase font-bold text-[#8A9993] tracking-wider">Điểm trả dự kiến</span>
                   <span className="text-xs font-bold text-[#101B17]">{trip.destination}</span>
                 </div>
-                <span className="text-xs font-bold text-[#101B17] font-mono">07:48</span>
+                <span className="text-xs font-bold text-[#101B17] font-mono">08:00</span>
               </div>
             </div>
           </div>

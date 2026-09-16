@@ -4,6 +4,8 @@ import {
   INITIAL_TRIPS,
   INITIAL_BOOKINGS,
   INITIAL_MESSAGES,
+  MOCK_DRIVER_SCHEDULES,
+  MOCK_PASSENGER_SCHEDULES,
   RECURRING_SCHEDULE_PRESETS,
   MOCK_WALLET_TRANSACTIONS,
   MOCK_PICKUP_POINTS,
@@ -20,7 +22,9 @@ export const AppProvider = ({ children }) => {
   // Core Collections
   const [trips, setTrips] = useState(INITIAL_TRIPS);
   const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
-  const [schedules, setSchedules] = useState(RECURRING_SCHEDULE_PRESETS);
+  const [driverSchedules, setDriverSchedules] = useState(MOCK_DRIVER_SCHEDULES);
+  const [passengerSchedules, setPassengerSchedules] = useState(MOCK_PASSENGER_SCHEDULES);
+  const [schedules, setSchedules] = useState(MOCK_DRIVER_SCHEDULES);
   const [walletTransactions, setWalletTransactions] = useState(MOCK_WALLET_TRANSACTIONS);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [safetyReports, setSafetyReports] = useState([]);
@@ -226,7 +230,7 @@ export const AppProvider = ({ children }) => {
       origin: tripData.origin || 'FPT University HCMC',
       originDetail: `${tripData.departureTime || '07:00'} · Điểm A`,
       destination: tripData.destination || 'Chợ Bến Thành, Q.1',
-      destinationDetail: `${tripData.arrivalTime || '07:48'} · dự kiến · ${tripData.distanceKm || 18.5} km`,
+      destinationDetail: `${tripData.arrivalTime || '08:00'} · dự kiến · ${tripData.distanceKm || 18.5} km`,
       distanceKm: tripData.distanceKm || 18.5,
       departureDate: tripData.departureDate || 'Hôm nay, 12/09',
       departureTime: tripData.departureTime || '07:00',
@@ -250,7 +254,7 @@ export const AppProvider = ({ children }) => {
       },
       stops: tripData.stops || [
         { id: 'st_1', name: tripData.origin || 'FPT University HCMC', role: 'Xuất phát', time: tripData.departureTime || '07:00', isPassengerStop: true },
-        { id: 'st_2', name: tripData.destination || 'Chợ Bến Thành, Q.1', role: 'Điểm kết thúc', time: tripData.arrivalTime || '07:48', isPassengerStop: true }
+        { id: 'st_2', name: tripData.destination || 'Chợ Bến Thành, Q.1', role: 'Điểm kết thúc', time: tripData.arrivalTime || '08:00', isPassengerStop: true }
       ],
       segments: [
         { km: 5, kmLabel: '5 km', barBg: '#DFE7E3', barFg: '#4B5A54', endLabel: 'B', isUserLeg: false },
@@ -481,16 +485,142 @@ export const AppProvider = ({ children }) => {
     }, 1500);
   };
 
-  // Toggle Recurring Schedule
+  // --- Driver Schedules Management ---
+  const addDriverSchedule = (newSched) => {
+    const created = {
+      ...newSched,
+      id: `dsch_${Date.now()}`,
+      active: true,
+      subscribers: []
+    };
+    setDriverSchedules(prev => [created, ...prev]);
+    setSchedules(prev => [created, ...prev]);
+    return created;
+  };
+
+  const updateDriverSchedule = (id, updatedFields) => {
+    setDriverSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updatedFields } : s));
+    setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updatedFields } : s));
+  };
+
+  const deleteDriverSchedule = (id) => {
+    setDriverSchedules(prev => prev.filter(s => s.id !== id));
+    setSchedules(prev => prev.filter(s => s.id !== id));
+  };
+
+  const toggleDriverSchedule = (id) => {
+    setDriverSchedules(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
+    setSchedules(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
+  };
+
+  // --- Passenger Schedules Management ---
+  const addPassengerSchedule = (newSched) => {
+    const created = {
+      ...newSched,
+      id: `psch_${Date.now()}`,
+      active: true,
+      matchedDriver: null
+    };
+    setPassengerSchedules(prev => [created, ...prev]);
+    return created;
+  };
+
+  const updatePassengerSchedule = (id, updatedFields) => {
+    setPassengerSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updatedFields } : s));
+  };
+
+  const deletePassengerSchedule = (id) => {
+    setPassengerSchedules(prev => prev.filter(s => s.id !== id));
+  };
+
+  const togglePassengerSchedule = (id) => {
+    setPassengerSchedules(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
+  };
+
+  // --- Passenger 1-Click Monthly Subscription to Driver Schedule ---
+  const subscribeRecurringCommute = (driverScheduleId, note = '') => {
+    const targetDriverSched = driverSchedules.find(s => s.id === driverScheduleId) || driverSchedules[0];
+    
+    // 1. Add passenger to driver's schedule subscribers
+    setDriverSchedules(prev => prev.map(s => {
+      if (s.id === targetDriverSched.id) {
+        const alreadySubbed = (s.subscribers || []).some(sub => sub.id === currentUser.id || sub.name === currentUser.name);
+        if (alreadySubbed) return s;
+        return {
+          ...s,
+          availableSeats: Math.max(0, (s.availableSeats || 1) - 1),
+          subscribers: [
+            ...(s.subscribers || []),
+            {
+              id: currentUser.id || 'pas_01',
+              name: currentUser.name || 'Minh Anh',
+              avatar: currentUser.initials || 'MA',
+              phone: currentUser.phone || '0912 345 678',
+              pickup: targetDriverSched.origin,
+              dropoff: targetDriverSched.destination,
+              note: note || 'Đăng ký trọn gói cả tháng (T2-T6)'
+            }
+          ]
+        };
+      }
+      return s;
+    }));
+
+    // 2. Add or update matched driver in passenger schedules
+    const existingPassengerSched = passengerSchedules.find(ps => ps.origin.includes(targetDriverSched.origin) || ps.destination.includes(targetDriverSched.destination));
+    if (existingPassengerSched) {
+      updatePassengerSchedule(existingPassengerSched.id, {
+        matchedDriver: {
+          id: 'drv_01',
+          name: 'Quốc Huy',
+          avatar: 'QH',
+          vehicle: targetDriverSched.vehicleModel ? `${targetDriverSched.vehicleModel} · ${targetDriverSched.vehiclePlate}` : 'Honda City · 51G-119.02',
+          phone: '0908 123 456',
+          status: 'Đã đăng ký trọn gói tháng 10 (22 chuyến)'
+        }
+      });
+    } else {
+      addPassengerSchedule({
+        title: `Đi chung cùng ${targetDriverSched.title || 'Tài xế Quốc Huy'}`,
+        purpose: 'Đi làm',
+        icon: '🏢',
+        origin: targetDriverSched.origin,
+        destination: targetDriverSched.destination,
+        days: targetDriverSched.days,
+        time: targetDriverSched.time,
+        duration: targetDriverSched.duration || { startDate: '01/10/2026', endDate: '31/10/2026', durationLabel: '01/10 → 31/10/2026' },
+        preferredVehicle: targetDriverSched.vehicleType || 'all',
+        matchedDriver: {
+          id: 'drv_01',
+          name: 'Quốc Huy',
+          avatar: 'QH',
+          vehicle: targetDriverSched.vehicleModel ? `${targetDriverSched.vehicleModel} · ${targetDriverSched.vehiclePlate}` : 'Honda City · 51G-119.02',
+          phone: '0908 123 456',
+          status: 'Đã đăng ký trọn gói tháng 10 (22 chuyến)'
+        }
+      });
+    }
+
+    return true;
+  };
+
+  // Toggle Recurring Schedule (Backward-compatible)
   const toggleSchedule = (scheduleId) => {
-    setSchedules(prev => prev.map(s => s.id === scheduleId ? { ...s, active: !s.active } : s));
+    toggleDriverSchedule(scheduleId);
+  };
+
+  // Delete Recurring Schedule (Backward-compatible)
+  const deleteSchedule = (scheduleId) => {
+    deleteDriverSchedule(scheduleId);
   };
 
   // Restore the whole demo to its initial seed data (used by the demo control bar's Reset button)
   const resetDemoState = () => {
     setTrips(INITIAL_TRIPS);
     setBookings(INITIAL_BOOKINGS);
-    setSchedules(RECURRING_SCHEDULE_PRESETS);
+    setDriverSchedules(MOCK_DRIVER_SCHEDULES);
+    setPassengerSchedules(MOCK_PASSENGER_SCHEDULES);
+    setSchedules(MOCK_DRIVER_SCHEDULES);
     setWalletTransactions(MOCK_WALLET_TRANSACTIONS);
     setMessages(INITIAL_MESSAGES);
     setSafetyReports([]);
@@ -594,6 +724,17 @@ export const AppProvider = ({ children }) => {
         setTrips,
         bookings,
         setBookings,
+        driverSchedules,
+        passengerSchedules,
+        addDriverSchedule,
+        updateDriverSchedule,
+        deleteDriverSchedule,
+        toggleDriverSchedule,
+        addPassengerSchedule,
+        updatePassengerSchedule,
+        deletePassengerSchedule,
+        togglePassengerSchedule,
+        subscribeRecurringCommute,
         schedules,
         walletTransactions,
         topUpWallet,
@@ -649,6 +790,8 @@ export const AppProvider = ({ children }) => {
         acceptReschedule,
         declineReschedule,
         toggleSchedule,
+        deleteSchedule,
+        setSchedules,
         resetDemoState,
       }}
     >

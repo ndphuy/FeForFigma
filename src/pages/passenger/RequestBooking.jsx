@@ -12,8 +12,8 @@ export const RequestBooking = () => {
   const stops = trip.stops?.length >= 2
     ? trip.stops
     : [
-      { id: 'st_o', name: trip.origin, time: trip.departureTime },
-      { id: 'st_d', name: trip.destination, time: '07:48' },
+      { id: 'st_o', name: trip.origin, time: trip.departureTime || '07:00' },
+      { id: 'st_d', name: trip.destination, time: '08:00' },
     ];
 
   const [seats, setSeats] = useState(1);

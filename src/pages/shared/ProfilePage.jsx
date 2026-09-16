@@ -124,12 +124,17 @@ export const ProfilePage = () => {
         {/* Recurring Commute */}
         <button
           type="button"
-          onClick={() => navigate('/shared/schedule')}
+          onClick={() => navigate(currentRole === 'driver' ? '/driver/schedules' : '/passenger/schedules')}
           className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#F1FAF6] transition-colors text-left cursor-pointer"
         >
           <div className="flex items-center space-x-3">
             <Calendar className="w-4.5 h-4.5 text-[#4B5A54]" />
-            <span className="text-xs font-semibold text-[#101B17]">Lịch trình đi lại định kỳ</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-[#101B17]">Lịch trình đi lại định kỳ</span>
+              <span className="text-[11px] text-[#8A9993]">
+                {currentRole === 'driver' ? 'Tuyến cố định nhận khách cả tháng' : 'Nhu cầu đi học/đi làm quen thuộc'}
+              </span>
+            </div>
           </div>
           <ChevronRight className="w-4 h-4 text-[#8A9993]" />
         </button>

@@ -140,7 +140,7 @@ export const INITIAL_TRIPS = [
     origin: "FPT University HCMC",
     originDetail: "07:00 · ĐH FPT",
     destination: "Chợ Bến Thành, Q.1",
-    destinationDetail: "07:48 · dự kiến · 18,5 km",
+    destinationDetail: "08:00 · dự kiến · 18,5 km",
     distanceKm: 18.5,
     departureDate: "Hôm nay, 12/09",
     departureTime: "07:00",
@@ -165,9 +165,9 @@ export const INITIAL_TRIPS = [
     },
     stops: [
       { id: "st_1", name: "FPT University HCMC (Điểm A)", role: "Xuất phát", time: "07:00", isPassengerStop: true },
-      { id: "st_2", name: "Ngã 4 Thủ Đức (Điểm B)", role: "Điểm đón 1", time: "07:15", isPassengerStop: false },
-      { id: "st_3", name: "Hàng Xanh (Điểm C)", role: "Điểm trả 1", time: "07:35", isPassengerStop: false },
-      { id: "st_4", name: "Chợ Bến Thành, Q.1 (Điểm D)", role: "Điểm kết thúc", time: "07:48", isPassengerStop: true },
+      { id: "st_2", name: "Ngã 4 Thủ Đức (Điểm B)", role: "Điểm đón 1", time: "07:20", isPassengerStop: false },
+      { id: "st_3", name: "Hàng Xanh (Điểm C)", role: "Điểm trả 1", time: "07:45", isPassengerStop: false },
+      { id: "st_4", name: "Chợ Bến Thành, Q.1 (Điểm D)", role: "Điểm kết thúc", time: "08:00", isPassengerStop: true },
     ],
     segments: [
       { km: 5, kmLabel: "5 km", barBg: "#DFE7E3", barFg: "#4B5A54", endLabel: "B", isUserLeg: false },
@@ -351,26 +351,102 @@ export const INITIAL_MESSAGES = [
   },
 ];
 
-export const RECURRING_SCHEDULE_PRESETS = [
+export const MOCK_DRIVER_SCHEDULES = [
   {
-    id: "sch_01",
-    title: "Đi làm buổi sáng",
+    id: "dsch_01",
+    title: "Sáng đi làm",
+    origin: "Phan Văn Trị, Gò Vấp",
+    destination: "Khu Công Nghệ Cao, Q.9",
     days: ["T2", "T3", "T4", "T5", "T6"],
-    origin: "Q.7 · Phú Mỹ Hưng",
-    destination: "Q.1 · Bến Thành",
-    time: "07:15",
+    time: "07:00",
+    duration: { startDate: "01/10/2026", endDate: "31/12/2026", durationLabel: "01/10 → 31/12/2026" },
+    vehicleId: "veh_02",
+    vehicleModel: "Honda SH 150i",
+    vehicleType: "bike",
+    vehiclePlate: "59-X3 892.12",
+    availableSeats: 1,
+    totalSeats: 2,
+    pricePerTrip: 35000,
+    wishlistDiscountPercent: 15,
     active: true,
+    subscribers: [
+      { id: "pas_01", name: "Minh Anh", avatar: "MA", phone: "0912 345 678", pickup: "Ngã 4 Thủ Đức", dropoff: "Khu CNC" }
+    ]
   },
   {
-    id: "sch_02",
-    title: "Về nhà buổi chiều",
-    days: ["T2", "T3", "T4", "T5", "T6"],
-    origin: "Q.1 · Bến Thành",
-    destination: "Q.7 · Phú Mỹ Hưng",
+    id: "dsch_02",
+    title: "Chiều về nhà",
+    origin: "Khu Công Nghệ Cao, Q.9",
+    destination: "Phan Văn Trị, Gò Vấp",
+    days: ["T2", "T3", "T4", "T5"],
     time: "17:30",
+    duration: { startDate: "01/10/2026", endDate: "31/12/2026", durationLabel: "01/10 → 31/12/2026" },
+    vehicleId: "veh_02",
+    vehicleModel: "Honda SH 150i",
+    vehicleType: "bike",
+    vehiclePlate: "59-X3 892.12",
+    availableSeats: 1,
+    totalSeats: 2,
+    pricePerTrip: 35000,
+    wishlistDiscountPercent: 15,
     active: true,
+    subscribers: []
   }
 ];
+
+export const MOCK_PASSENGER_SCHEDULES = [
+  {
+    id: "psch_01",
+    title: "Sáng đi học / đi làm",
+    purpose: "Đi học",
+    icon: "🎓",
+    origin: "Phan Văn Trị, Gò Vấp",
+    destination: "Đại học FPT, Khu CNC Q.9",
+    days: ["T2", "T3", "T4", "T5", "T6"],
+    time: "07:00",
+    duration: { startDate: "01/10/2026", endDate: "31/10/2026", durationLabel: "01/10 → 31/10/2026" },
+    preferredVehicle: "all",
+    active: true,
+    matchedDriver: {
+      id: "drv_01",
+      name: "Quốc Huy",
+      avatar: "QH",
+      vehicle: "Honda SH 150i · 59-X3 892.12",
+      phone: "0908 123 456",
+      status: "Đã ghép đôi trọn gói T10 (22 chuyến)"
+    }
+  },
+  {
+    id: "psch_02",
+    title: "Chiều về nhà",
+    purpose: "Về nhà",
+    icon: "🏠",
+    origin: "Đại học FPT, Khu CNC Q.9",
+    destination: "Phan Văn Trị, Gò Vấp",
+    days: ["T2", "T3", "T4", "T5"],
+    time: "17:30",
+    duration: { startDate: "01/10/2026", endDate: "31/10/2026", durationLabel: "01/10 → 31/10/2026" },
+    preferredVehicle: "all",
+    active: true,
+    matchedDriver: null
+  },
+  {
+    id: "psch_03",
+    title: "Cuối tuần đi chơi",
+    purpose: "Khác",
+    icon: "☕",
+    origin: "Phan Văn Trị, Gò Vấp",
+    destination: "Landmark 81, Bình Thạnh",
+    days: ["T7"],
+    time: "09:00",
+    duration: { startDate: "01/10/2026", endDate: "31/12/2026", durationLabel: "01/10 → 31/12/2026" },
+    preferredVehicle: "car",
+    active: false,
+    matchedDriver: null
+  }
+];
+
+export const RECURRING_SCHEDULE_PRESETS = MOCK_DRIVER_SCHEDULES;
 
 export const MOCK_WALLET_TRANSACTIONS = [
   {

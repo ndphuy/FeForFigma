@@ -23,7 +23,7 @@ import { RouteMapPreview } from '../../components/RouteMapPreview';
 
 export const CreateTrip = () => {
   const navigate = useNavigate();
-  const { publishTrip, vehicles, activeVehicle, setActiveVehicle } = useApp();
+  const { publishTrip, addDriverSchedule, vehicles, activeVehicle, setActiveVehicle } = useApp();
 
   const [currentStep, setCurrentStep] = useState(1); // 1 to 6
 
@@ -87,7 +87,7 @@ export const CreateTrip = () => {
         stops: [
           { id: 'st_origin', name: origin, role: 'Xuất phát', time: departureTime, isPassengerStop: true },
           ...stops.map((s, idx) => ({ id: s.id, name: s.name, role: `Điểm đón ${idx + 1}`, time: s.time, isPassengerStop: false })),
-          { id: 'st_dest', name: destination, role: 'Điểm kết thúc', time: '07:48', isPassengerStop: true }
+          { id: 'st_dest', name: destination, role: 'Điểm kết thúc', time: '08:00', isPassengerStop: true }
         ],
         departureDate,
         departureTime,
@@ -100,6 +100,28 @@ export const CreateTrip = () => {
         priceVnd: calculatedPricePerSeat,
         distanceKm
       });
+
+      // If marked as recurring, synchronize with driver schedules
+      if (isRecurring && addDriverSchedule) {
+        addDriverSchedule({
+          title: `Lịch đi làm (${origin.split('·')[0].trim()} → ${destination.split('·')[0].trim()})`,
+          origin,
+          destination,
+          days: recurringDays,
+          time: departureTime,
+          duration: { startDate: '01/10/2026', endDate: '31/12/2026', durationLabel: '01/10 → 31/12/2026' },
+          vehicleId: chosenVehicle?.id || 'veh_01',
+          vehicleModel: chosenVehicle?.model,
+          vehicleType: chosenVehicle?.type,
+          vehiclePlate: chosenVehicle?.plate,
+          availableSeats: seats,
+          totalSeats: chosenVehicle?.seats || 4,
+          pricePerTrip: calculatedPricePerSeat,
+          wishlistDiscountPercent: isWishlistDiscountEnabled ? wishlistDiscountPercent : 0,
+          active: true
+        });
+      }
+
       navigate('/driver/home');
     }
   };
