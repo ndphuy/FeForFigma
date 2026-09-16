@@ -1,231 +1,343 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="./support.js"></script>
 </head>
+
 <body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  body { margin:0; background:#F4F7F5; font-family:'Be Vietnam Pro',-apple-system,'Segoe UI',Helvetica,sans-serif; color:#101B17; -webkit-font-smoothing:antialiased; }
-  * { box-sizing:border-box; }
-  a { color:#0B7A5C; text-decoration:none; }
-  a:hover { color:#0E9873; text-decoration:underline; }
-  .rs-scroll::-webkit-scrollbar { width:8px; height:8px; }
-  .rs-scroll::-webkit-scrollbar-thumb { background:#DFE7E3; border-radius:999px; }
-</style>
-</helmet>
+  <x-dc>
+    <helmet>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+      <style>
+        body {
+          margin: 0;
+          background: #F4F7F5;
+          font-family: 'Be Vietnam Pro', -apple-system, 'Segoe UI', Helvetica, sans-serif;
+          color: #101B17;
+          -webkit-font-smoothing: antialiased;
+        }
 
-<div style="min-height:100vh;display:flex;align-items:stretch;flex-wrap:wrap">
+        * {
+          box-sizing: border-box;
+        }
 
-  <aside style="flex:0 0 248px;min-width:220px;background:#0F1F1A;padding:20px 14px 24px;display:flex;flex-direction:column;gap:20px">
-    <div style="display:flex;align-items:center;gap:11px;padding:0 8px">
-      <span style="width:34px;height:34px;border-radius:11px;background:#0F9D76;display:flex;align-items:center;justify-content:center;flex:none">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="17" r="2.6"></circle><circle cx="17" cy="7" r="2.6"></circle><line x1="9.6" y1="17" x2="17" y2="17"></line><line x1="17" y1="17" x2="17" y2="9.6"></line></svg>
-      </span>
-      <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
-        <span style="font-size:14px;font-weight:700;color:#FFFFFF;letter-spacing:.02em">RouteShare</span>
-        <span style="font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#8AA399">Admin console</span>
-      </span>
-    </div>
-    <nav style="display:flex;flex-direction:column;gap:2px">
-      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="11">
-        <a href="#" style="display:flex;align-items:center;gap:11px;min-height:40px;padding:0 10px;border-radius:10px;text-decoration:none;background:{{ n.bg }}" style-hover="background:rgba(255,255,255,.07)">
-          <span style="width:18px;height:18px;border-radius:{{ n.shape }};background:{{ n.mark }};flex:none"></span>
-          <span style="flex:1;min-width:0;font-size:13.5px;font-weight:{{ n.weight }};color:{{ n.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</span>
-          <span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:{{ n.badgeBg }};color:{{ n.badgeFg }};font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ n.badge }}</span>
-        </a>
-      </sc-for>
-    </nav>
-    <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:0 4px">
-      <span style="width:32px;height:32px;border-radius:999px;background:#1F3A31;color:#7FDCC0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex:none">TH</span>
-      <span style="flex:1;min-width:0;display:flex;flex-direction:column">
-        <span style="font-size:12.5px;font-weight:600;color:#FFFFFF">Trần Hương</span>
-        <span style="font-size:10.5px;color:#8AA399">Ops lead · quyền sửa quy tắc</span>
-      </span>
-    </div>
-  </aside>
+        a {
+          color: #0B7A5C;
+          text-decoration: none;
+        }
 
-  <main style="flex:1 1 640px;min-width:0;display:flex;flex-direction:column">
+        a:hover {
+          color: #0E9873;
+          text-decoration: underline;
+        }
 
-    <header style="background:#FFFFFF;border-bottom:1px solid #E4EAE7;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:3px">
-        <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em">Quy tắc chi phí</h1>
-        <span style="font-size:12.5px;color:#8A9993">{{ headerNote }}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <div style="display:flex;gap:4px;background:#F4F7F5;border-radius:10px;padding:4px">
-          <sc-for list="{{ regions }}" as="r" hint-placeholder-count="3">
-            <button type="button" onClick="{{ r.pick }}" style="height:34px;padding:0 14px;border:none;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }};box-shadow:{{ r.shadow }}">{{ r.label }}</button>
+        .rs-scroll::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+
+        .rs-scroll::-webkit-scrollbar-thumb {
+          background: #DFE7E3;
+          border-radius: 999px;
+        }
+      </style>
+    </helmet>
+
+    <div style="min-height:100vh;display:flex;align-items:stretch;flex-wrap:wrap">
+
+      <aside
+        style="flex:0 0 248px;min-width:220px;background:#0F1F1A;padding:20px 14px 24px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:center;gap:11px;padding:0 8px">
+          <span
+            style="width:34px;height:34px;border-radius:11px;background:#0F9D76;display:flex;align-items:center;justify-content:center;flex:none">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#FFFFFF" stroke-width="2"
+              stroke-linecap="round">
+              <circle cx="7" cy="17" r="2.6"></circle>
+              <circle cx="17" cy="7" r="2.6"></circle>
+              <line x1="9.6" y1="17" x2="17" y2="17"></line>
+              <line x1="17" y1="17" x2="17" y2="9.6"></line>
+            </svg>
+          </span>
+          <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
+            <span style="font-size:14px;font-weight:700;color:#FFFFFF;letter-spacing:.02em">RouteShare</span>
+            <span
+              style="font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#8AA399">Admin
+              console</span>
+          </span>
+        </div>
+        <nav style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="11">
+            <a href="#"
+              style="display:flex;align-items:center;gap:11px;min-height:40px;padding:0 10px;border-radius:10px;text-decoration:none;background:{{ n.bg }}"
+              style-hover="background:rgba(255,255,255,.07)">
+              <span style="width:18px;height:18px;border-radius:{{ n.shape }};background:{{ n.mark }};flex:none"></span>
+              <span
+                style="flex:1;min-width:0;font-size:13.5px;font-weight:{{ n.weight }};color:{{ n.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{
+                n.label }}</span>
+              <span
+                style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:{{ n.badgeBg }};color:{{ n.badgeFg }};font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{
+                n.badge }}</span>
+            </a>
           </sc-for>
+        </nav>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:0 4px">
+          <span
+            style="width:32px;height:32px;border-radius:999px;background:#1F3A31;color:#7FDCC0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex:none">TH</span>
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <span style="font-size:12.5px;font-weight:600;color:#FFFFFF">Trần Hương</span>
+            <span style="font-size:10.5px;color:#8AA399">Ops lead · quyền sửa quy tắc</span>
+          </span>
         </div>
-        <button type="button" style="height:42px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Nhật ký thay đổi</button>
-        <button type="button" style="height:42px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Lưu nháp</button>
-        <button type="button" style="height:42px;padding:0 16px;border:none;border-radius:11px;background:{{ publishBg }};color:{{ publishFg }};font-family:inherit;font-size:13px;font-weight:600;cursor:{{ publishCursor }}" style-hover="filter:brightness(.95)">{{ publishLabel }}</button>
-      </div>
-    </header>
+      </aside>
 
-    <!-- draft banner -->
-    <div style="background:#FFF4E9;border-bottom:1px solid #F7D9B8;padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <span style="width:22px;height:22px;border-radius:999px;background:#EE7A22;color:#FFFFFF;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">!</span>
-      <span style="flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:#8A4A0B">{{ draftNote }}</span>
-      <button type="button" style="height:34px;padding:0 13px;border:1px solid #F0CBA4;border-radius:9px;background:#FFFFFF;color:#8A4A0B;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;flex:none" style-hover="background:#FFF9F2">Hoàn tác thay đổi</button>
-    </div>
+      <main style="flex:1 1 640px;min-width:0;display:flex;flex-direction:column">
 
-    <div style="flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1600px;width:100%">
-
-      <!-- legal ceiling -->
-      <section style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <span style="width:46px;height:46px;border-radius:15px;background:#F1FAF6;color:#0B7A5C;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;flex:none">⚖</span>
-        <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
-          <span style="font-size:14.5px;font-weight:600">Trần đóng góp · {{ ceiling }}% chi phí thực tế</span>
-          <span style="font-size:12.5px;line-height:1.5;color:#8A9993">Tổng đóng góp của tất cả khách không bao giờ vượt chi phí vận hành của chuyến. Tài xế luôn chịu ít nhất phần chặng đi một mình.</span>
-        </div>
-        <span style="padding:7px 13px;border-radius:999px;background:#DDF3EA;color:#0B7A5C;font-size:11.5px;font-weight:700;flex:none">Ràng buộc cứng · không thể tắt</span>
-      </section>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start">
-
-        <!-- LEFT: inputs -->
-        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
-
-          <section style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:16px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <span style="font-size:14.5px;font-weight:600">Thành phần chi phí · {{ regionLabel }}</span>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#0B7A5C">{{ ratePerKm }} / km</span>
+        <header
+          style="background:#FFFFFF;border-bottom:1px solid #E4EAE7;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:3px">
+            <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em">Quy tắc chi phí</h1>
+            <span style="font-size:12.5px;color:#8A9993">{{ headerNote }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;gap:4px;background:#F4F7F5;border-radius:10px;padding:4px">
+              <sc-for list="{{ regions }}" as="r" hint-placeholder-count="3">
+                <button type="button" onClick="{{ r.pick }}"
+                  style="height:34px;padding:0 14px;border:none;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }};box-shadow:{{ r.shadow }}">{{
+                  r.label }}</button>
+              </sc-for>
             </div>
-            <sc-for list="{{ inputs }}" as="i" hint-placeholder-count="4">
-              <div style="display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #F4F7F5;padding-bottom:14px">
-                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
-                  <span style="font-size:13.5px;font-weight:600">{{ i.label }}</span>
-                  <span style="display:inline-flex;align-items:center;gap:8px;flex:none">
-                    <button type="button" onClick="{{ i.dec }}" style="width:34px;height:34px;border:1px solid #E4EAE7;border-radius:10px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:16px;line-height:1;cursor:pointer" style-hover="background:#F7FAF9">−</button>
-                    <span style="min-width:96px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:{{ i.valueColor }}">{{ i.value }}</span>
-                    <button type="button" onClick="{{ i.inc }}" style="width:34px;height:34px;border:none;border-radius:10px;background:#DDF3EA;color:#0B7A5C;font-family:inherit;font-size:16px;line-height:1;cursor:pointer" style-hover="background:#C9ECDD">+</button>
-                  </span>
+            <button type="button"
+              style="height:42px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer"
+              style-hover="background:#F7FAF9">Nhật ký thay đổi</button>
+            <button type="button"
+              style="height:42px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer"
+              style-hover="background:#F7FAF9">Lưu nháp</button>
+            <button type="button"
+              style="height:42px;padding:0 16px;border:none;border-radius:11px;background:{{ publishBg }};color:{{ publishFg }};font-family:inherit;font-size:13px;font-weight:600;cursor:{{ publishCursor }}"
+              style-hover="filter:brightness(.95)">{{ publishLabel }}</button>
+          </div>
+        </header>
+
+        <!-- draft banner -->
+        <div
+          style="background:#FFF4E9;border-bottom:1px solid #F7D9B8;padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span
+            style="width:22px;height:22px;border-radius:999px;background:#EE7A22;color:#FFFFFF;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">!</span>
+          <span style="flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:#8A4A0B">{{ draftNote }}</span>
+          <button type="button"
+            style="height:34px;padding:0 13px;border:1px solid #F0CBA4;border-radius:9px;background:#FFFFFF;color:#8A4A0B;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;flex:none"
+            style-hover="background:#FFF9F2">Hoàn tác thay đổi</button>
+        </div>
+
+        <div style="flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1600px;width:100%">
+
+          <!-- legal ceiling -->
+          <section
+            style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <span
+              style="width:46px;height:46px;border-radius:15px;background:#F1FAF6;color:#0B7A5C;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;flex:none">⚖</span>
+            <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:14.5px;font-weight:600">Trần đóng góp · {{ ceiling }}% chi phí thực tế</span>
+              <span style="font-size:12.5px;line-height:1.5;color:#8A9993">Tổng đóng góp của tất cả khách không bao giờ
+                vượt chi phí vận hành của chuyến. Tài xế luôn chịu ít nhất phần chặng đi một mình.</span>
+            </div>
+            <span
+              style="padding:7px 13px;border-radius:999px;background:#DDF3EA;color:#0B7A5C;font-size:11.5px;font-weight:700;flex:none">Ràng
+              buộc cứng · không thể tắt</span>
+          </section>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start">
+
+            <!-- LEFT: inputs -->
+            <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+              <section
+                style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:14.5px;font-weight:600">Thành phần chi phí · {{ regionLabel }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#0B7A5C">{{
+                    ratePerKm }} / km</span>
                 </div>
-                <span style="font-size:11.5px;line-height:1.45;color:#8A9993">{{ i.note }}</span>
-                <span style="display:inline-flex;align-items:center;gap:8px;font-size:11px;color:#8A9993">
-                  <span style="flex:1;height:6px;border-radius:999px;background:#F1F5F3;display:flex;overflow:hidden">
-                    <span style="flex:{{ i.fill }};background:{{ i.barColor }}"></span><span style="flex:{{ i.rest }}"></span>
-                  </span>
-                  <span style="flex:none;font-family:'IBM Plex Mono',monospace">{{ i.share }}</span>
-                </span>
-              </div>
-            </sc-for>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-              <span style="font-size:13.5px;font-weight:600">Làm tròn hiển thị</span>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <sc-for list="{{ roundings }}" as="r" hint-placeholder-count="3">
-                  <button type="button" onClick="{{ r.pick }}" style="height:38px;padding:0 14px;border:none;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }};box-shadow:{{ r.ring }}">{{ r.label }}</button>
+                <sc-for list="{{ inputs }}" as="i" hint-placeholder-count="4">
+                  <div
+                    style="display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #F4F7F5;padding-bottom:14px">
+                    <div
+                      style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                      <span style="font-size:13.5px;font-weight:600">{{ i.label }}</span>
+                      <span style="display:inline-flex;align-items:center;gap:8px;flex:none">
+                        <button type="button" onClick="{{ i.dec }}"
+                          style="width:34px;height:34px;border:1px solid #E4EAE7;border-radius:10px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:16px;line-height:1;cursor:pointer"
+                          style-hover="background:#F7FAF9">−</button>
+                        <span
+                          style="min-width:96px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:{{ i.valueColor }}">{{
+                          i.value }}</span>
+                        <button type="button" onClick="{{ i.inc }}"
+                          style="width:34px;height:34px;border:none;border-radius:10px;background:#DDF3EA;color:#0B7A5C;font-family:inherit;font-size:16px;line-height:1;cursor:pointer"
+                          style-hover="background:#C9ECDD">+</button>
+                      </span>
+                    </div>
+                    <span style="font-size:11.5px;line-height:1.45;color:#8A9993">{{ i.note }}</span>
+                    <span style="display:inline-flex;align-items:center;gap:8px;font-size:11px;color:#8A9993">
+                      <span
+                        style="flex:1;height:6px;border-radius:999px;background:#F1F5F3;display:flex;overflow:hidden">
+                        <span style="flex:{{ i.fill }};background:{{ i.barColor }}"></span><span
+                          style="flex:{{ i.rest }}"></span>
+                      </span>
+                      <span style="flex:none;font-family:'IBM Plex Mono',monospace">{{ i.share }}</span>
+                    </span>
+                  </div>
                 </sc-for>
-              </div>
-            </div>
-          </section>
-
-          <section style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
-            <span style="font-size:14.5px;font-weight:600">Quy tắc chia</span>
-            <sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
-              <div style="display:flex;align-items:center;gap:14px;border-top:1px solid #F4F7F5;padding-top:13px">
-                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-                  <span style="font-size:13.5px;font-weight:600">{{ r.label }}</span>
-                  <span style="font-size:11.5px;line-height:1.45;color:#8A9993">{{ r.note }}</span>
-                </span>
-                <span style="width:48px;height:28px;border-radius:999px;background:{{ r.trackBg }};padding:3px;display:flex;justify-content:{{ r.justify }};align-items:center;flex:none;cursor:{{ r.cursor }}"><span style="width:22px;height:22px;border-radius:999px;background:#FFFFFF"></span></span>
-              </div>
-            </sc-for>
-          </section>
-        </div>
-
-        <!-- RIGHT: simulation -->
-        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
-
-          <section style="background:#FFFFFF;border:1px solid #BDE7D5;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:16px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <span style="font-size:14.5px;font-weight:600">Xem trước tác động</span>
-              <span style="font-size:11.5px;color:#8A9993">mô phỏng trên 1.000 chuyến gần nhất</span>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
-              <sc-for list="{{ impact }}" as="m" hint-placeholder-count="4">
-                <div style="border:1px solid #EEF2F0;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:5px">
-                  <span style="font-size:10.5px;font-weight:600;letter-spacing:.05em;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.label }}</span>
-                  <span style="font-size:19px;font-weight:700;line-height:1.1;font-family:'IBM Plex Mono',monospace;color:{{ m.color }}">{{ m.value }}</span>
-                  <span style="font-size:10.5px;font-weight:600;color:{{ m.deltaColor }}">{{ m.delta }}</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <span style="font-size:13.5px;font-weight:600">Làm tròn hiển thị</span>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <sc-for list="{{ roundings }}" as="r" hint-placeholder-count="3">
+                      <button type="button" onClick="{{ r.pick }}"
+                        style="height:38px;padding:0 14px;border:none;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }};box-shadow:{{ r.ring }}">{{
+                        r.label }}</button>
+                    </sc-for>
+                  </div>
                 </div>
-              </sc-for>
-            </div>
-          </section>
+              </section>
 
-          <section style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <span style="font-size:14.5px;font-weight:600">Chuyến mẫu · A→B→C→D</span>
-              <span style="font-size:11.5px;color:#8A9993">30 km · khách đi B→D</span>
+              <section
+                style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+                <span style="font-size:14.5px;font-weight:600">Quy tắc chia</span>
+                <sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:14px;border-top:1px solid #F4F7F5;padding-top:13px">
+                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                      <span style="font-size:13.5px;font-weight:600">{{ r.label }}</span>
+                      <span style="font-size:11.5px;line-height:1.45;color:#8A9993">{{ r.note }}</span>
+                    </span>
+                    <span
+                      style="width:48px;height:28px;border-radius:999px;background:{{ r.trackBg }};padding:3px;display:flex;justify-content:{{ r.justify }};align-items:center;flex:none;cursor:{{ r.cursor }}"><span
+                        style="width:22px;height:22px;border-radius:999px;background:#FFFFFF"></span></span>
+                  </div>
+                </sc-for>
+              </section>
             </div>
-            <div style="display:flex;gap:3px;height:30px;border-radius:11px;overflow:hidden">
-              <sc-for list="{{ segments }}" as="s" hint-placeholder-count="3">
-                <span style="flex:{{ s.km }};background:{{ s.bg }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600">{{ s.label }}</span>
-              </sc-for>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <sc-for list="{{ sampleRows }}" as="r" hint-placeholder-count="4">
-                <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px">
-                  <span style="color:#4B5A54;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.label }}</span>
-                  <span style="font-weight:600;flex:none;font-family:'IBM Plex Mono',monospace;color:{{ r.color }}">{{ r.value }}</span>
+
+            <!-- RIGHT: simulation -->
+            <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+              <section
+                style="background:#FFFFFF;border:1px solid #BDE7D5;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <span style="font-size:14.5px;font-weight:600">Xem trước tác động</span>
+                  <span style="font-size:11.5px;color:#8A9993">mô phỏng trên 1.000 chuyến gần nhất</span>
                 </div>
-              </sc-for>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+                  <sc-for list="{{ impact }}" as="m" hint-placeholder-count="4">
+                    <div
+                      style="border:1px solid #EEF2F0;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:5px">
+                      <span
+                        style="font-size:10.5px;font-weight:600;letter-spacing:.05em;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{
+                        m.label }}</span>
+                      <span
+                        style="font-size:19px;font-weight:700;line-height:1.1;font-family:'IBM Plex Mono',monospace;color:{{ m.color }}">{{
+                        m.value }}</span>
+                      <span style="font-size:10.5px;font-weight:600;color:{{ m.deltaColor }}">{{ m.delta }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section
+                style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:14.5px;font-weight:600">Chuyến mẫu · A→B→C→D</span>
+                  <span style="font-size:11.5px;color:#8A9993">30 km · khách đi B→D</span>
+                </div>
+                <div style="display:flex;gap:3px;height:30px;border-radius:11px;overflow:hidden">
+                  <sc-for list="{{ segments }}" as="s" hint-placeholder-count="3">
+                    <span
+                      style="flex:{{ s.km }};background:{{ s.bg }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600">{{
+                      s.label }}</span>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ sampleRows }}" as="r" hint-placeholder-count="4">
+                    <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px">
+                      <span
+                        style="color:#4B5A54;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{
+                        r.label }}</span>
+                      <span
+                        style="font-weight:600;flex:none;font-family:'IBM Plex Mono',monospace;color:{{ r.color }}">{{
+                        r.value }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div
+                  style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #EEF2F0;padding-top:13px">
+                  <span style="font-size:13.5px;font-weight:600">Khách đóng góp</span>
+                  <span style="font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#0B7A5C">{{
+                    sampleTotal }}</span>
+                </div>
+                <div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px">
+                  <span style="flex:{{ shareWeight }};background:#0F9D76"></span>
+                  <span style="flex:{{ driverWeight }};background:#DFE7E3"></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#8A9993">
+                  <span>Khách {{ sampleTotal }}</span><span>Tài xế chịu {{ driverRest }}</span>
+                </div>
+              </section>
+
+              <section
+                style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:13px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:14.5px;font-weight:600">Phiên bản</span>
+                  <a href="#" style="font-size:12.5px;font-weight:600">Xem tất cả</a>
+                </div>
+                <sc-for list="{{ versions }}" as="v" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:12px;border-top:1px solid #F4F7F5;padding-top:11px">
+                    <span
+                      style="width:34px;height:34px;border-radius:11px;background:{{ v.bg }};color:{{ v.fg }};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex:none">{{
+                      v.mark }}</span>
+                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                      <span
+                        style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{
+                        v.label }}</span>
+                      <span
+                        style="font-size:11px;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{
+                        v.note }}</span>
+                    </span>
+                    <button type="button"
+                      style="height:32px;padding:0 11px;border:1px solid #E4EAE7;border-radius:9px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;flex:none"
+                      style-hover="background:#F7FAF9">{{ v.action }}</button>
+                  </div>
+                </sc-for>
+              </section>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #EEF2F0;padding-top:13px">
-              <span style="font-size:13.5px;font-weight:600">Khách đóng góp</span>
-              <span style="font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#0B7A5C">{{ sampleTotal }}</span>
+          </div>
+
+          <section
+            style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:14px;font-weight:600">Lịch áp dụng</span>
+              <span style="font-size:12.5px;color:#8A9993">Chuyến đã đăng giữ nguyên mức cũ. Quy tắc mới chỉ áp cho
+                chuyến tạo sau thời điểm kích hoạt.</span>
             </div>
-            <div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px">
-              <span style="flex:{{ shareWeight }};background:#0F9D76"></span>
-              <span style="flex:{{ driverWeight }};background:#DFE7E3"></span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#8A9993">
-              <span>Khách {{ sampleTotal }}</span><span>Tài xế chịu {{ driverRest }}</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;flex:none">
+              <button type="button"
+                style="height:44px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer"
+                style-hover="background:#F7FAF9">Chọn ngày hiệu lực</button>
+              <button type="button"
+                style="height:44px;padding:0 16px;border:none;border-radius:11px;background:#F1FAF6;color:#0B7A5C;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer"
+                style-hover="background:#DDF3EA">Gửi duyệt cấp 2</button>
             </div>
           </section>
-
-          <section style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:13px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <span style="font-size:14.5px;font-weight:600">Phiên bản</span>
-              <a href="#" style="font-size:12.5px;font-weight:600">Xem tất cả</a>
-            </div>
-            <sc-for list="{{ versions }}" as="v" hint-placeholder-count="3">
-              <div style="display:flex;align-items:center;gap:12px;border-top:1px solid #F4F7F5;padding-top:11px">
-                <span style="width:34px;height:34px;border-radius:11px;background:{{ v.bg }};color:{{ v.fg }};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex:none">{{ v.mark }}</span>
-                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-                  <span style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.label }}</span>
-                  <span style="font-size:11px;color:#8A9993;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.note }}</span>
-                </span>
-                <button type="button" style="height:32px;padding:0 11px;border:1px solid #E4EAE7;border-radius:9px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;flex:none" style-hover="background:#F7FAF9">{{ v.action }}</button>
-              </div>
-            </sc-for>
-          </section>
         </div>
-      </div>
-
-      <section style="background:#FFFFFF;border:1px solid #EEF2F0;border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:3px">
-          <span style="font-size:14px;font-weight:600">Lịch áp dụng</span>
-          <span style="font-size:12.5px;color:#8A9993">Chuyến đã đăng giữ nguyên mức cũ. Quy tắc mới chỉ áp cho chuyến tạo sau thời điểm kích hoạt.</span>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;flex:none">
-          <button type="button" style="height:44px;padding:0 16px;border:1px solid #E4EAE7;border-radius:11px;background:#FFFFFF;color:#4B5A54;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7FAF9">Chọn ngày hiệu lực</button>
-          <button type="button" style="height:44px;padding:0 16px;border:none;border-radius:11px;background:#F1FAF6;color:#0B7A5C;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#DDF3EA">Gửi duyệt cấp 2</button>
-        </div>
-      </section>
+      </main>
     </div>
-  </main>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;region&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;hcm&quot;,&quot;hn&quot;,&quot;dn&quot;],&quot;default&quot;:&quot;hcm&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Khu vực&quot;},&quot;rounding&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;500&quot;,&quot;1k&quot;,&quot;5k&quot;],&quot;default&quot;:&quot;1k&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hiển thị&quot;}}">
+  </x-dc>
+  <script type="text/x-dc" data-dc-script
+    data-props="{&quot;region&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;hcm&quot;,&quot;hn&quot;,&quot;dn&quot;],&quot;default&quot;:&quot;hcm&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Khu vực&quot;},&quot;rounding&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;500&quot;,&quot;1k&quot;,&quot;5k&quot;],&quot;default&quot;:&quot;1k&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hiển thị&quot;}}">
 class Component extends DCLogic {
   state = { fuel: null, toll: null, wear: null, consumption: null, region: null, rounding: null };
 
@@ -385,4 +497,5 @@ class Component extends DCLogic {
 }
 </script>
 </body>
+
 </html>

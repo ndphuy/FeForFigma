@@ -134,6 +134,7 @@ const AppRoutes = () => {
         <Route path="/passenger/notifications" element={<NotificationsPage />} />
         <Route path="/driver/notifications" element={<NotificationsPage />} />
         <Route path="/passenger/cost-breakdown" element={<CostBreakdown />} />
+        <Route path="/shared/cost-breakdown/:id" element={<CostBreakdown />} />
         <Route path="/shared/cost-breakdown" element={<CostBreakdown />} />
         <Route path="/shared/cost-history" element={<CostHistory />} />
         <Route path="/passenger/cost-history" element={<CostHistory />} />

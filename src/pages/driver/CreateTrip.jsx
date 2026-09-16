@@ -35,7 +35,7 @@ export const CreateTrip = () => {
     { id: 'st_2', name: 'Quận 7 · Lotte Mart', time: '07:35' }
   ]);
   const [newStopName, setNewStopName] = useState('');
-  
+
   const [departureDate, setDepartureDate] = useState('Thứ 6, 12 tháng 9');
   const [departureTime, setDepartureTime] = useState('07:00');
   const [isRecurring, setIsRecurring] = useState(true);
@@ -55,8 +55,8 @@ export const CreateTrip = () => {
   const MIN_RATE = 3000;
   const MAX_RATE = 7000;
 
-  // Calculated trip price
-  const calculatedPricePerSeat = Math.round((distanceKm * ratePerKm) / (chosenVehicle?.type === 'bike' ? 1 : 2) / 1000) * 1000;
+  // Calculated trip price — matches the "Khách đi toàn tuyến" formula shown below: km × đơn giá/km
+  const calculatedPricePerSeat = Math.round((distanceKm * ratePerKm) / 1000) * 1000;
 
   const handleAddStop = () => {
     if (!newStopName.trim()) return;
@@ -151,9 +151,8 @@ export const CreateTrip = () => {
           {[1, 2, 3, 4, 5, 6].map(st => (
             <span
               key={st}
-              className={`flex-1 h-1.5 rounded-full transition-all ${
-                st <= currentStep ? 'bg-[#0F9D76]' : 'bg-[#E4EAE7]'
-              }`}
+              className={`flex-1 h-1.5 rounded-full transition-all ${st <= currentStep ? 'bg-[#0F9D76]' : 'bg-[#E4EAE7]'
+                }`}
             />
           ))}
         </div>
@@ -201,13 +200,7 @@ export const CreateTrip = () => {
               meta="Xem trước lộ trình"
             />
 
-            {/* Corridor Insight */}
-            <div className="bg-[#F1FAF6] border border-[#BDE7D5] rounded-2xl p-3.5 flex gap-2.5 items-start">
-              <TrendingUp className="w-4 h-4 text-[#0F9D76] shrink-0 mt-0.5" />
-              <span className="text-xs text-[#0B7A5C] leading-relaxed">
-                Tuyến <strong>Thủ Đức → Quận 1</strong> lúc 07:00 có <strong>14 khách</strong> đang tìm chuyến tuần này.
-              </span>
-            </div>
+
           </div>
         )}
 
@@ -324,11 +317,10 @@ export const CreateTrip = () => {
                         key={d}
                         type="button"
                         onClick={() => toggleDay(d)}
-                        className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          recurringDays.includes(d)
-                            ? 'bg-[#0F9D76] text-white'
-                            : 'bg-[#F4F7F5] text-[#4B5A54]'
-                        }`}
+                        className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${recurringDays.includes(d)
+                          ? 'bg-[#0F9D76] text-white'
+                          : 'bg-[#F4F7F5] text-[#4B5A54]'
+                          }`}
                       >
                         {d}
                       </button>
@@ -361,16 +353,15 @@ export const CreateTrip = () => {
                     onClick={() => {
                       if (isPending) return;
                       setSelectedVehId(v.id);
-                      setActiveVehicle(v.id);
+                      setActiveVehicle(v);
                       setSeats(v.passengerCapacity || 1);
                     }}
-                    className={`p-3.5 rounded-2xl border-[1.5px] transition-all bg-white flex items-start justify-between gap-2.5 ${
-                      isPending
-                        ? 'border-[#E4EAE7] opacity-60 cursor-not-allowed'
-                        : isSelected
-                          ? 'border-[#0F9D76] bg-[#F1FAF6]/50 shadow-xs cursor-pointer'
-                          : 'border-[#E4EAE7] hover:border-[#BDE7D5] cursor-pointer'
-                    }`}
+                    className={`p-3.5 rounded-2xl border-[1.5px] transition-all bg-white flex items-start justify-between gap-2.5 ${isPending
+                      ? 'border-[#E4EAE7] opacity-60 cursor-not-allowed'
+                      : isSelected
+                        ? 'border-[#0F9D76] bg-[#F1FAF6]/50 shadow-xs cursor-pointer'
+                        : 'border-[#E4EAE7] hover:border-[#BDE7D5] cursor-pointer'
+                      }`}
                   >
                     <div className="flex items-start gap-3 min-w-0">
                       <div className="w-11 h-11 rounded-xl bg-[#DDF3EA] text-[#0B7A5C] font-bold text-lg flex items-center justify-center shrink-0 mt-0.5">

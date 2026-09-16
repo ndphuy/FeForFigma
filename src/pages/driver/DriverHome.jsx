@@ -15,7 +15,7 @@ const TODAY_TRIP_STATUS = {
 
 export const DriverHome = () => {
   const navigate = useNavigate();
-  const { currentUser, schedules, toggleSchedule, trips, pendingBookingsForDriver, respondBooking } = useApp();
+  const { currentUser, schedules, toggleSchedule, trips, pendingBookingsForDriver, respondBooking, setActiveTripId } = useApp();
   const todayTrip = trips.find((t) => t.id === 'trip_001') || trips[0];
   const [showCancel, setShowCancel] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
@@ -178,7 +178,7 @@ export const DriverHome = () => {
                 <span className="font-semibold text-[#4B5A54]">{bookedSeats}/{totalSeats} chỗ đã đặt · còn {totalSeats - bookedSeats} chỗ</span>
                 <button
                   type="button"
-                  onClick={() => navigate('/shared/cost-breakdown')}
+                  onClick={() => navigate(`/shared/cost-breakdown/${todayTrip.id}`)}
                   className="font-semibold text-[#0B7A5C] shrink-0 hover:underline"
                 >
                   Chia lại {bookedTotalVnd.toLocaleString('vi-VN')} ₫
@@ -213,29 +213,46 @@ export const DriverHome = () => {
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
-                onClick={() => navigate('/shared/trip-detail/trip_001')}
+                onClick={() => navigate(`/shared/trip-detail/${todayTrip.id}`)}
                 className="h-[50px] rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#101B17] text-sm font-semibold hover:border-[#BDE7D5] hover:bg-[#F7FAF9] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <CalendarClock className="w-4 h-4 text-[#0B7A5C]" />
                 <span>Chi tiết & Lộ trình</span>
               </button>
-              <button
-                type="button"
-                onClick={() => navigate('/driver/active-trip')}
-                className="h-[50px] rounded-2xl bg-[#0F9D76] text-white text-sm font-semibold hover:bg-[#0B7A5C] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(15,157,118,0.25)] cursor-pointer"
-              >
-                <span>Bắt đầu chuyến</span>
-              </button>
+              {canModifyTrip && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTripId(todayTrip.id);
+                    navigate('/driver/active-trip');
+                  }}
+                  className="h-[50px] rounded-2xl bg-[#0F9D76] text-white text-sm font-semibold hover:bg-[#0B7A5C] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(15,157,118,0.25)] cursor-pointer"
+                >
+                  <span>Bắt đầu chuyến</span>
+                </button>
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowCancel(true)}
-              className="h-10 w-full rounded-2xl border border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all cursor-pointer"
-            >
-              <Ban className="w-3.5 h-3.5" />
-              <span>Huỷ chuyến đi</span>
-            </button>
+            {canModifyTrip && (
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowReschedule(true)}
+                  className="h-10 w-full rounded-2xl border border-[#E4EAE7] bg-white text-[#0B7A5C] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#BDE7D5] hover:bg-[#F1FAF6] active:scale-[0.99] transition-all cursor-pointer"
+                >
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  <span>Dời lịch</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCancel(true)}
+                  className="h-10 w-full rounded-2xl border border-[#E4EAE7] bg-white text-[#C22B35] text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-[#F4C6C6] hover:bg-[#FCEBEB] active:scale-[0.99] transition-all cursor-pointer"
+                >
+                  <Ban className="w-3.5 h-3.5" />
+                  <span>Huỷ chuyến đi</span>
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
