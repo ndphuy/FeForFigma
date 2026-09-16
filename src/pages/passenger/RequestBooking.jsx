@@ -20,6 +20,7 @@ export const RequestBooking = () => {
   const [pickupIdx, setPickupIdx] = useState(0);
   const [dropoffIdx, setDropoffIdx] = useState(stops.length - 1);
   const [message, setMessage] = useState('Chào anh, em mang balo nhỏ, đứng ở cổng 2 nhé.');
+  const [submitError, setSubmitError] = useState('');
 
   const pickupStop = stops[pickupIdx] || stops[0];
   const dropoffStop = stops[dropoffIdx] || stops[stops.length - 1];
@@ -35,11 +36,15 @@ export const RequestBooking = () => {
   const formattedFare = new Intl.NumberFormat('vi-VN').format(totalFare);
 
   const handleSubmitRequest = () => {
-    const booking = requestBooking(trip.id, seats, message, {
+    const result = requestBooking(trip.id, seats, message, {
       pickupPoint: pickupStop.name,
       dropoffPoint: dropoffStop.name,
     });
-    setActiveBookingId(booking.id);
+    if (!result.ok) {
+      setSubmitError(result.message);
+      return;
+    }
+    setActiveBookingId(result.booking.id);
     navigate(`/passenger/booking-pending/${trip.id}`);
   };
 
@@ -230,6 +235,11 @@ export const RequestBooking = () => {
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>
+      {submitError && (
+        <div role="alert" className="absolute bottom-[92px] left-4 right-4 z-30 rounded-xl bg-[#FCEBEB] border border-[#F4C6C6] px-3 py-2 text-[11px] font-semibold text-[#8A1F27] shadow-sm">
+          {submitError}
+        </div>
+      )}
     </div>
   );
 };

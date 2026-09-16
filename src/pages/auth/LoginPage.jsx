@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { OTPInput } from '../../components/OTPInput';
+import { RouteShareMark } from '../../components/RouteShareMark';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export const LoginPage = () => {
@@ -35,8 +36,8 @@ export const LoginPage = () => {
       <div>
         {/* Brand Header */}
         <div className="flex items-center space-x-2.5 mb-6">
-          <div className="w-10 h-10 rounded-2xl bg-[#0F9D76] text-white font-bold flex items-center justify-center text-lg shadow-sm">
-            RS
+          <div className="w-10 h-10 rounded-2xl bg-[#0F9D76] flex items-center justify-center shadow-sm">
+            <RouteShareMark size={24} />
           </div>
           <span className="text-lg font-bold text-[#101B17] tracking-tight">RouteShare</span>
         </div>

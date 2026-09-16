@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { AuditToast } from './components/AuditToast';
+import { RouteShareMark } from '../../components/RouteShareMark';
 import { ADMIN_OVERVIEW_STATS, ADMIN_NOTIFICATIONS } from '../../data/adminMockData';
 
 const NAV_ITEMS = [
@@ -67,8 +68,8 @@ export const AdminLayout = () => {
         {/* Brand */}
         <div className="flex items-center justify-between gap-2 px-5 h-[72px] border-b border-white/8 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">
-              RS
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <RouteShareMark size={22} />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-white leading-tight truncate">RouteShare</p>
@@ -149,8 +150,8 @@ export const AdminLayout = () => {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-              RS
+            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center shrink-0">
+              <RouteShareMark size={15} />
             </div>
             <span className="text-sm font-bold text-textPrimary truncate">RouteShare Admin</span>
           </div>

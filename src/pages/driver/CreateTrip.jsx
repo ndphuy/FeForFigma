@@ -20,6 +20,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { RouteMapPreview } from '../../components/RouteMapPreview';
+import { AddressAutocomplete } from '../../components/AddressAutocomplete';
+import { VIETNAM_CITIES } from '../../data/vietnamCities';
 
 export const CreateTrip = () => {
   const navigate = useNavigate();
@@ -28,6 +30,7 @@ export const CreateTrip = () => {
   const [currentStep, setCurrentStep] = useState(1); // 1 to 6
 
   // Form state
+  const [selectedCity, setSelectedCity] = useState(VIETNAM_CITIES[0]);
   const [origin, setOrigin] = useState('Thủ Đức · Khu Công Nghệ Cao');
   const [destination, setDestination] = useState('Quận 1 · Chợ Bến Thành');
   const [stops, setStops] = useState([
@@ -192,24 +195,41 @@ export const CreateTrip = () => {
               </p>
             </div>
 
+            <label className="block rounded-2xl border border-[#E4EAE7] bg-white px-3.5 py-2.5">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Khu vực tìm địa chỉ</span>
+              <select
+                value={selectedCity.id}
+                onChange={(e) => setSelectedCity(VIETNAM_CITIES.find((c) => c.id === e.target.value) || VIETNAM_CITIES[0])}
+                className="mt-0.5 w-full bg-transparent text-xs font-bold text-[#101B17] outline-none cursor-pointer"
+              >
+                {VIETNAM_CITIES.map((city) => (
+                  <option key={city.id} value={city.id}>{city.name}</option>
+                ))}
+              </select>
+            </label>
+
             <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.05)] flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Điểm xuất phát · A</span>
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
-                  className="w-full text-xs font-bold text-[#101B17] bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl p-3 outline-none focus:border-[#0F9D76]"
+                  onChange={setOrigin}
+                  placeholder="Nhập địa chỉ hoặc tên đường..."
+                  inputClassName="w-full text-xs font-bold text-[#101B17] bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl p-3 outline-none focus:border-[#0F9D76]"
+                  proximity={selectedCity.center}
+                  bbox={selectedCity.bbox}
                 />
               </div>
 
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A9993]">Điểm kết thúc · D</span>
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  className="w-full text-xs font-bold text-[#101B17] bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl p-3 outline-none focus:border-[#0F9D76]"
+                  onChange={setDestination}
+                  placeholder="Nhập địa chỉ hoặc tên đường..."
+                  inputClassName="w-full text-xs font-bold text-[#101B17] bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl p-3 outline-none focus:border-[#0F9D76]"
+                  proximity={selectedCity.center}
+                  bbox={selectedCity.bbox}
                 />
               </div>
             </div>
@@ -260,13 +280,16 @@ export const CreateTrip = () => {
 
               {/* Add New Stop Input */}
               <div className="flex items-center gap-2 pt-2 border-t border-[#EEF2F0]">
-                <input
-                  type="text"
-                  value={newStopName}
-                  onChange={(e) => setNewStopName(e.target.value)}
-                  placeholder="Nhập tên điểm dừng (VD: Cầu Sài Gòn)..."
-                  className="flex-1 text-xs text-[#101B17] bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl p-2.5 outline-none focus:border-[#0F9D76]"
-                />
+                <div className="flex-1">
+                  <AddressAutocomplete
+                    value={newStopName}
+                    onChange={setNewStopName}
+                    placeholder="Nhập tên điểm dừng (VD: Cầu Sài Gòn)..."
+                    inputClassName="w-full text-xs text-[#101B17] bg-[#F7FAF9] border border-[#E4EAE7] rounded-xl p-2.5 outline-none focus:border-[#0F9D76]"
+                    proximity={selectedCity.center}
+                    bbox={selectedCity.bbox}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleAddStop}

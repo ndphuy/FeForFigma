@@ -1,7 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700">
-  <rect x="0" y="0" width="700" height="700" rx="150" fill="#0F9D76"/>
-  <g transform="translate(54.4,57.3)">
-    <g transform="translate(-20.108355,603.764757) scale(0.100000,-0.100000)" fill="#fff" stroke="none">
+import React from 'react';
+
+/**
+ * The RouteShare brand mark, traced directly from the official logo artwork
+ * (car + destination pin + road). Holes (windshield, headlights, pin dot)
+ * are real cut-outs, so whatever sits behind this SVG shows through them —
+ * that's why it reads correctly on any background color.
+ */
+export const RouteShareMark = ({ size = 24, color = '#FFFFFF', className = '' }) => (
+  <svg
+    viewBox="0 0 591.172760 585.486971"
+    width={size}
+    height={size}
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <g transform="translate(-20.108355,603.764757) scale(0.100000,-0.100000)" fill={color} stroke="none">
       <path d="M5045 6026 c-268 -61 -500 -247 -628 -501 -13 -27 -37 -88 -53 -135
 -25 -78 -28 -97 -28 -235 1 -134 3 -159 28 -239 49 -163 140 -323 365 -643
 133 -191 312 -434 424 -576 67 -85 71 -88 87 -70 56 59 390 516 562 768 238
@@ -41,5 +55,5 @@
 273 236 148 70 315 125 699 229 569 153 750 213 985 325 370 178 564 386 693
 750 82 230 113 442 99 687 -18 309 -93 638 -201 882 l-23 52 -145 -197z" />
     </g>
-  </g>
-</svg>
+  </svg>
+);

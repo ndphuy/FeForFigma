@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { StatusBar } from './StatusBar';
 import { BottomNav } from './BottomNav';
+import { RouteShareMark } from './RouteShareMark';
 import { RotateCcw, User, Car, Layers } from 'lucide-react';
 
 export const MobileFrame = ({ children, hideNav = false }) => {
@@ -82,8 +83,8 @@ export const MobileFrame = ({ children, hideNav = false }) => {
       <header className="w-full max-w-[940px] bg-[#14231e]/90 backdrop-blur-xl border border-[#233830] rounded-2xl p-3 mb-6 shadow-2xl z-40 flex flex-wrap items-center justify-between gap-3">
         {/* Brand */}
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#0F9D76] flex items-center justify-center text-white font-bold text-sm shadow-md">
-            RS
+          <div className="w-9 h-9 rounded-xl bg-[#0F9D76] flex items-center justify-center shadow-md">
+            <RouteShareMark size={22} />
           </div>
           <div>
             <div className="flex items-center space-x-2">

@@ -44,7 +44,7 @@ export const AppProvider = ({ children }) => {
       ...newVehicle,
       id: `veh_${Date.now()}`,
       active: vehicles.length === 0,
-      verificationStatus: 'verified'
+      verificationStatus: newVehicle.hasCavet ? 'pending_review' : 'missing_document'
     };
     setVehicles(prev => [...prev, created]);
     if (vehicles.length === 0) {
@@ -212,6 +212,15 @@ export const AppProvider = ({ children }) => {
 
   // Publish a new Driver Trip (6-Step Wizard)
   const publishTrip = (tripData) => {
+    if (currentRole !== 'driver') {
+      return { ok: false, message: 'Chỉ tài xế mới có thể đăng chuyến.' };
+    }
+
+    const vehicle = vehicles.find(v => v.id === tripData.vehicleId) || activeVehicle;
+    if (!vehicle || vehicle.verificationStatus !== 'verified') {
+      return { ok: false, message: 'Hãy chọn phương tiện đã được xác thực trước khi đăng chuyến.' };
+    }
+
     const newTripId = `trip_${Date.now()}`;
     const newTrip = {
       id: newTripId,
@@ -222,11 +231,11 @@ export const AppProvider = ({ children }) => {
       driverTripsCount: MOCK_USER_PROFILES.driver.tripsCompleted + 1,
       driverPhone: MOCK_USER_PROFILES.driver.phone,
       verified: true,
-      vehicleModel: tripData.vehicleModel || activeVehicle.model,
-      vehiclePlate: tripData.vehiclePlate || activeVehicle.plate,
-      vehicleColor: tripData.vehicleColor || activeVehicle.color,
-      vehicleSeats: tripData.totalSeats || activeVehicle.seats,
-      vehicleImage: activeVehicle.image || MOCK_USER_PROFILES.driver.vehicle.image,
+      vehicleModel: tripData.vehicleModel || vehicle.model,
+      vehiclePlate: tripData.vehiclePlate || vehicle.plate,
+      vehicleColor: tripData.vehicleColor || vehicle.color,
+      vehicleSeats: tripData.totalSeats || vehicle.seats,
+      vehicleImage: vehicle.image || MOCK_USER_PROFILES.driver.vehicle.image,
       origin: tripData.origin || 'FPT University HCMC',
       originDetail: `${tripData.departureTime || '07:00'} · Điểm A`,
       destination: tripData.destination || 'Chợ Bến Thành, Q.1',
@@ -237,8 +246,8 @@ export const AppProvider = ({ children }) => {
       timeRange: tripData.timeRange || '07:00–08:00',
       matchPercentage: 95,
       isBestMatch: true,
-      availableSeats: tripData.seats || (activeVehicle.type === 'bike' ? 1 : 3),
-      totalSeats: tripData.totalSeats || activeVehicle.seats,
+      availableSeats: Number.isInteger(tripData.seats) ? tripData.seats : vehicle.passengerCapacity,
+      totalSeats: tripData.totalSeats || vehicle.seats,
       statusText: 'Đang mở',
       priceVnd: tripData.priceVnd || 45000,
       costSharing: {
@@ -265,12 +274,26 @@ export const AppProvider = ({ children }) => {
 
     setTrips(prev => [newTrip, ...prev]);
     setActiveTripId(newTripId);
-    return newTrip;
+    return { ok: true, trip: newTrip };
   };
 
   // Request a Booking as Passenger
   const requestBooking = (tripId, seatsCount = 1, messageText = '', overrides = {}) => {
-    const targetTrip = trips.find(t => t.id === tripId) || trips[0];
+    if (currentRole !== 'passenger') {
+      return { ok: false, message: 'Chỉ hành khách mới có thể gửi yêu cầu đặt chỗ.' };
+    }
+
+    const targetTrip = trips.find(t => t.id === tripId);
+    const requestedSeats = Number(seatsCount);
+    if (!targetTrip) return { ok: false, message: 'Không tìm thấy chuyến đi này.' };
+    if (targetTrip.statusText !== 'Đang mở') return { ok: false, message: 'Chuyến đi hiện không mở nhận khách.' };
+    if (!Number.isInteger(requestedSeats) || requestedSeats < 1 || requestedSeats > targetTrip.availableSeats) {
+      return { ok: false, message: 'Số chỗ yêu cầu không hợp lệ hoặc đã hết chỗ.' };
+    }
+    if (bookings.some(b => b.tripId === tripId && b.passengerId === currentUser.id && ['pending', 'confirmed', 'pending_reschedule'].includes(b.status))) {
+      return { ok: false, message: 'Bạn đã có yêu cầu đặt chỗ cho chuyến này.' };
+    }
+
     const newBookingId = `bk_${Date.now()}`;
     const bookingCode = `#RS-${Math.floor(1000 + Math.random() * 9000)}`;
     const pin = String(Math.floor(1000 + Math.random() * 9000));
@@ -288,10 +311,11 @@ export const AppProvider = ({ children }) => {
       passengerTrips: MOCK_USER_PROFILES.passenger.tripsTaken,
       pickupPoint,
       dropoffPoint,
-      fareVnd: targetTrip.priceVnd * seatsCount,
-      seatsCount,
+      fareVnd: targetTrip.priceVnd * requestedSeats,
+      seatsCount: requestedSeats,
       message: messageText,
       status: 'pending',
+      driverId: targetTrip.driverId,
       driverName: targetTrip.driverName,
       driverPhone: targetTrip.driverPhone,
       vehicleModel: `${targetTrip.vehicleModel} · ${targetTrip.vehicleColor}`,
@@ -310,54 +334,79 @@ export const AppProvider = ({ children }) => {
     setBookings(prev => [newBooking, ...prev]);
     setActiveBookingId(newBookingId);
     setActiveTripId(targetTrip.id);
-    return newBooking;
+    return { ok: true, booking: newBooking };
   };
 
   // Driver responds to Booking (Accept / Reject)
   const respondBooking = (bookingId, decision) => {
-    setBookings(prev => prev.map(b => {
-      if (b.id === bookingId) {
-        return {
-          ...b,
-          status: decision === 'accept' ? 'confirmed' : 'rejected'
-        };
-      }
-      return b;
-    }));
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể xử lý yêu cầu.' };
+    if (!['accept', 'reject'].includes(decision)) return { ok: false, message: 'Quyết định xử lý không hợp lệ.' };
+
+    const targetBk = bookings.find(b => b.id === bookingId);
+    const targetTrip = targetBk && trips.find(t => t.id === targetBk.tripId);
+    if (!targetBk || !targetTrip) return { ok: false, message: 'Không tìm thấy yêu cầu đặt chỗ.' };
+    if ((targetBk.driverId || targetTrip.driverId) !== currentUser.id) return { ok: false, message: 'Bạn không có quyền xử lý yêu cầu này.' };
+    if (targetBk.status !== 'pending') return { ok: false, message: 'Yêu cầu này đã được xử lý.' };
 
     if (decision === 'accept') {
-      const targetBk = bookings.find(b => b.id === bookingId);
-      if (targetBk) {
-        setTrips(prev => prev.map(t => {
-          if (t.id === targetBk.tripId) {
-            return {
-              ...t,
-              availableSeats: Math.max(0, t.availableSeats - (targetBk.seatsCount || 1)),
-              passengers: [
-                ...t.passengers.filter(p => p.id !== targetBk.passengerId),
-                {
-                  id: targetBk.passengerId,
-                  name: targetBk.passengerName,
-                  initials: targetBk.passengerInitials || 'MA',
-                  phone: targetBk.passengerPhone,
-                  pickupPoint: targetBk.pickupPoint,
-                  dropoffPoint: targetBk.dropoffPoint,
-                  fareVnd: targetBk.fareVnd,
-                  status: 'waiting_pickup',
-                  isNearDropoff: false,
-                  pin: targetBk.pin || '4821'
-                }
-              ]
-            };
+      const requestedSeats = Number(targetBk.seatsCount) || 1;
+      if (targetTrip.statusText !== 'Đang mở') return { ok: false, message: 'Chuyến đi hiện không mở nhận khách.' };
+      if (requestedSeats > targetTrip.availableSeats) return { ok: false, message: 'Số chỗ còn lại không đủ cho yêu cầu này.' };
+
+      setTrips(prev => prev.map(t => t.id === targetBk.tripId
+        ? {
+            ...t,
+            availableSeats: t.availableSeats - requestedSeats,
+            passengers: [
+              ...t.passengers.filter(p => p.id !== targetBk.passengerId),
+              {
+                id: targetBk.passengerId,
+                name: targetBk.passengerName,
+                initials: targetBk.passengerInitials || 'MA',
+                phone: targetBk.passengerPhone,
+                pickupPoint: targetBk.pickupPoint,
+                dropoffPoint: targetBk.dropoffPoint,
+                fareVnd: targetBk.fareVnd,
+                seatsCount: requestedSeats,
+                status: 'waiting_pickup',
+                isNearDropoff: false,
+                pin: targetBk.pin || '4821'
+              }
+            ]
           }
-          return t;
-        }));
-      }
+        : t
+      ));
     }
+
+    setBookings(prev => prev.map(b => b.id === bookingId
+      ? { ...b, status: decision === 'accept' ? 'confirmed' : 'rejected' }
+      : b
+    ));
+    return { ok: true };
+  };
+
+  const startTrip = (tripId) => {
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể bắt đầu chuyến.' };
+    const trip = trips.find(t => t.id === tripId);
+    if (!trip) return { ok: false, message: 'Không tìm thấy chuyến đi.' };
+    if (trip.driverId !== currentUser.id) return { ok: false, message: 'Bạn không có quyền bắt đầu chuyến này.' };
+    if (trip.statusText !== 'Đang mở') return { ok: false, message: 'Chuyến đi không ở trạng thái sẵn sàng khởi hành.' };
+
+    setTrips(prev => prev.map(t => t.id === tripId ? { ...t, statusText: 'Đang diễn ra', startedAt: 'Vừa xong' } : t));
+    setActiveTripId(tripId);
+    return { ok: true };
   };
 
   // Driver confirms passenger pickup (physical onboarding)
   const confirmPassengerPickup = (tripId, passengerId) => {
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể xác nhận đón khách.' };
+    const trip = trips.find(t => t.id === tripId);
+    const passenger = trip?.passengers?.find(p => p.id === passengerId);
+    if (!trip || trip.driverId !== currentUser.id) return { ok: false, message: 'Không tìm thấy chuyến đi hợp lệ.' };
+    if (trip.statusText !== 'Đang diễn ra' || passenger?.status !== 'waiting_pickup') {
+      return { ok: false, message: 'Khách không ở trạng thái chờ đón.' };
+    }
+
     setTrips(prev => prev.map(t => {
       if (t.id === tripId) {
         return {
@@ -367,15 +416,22 @@ export const AppProvider = ({ children }) => {
       }
       return t;
     }));
+    return { ok: true };
   };
 
   // Driver confirms reaching dropoff point for a passenger
   const confirmPassengerDropoff = (tripId, passengerId) => {
-    let fareEarned = 45000;
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể xác nhận trả khách.' };
+    const trip = trips.find(t => t.id === tripId);
+    const passenger = trip?.passengers?.find(p => p.id === passengerId);
+    if (!trip || trip.driverId !== currentUser.id) return { ok: false, message: 'Không tìm thấy chuyến đi hợp lệ.' };
+    if (trip.statusText !== 'Đang diễn ra' || passenger?.status !== 'on_board') {
+      return { ok: false, message: 'Chỉ có thể trả khách đã được xác nhận lên xe.' };
+    }
+
+    const fareEarned = passenger.fareVnd || 45000;
     setTrips(prev => prev.map(t => {
       if (t.id === tripId) {
-        const found = t.passengers.find(p => p.id === passengerId);
-        if (found) fareEarned = found.fareVnd || 45000;
         return {
           ...t,
           passengers: t.passengers.map(p => p.id === passengerId ? { ...p, status: 'dropped_off', isNearDropoff: false } : p)
@@ -396,16 +452,34 @@ export const AppProvider = ({ children }) => {
       code: '#RS-4821'
     };
     setWalletTransactions(prev => [newTx, ...prev]);
+    setBookings(prev => prev.map(b => b.tripId === tripId && b.passengerId === passengerId && b.status === 'confirmed'
+      ? { ...b, status: 'completed' }
+      : b
+    ));
+    return { ok: true };
   };
 
   // Complete entire Trip
   const completeTrip = (tripId) => {
-    setTrips(prev => prev.map(t => t.id === tripId ? { ...t, statusText: 'Hoàn thành' } : t));
-    setBookings(prev => prev.map(b => (b.tripId === tripId && b.status === 'confirmed') ? { ...b, status: 'completed' } : b));
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể hoàn thành chuyến.' };
+    const trip = trips.find(t => t.id === tripId);
+    if (!trip || trip.driverId !== currentUser.id) return { ok: false, message: 'Không tìm thấy chuyến đi hợp lệ.' };
+    if (trip.statusText !== 'Đang diễn ra') return { ok: false, message: 'Chuyến đi chưa được bắt đầu.' };
+    if (trip.passengers.some(p => p.status !== 'dropped_off')) {
+      return { ok: false, message: 'Hãy xác nhận trả toàn bộ hành khách trước khi kết thúc chuyến.' };
+    }
+
+    setTrips(prev => prev.map(t => t.id === tripId ? { ...t, statusText: 'Hoàn thành', completedAt: 'Vừa xong' } : t));
+    return { ok: true };
   };
 
   // Driver cancels a trip that hasn't started yet (SF-14)
   const cancelTrip = (tripId, reason = '') => {
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể huỷ chuyến.' };
+    const trip = trips.find(t => t.id === tripId);
+    if (!trip || trip.driverId !== currentUser.id) return { ok: false, message: 'Không tìm thấy chuyến đi hợp lệ.' };
+    if (trip.statusText !== 'Đang mở') return { ok: false, message: 'Chỉ có thể huỷ chuyến trước khi khởi hành.' };
+
     setTrips(prev => prev.map(t => t.id === tripId
       ? { ...t, statusText: 'Đã huỷ', cancelled: true, cancelReason: reason }
       : t
@@ -414,25 +488,36 @@ export const AppProvider = ({ children }) => {
       ? { ...b, status: 'cancelled', cancelReason: reason || 'Tài xế đã huỷ chuyến đi' }
       : b
     ));
+    return { ok: true };
   };
 
   // Driver reschedules a trip's date/time; confirmed passengers must accept or cancel (SF-15, SF-16)
   const rescheduleTrip = (tripId, { departureDate, departureTime } = {}, reason = '') => {
+    if (currentRole !== 'driver') return { ok: false, message: 'Chỉ tài xế mới có thể đổi lịch chuyến.' };
+    const trip = trips.find(t => t.id === tripId);
+    if (!trip || trip.driverId !== currentUser.id) return { ok: false, message: 'Không tìm thấy chuyến đi hợp lệ.' };
+    if (trip.statusText !== 'Đang mở') return { ok: false, message: 'Chỉ có thể đổi lịch trước khi khởi hành.' };
+    if (!departureDate?.trim() || !/^\d{2}:\d{2}$/.test(departureTime || '')) {
+      return { ok: false, message: 'Ngày hoặc giờ khởi hành mới không hợp lệ.' };
+    }
+
     setTrips(prev => prev.map(t => t.id === tripId
       ? {
           ...t,
           departureDate: departureDate || t.departureDate,
           departureTime: departureTime || t.departureTime,
+          originDetail: `${departureTime || t.departureTime} · Điểm A`,
+          stops: (t.stops || []).map((stop, index) => index === 0 ? { ...stop, time: departureTime || stop.time } : stop),
           rescheduled: true,
           rescheduleReason: reason,
         }
       : t
     ));
     setBookings(prev => prev.map(b => {
-      if (b.tripId !== tripId || b.status !== 'confirmed') return b;
+      if (b.tripId !== tripId || !['pending', 'confirmed'].includes(b.status)) return b;
       return {
         ...b,
-        status: 'pending_reschedule',
+        status: b.status === 'confirmed' ? 'pending_reschedule' : 'pending',
         previousDepartureDate: b.departureDate,
         previousDepartureTime: b.departureTime,
         departureDate: departureDate || b.departureDate,
@@ -440,18 +525,47 @@ export const AppProvider = ({ children }) => {
         rescheduleReason: reason,
       };
     }));
+    return { ok: true };
   };
 
   // Passenger responds to a trip-change notification (SF-16)
   const acceptReschedule = (bookingId) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (currentRole !== 'passenger' || !booking || booking.passengerId !== currentUser.id || booking.status !== 'pending_reschedule') {
+      return { ok: false, message: 'Bạn không thể xác nhận thay đổi lịch này.' };
+    }
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'confirmed' } : b));
+    return { ok: true };
   };
 
   const declineReschedule = (bookingId) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (currentRole !== 'passenger' || !booking || booking.passengerId !== currentUser.id || booking.status !== 'pending_reschedule') {
+      return { ok: false, message: 'Bạn không thể huỷ đặt chỗ này.' };
+    }
+    const releasedSeats = Number(booking.seatsCount) || 1;
     setBookings(prev => prev.map(b => b.id === bookingId
       ? { ...b, status: 'cancelled', cancelReason: 'Hành khách huỷ do lịch mới không phù hợp' }
       : b
     ));
+    setTrips(prev => prev.map(t => t.id === booking.tripId
+      ? {
+          ...t,
+          availableSeats: Math.min(t.totalSeats || releasedSeats, t.availableSeats + releasedSeats),
+          passengers: t.passengers.filter(p => p.id !== booking.passengerId)
+        }
+      : t
+    ));
+    return { ok: true };
+  };
+
+  const cancelBookingRequest = (bookingId) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (currentRole !== 'passenger' || !booking || booking.passengerId !== currentUser.id || booking.status !== 'pending') {
+      return { ok: false, message: 'Bạn chỉ có thể huỷ yêu cầu đang chờ duyệt của mình.' };
+    }
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'cancelled', cancelReason: 'Hành khách đã rút yêu cầu' } : b));
+    return { ok: true };
   };
 
   // Chat message sender with simulated auto-reply
@@ -539,13 +653,17 @@ export const AppProvider = ({ children }) => {
 
   // --- Passenger 1-Click Monthly Subscription to Driver Schedule ---
   const subscribeRecurringCommute = (driverScheduleId, note = '') => {
-    const targetDriverSched = driverSchedules.find(s => s.id === driverScheduleId) || driverSchedules[0];
+    if (currentRole !== 'passenger') return { ok: false, message: 'Chỉ hành khách mới có thể đăng ký lịch định kỳ.' };
+    const targetDriverSched = driverSchedules.find(s => s.id === driverScheduleId);
+    if (!targetDriverSched || !targetDriverSched.active) return { ok: false, message: 'Lịch trình này hiện không mở đăng ký.' };
+    if ((targetDriverSched.availableSeats || 0) < 1) return { ok: false, message: 'Lịch trình này đã hết chỗ.' };
+    if ((targetDriverSched.subscribers || []).some(sub => sub.id === currentUser.id || sub.name === currentUser.name)) {
+      return { ok: false, message: 'Bạn đã đăng ký lịch trình này.' };
+    }
     
     // 1. Add passenger to driver's schedule subscribers
     setDriverSchedules(prev => prev.map(s => {
       if (s.id === targetDriverSched.id) {
-        const alreadySubbed = (s.subscribers || []).some(sub => sub.id === currentUser.id || sub.name === currentUser.name);
-        if (alreadySubbed) return s;
         return {
           ...s,
           availableSeats: Math.max(0, (s.availableSeats || 1) - 1),
@@ -565,6 +683,25 @@ export const AppProvider = ({ children }) => {
       }
       return s;
     }));
+    setSchedules(prev => prev.map(s => s.id === targetDriverSched.id
+      ? {
+          ...s,
+          availableSeats: Math.max(0, (s.availableSeats || 1) - 1),
+          subscribers: [
+            ...(s.subscribers || []),
+            {
+              id: currentUser.id,
+              name: currentUser.name,
+              avatar: currentUser.initials,
+              phone: currentUser.phone,
+              pickup: targetDriverSched.origin,
+              dropoff: targetDriverSched.destination,
+              note: note || 'Đăng ký trọn gói cả tháng (T2-T6)'
+            }
+          ]
+        }
+      : s
+    ));
 
     // 2. Add or update matched driver in passenger schedules
     const existingPassengerSched = passengerSchedules.find(ps => ps.origin.includes(targetDriverSched.origin) || ps.destination.includes(targetDriverSched.destination));
@@ -601,7 +738,7 @@ export const AppProvider = ({ children }) => {
       });
     }
 
-    return true;
+    return { ok: true };
   };
 
   // Toggle Recurring Schedule (Backward-compatible)
@@ -708,7 +845,11 @@ export const AppProvider = ({ children }) => {
 
   const activeTrip = trips.find(t => t.id === activeTripId) || trips[0];
   const activeBooking = bookings.find(b => b.id === activeBookingId) || bookings[0];
-  const pendingBookingsForDriver = bookings.filter(b => b.status === 'pending');
+  const pendingBookingsForDriver = bookings.filter(b => {
+    if (b.status !== 'pending') return false;
+    const trip = trips.find(t => t.id === b.tripId);
+    return (b.driverId || trip?.driverId) === MOCK_USER_PROFILES.driver.id;
+  });
 
   return (
     <AppContext.Provider
@@ -782,6 +923,7 @@ export const AppProvider = ({ children }) => {
         publishTrip,
         requestBooking,
         respondBooking,
+        startTrip,
         confirmPassengerPickup,
         confirmPassengerDropoff,
         completeTrip,
@@ -789,6 +931,7 @@ export const AppProvider = ({ children }) => {
         rescheduleTrip,
         acceptReschedule,
         declineReschedule,
+        cancelBookingRequest,
         toggleSchedule,
         deleteSchedule,
         setSchedules,

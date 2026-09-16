@@ -8,18 +8,41 @@ import {
   Repeat,
   CalendarClock,
   Plus,
-  Edit3,
-  Clock,
-  MapPin,
-  Users,
-  ShieldCheck,
-  Check,
-  ToggleLeft,
-  ToggleRight,
-  Info
+  Edit3
 } from 'lucide-react';
 
 const WEEK_DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+const formatScheduleDays = (days = []) => {
+  const selectedIndexes = WEEK_DAYS
+    .map((day, index) => (days.includes(day) ? index : -1))
+    .filter((index) => index !== -1);
+
+  if (selectedIndexes.length === 0) return 'Chưa chọn ngày';
+  if (selectedIndexes.length === 7) return 'Mỗi ngày';
+
+  const ranges = [];
+  let start = selectedIndexes[0];
+  let previous = selectedIndexes[0];
+
+  selectedIndexes.slice(1).forEach((index) => {
+    if (index === previous + 1) {
+      previous = index;
+      return;
+    }
+    ranges.push(start === previous ? WEEK_DAYS[start] : `${WEEK_DAYS[start]}–${WEEK_DAYS[previous]}`);
+    start = index;
+    previous = index;
+  });
+  ranges.push(start === previous ? WEEK_DAYS[start] : `${WEEK_DAYS[start]}–${WEEK_DAYS[previous]}`);
+
+  return ranges.join(', ');
+};
+
+const formatCompactPrice = (price) => {
+  const amount = Number(price) || 35000;
+  return amount >= 1000 ? `${(amount / 1000).toLocaleString('vi-VN')}k` : `${amount.toLocaleString('vi-VN')} ₫`;
+};
 
 export const TripHistory = () => {
   const navigate = useNavigate();
@@ -313,24 +336,19 @@ export const TripHistory = () => {
                       return (
                         <div
                           key={sch.id}
-                          className={`bg-white rounded-3xl p-4.5 border border-[#E4EAE7] shadow-[0_4px_16px_rgba(16,27,23,0.06)] flex flex-col gap-3.5 transition-all ${
+                          className={`bg-white rounded-[26px] p-4 border border-[#E4EAE7] shadow-[0_8px_24px_rgba(16,27,23,0.05)] flex flex-col overflow-hidden transition-all ${
                             isActive ? 'opacity-100' : 'opacity-70 bg-[#FAFBFB]'
                           }`}
                         >
-                          {/* ① Header & Switch */}
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span className="w-10 h-10 rounded-2xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center shrink-0 border border-[#BDE7D5]/50">
-                                <Repeat className="w-5 h-5 stroke-[2.2]" />
-                              </span>
-                              <div className="min-w-0">
-                                <h2 className="text-[14.5px] font-bold text-[#101B17] truncate">
-                                  {sch.title}
-                                </h2>
-                                <p className="text-[11px] text-[#8A9993] truncate">
-                                  {isActive ? 'Tự đăng chuyến lúc 20:00 tối hôm trước' : 'Đang tạm dừng tự động đăng chuyến'}
-                                </p>
-                              </div>
+                          {/* Header */}
+                          <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-[#EEF2F0]">
+                            <div className="min-w-0">
+                              <h2 className="text-[15px] leading-tight font-bold text-[#101B17] truncate">
+                                {sch.title}
+                              </h2>
+                              <p className="mt-1 text-[10.5px] font-medium text-[#718079] truncate">
+                                {isActive ? 'Đang chạy' : 'Đang tạm dừng'} · {formatScheduleDays(sch.days)}
+                              </p>
                             </div>
 
                             <button
@@ -351,130 +369,92 @@ export const TripHistory = () => {
                             </button>
                           </div>
 
-                          {/* ② Route Rail & Timeline */}
-                          <div className="bg-[#F7FAF9] rounded-2xl p-3 border border-[#EEF2F0] flex flex-col gap-2.5">
-                            <div className="flex gap-2.5">
-                              <div className="flex flex-col items-center pt-1 gap-1 shrink-0">
+                          {/* Route */}
+                          <div className="py-3.5 border-b border-[#EEF2F0]">
+                            <div className="flex gap-3">
+                              <div className="flex flex-col items-center pt-1.5 gap-1 shrink-0">
                                 <span className="w-2.5 h-2.5 rounded-full bg-[#0F9D76]" />
-                                <span className="w-0.5 flex-1 min-h-6 bg-[#DFE7E3]" />
+                                <span className="w-px flex-1 min-h-7 bg-[#D9E8E1]" />
                                 <span className="w-2.5 h-2.5 rounded-xs bg-[#EE7A22]" />
                               </div>
 
-                              <div className="flex-1 min-w-0 flex flex-col gap-2 text-xs">
-                                <div className="flex justify-between items-start gap-2">
-                                  <span className="font-semibold text-[#101B17] truncate">{sch.origin}</span>
-                                  <span className="font-mono font-bold text-[#101B17] shrink-0">{sch.time}</span>
+                              <div className="flex-1 min-w-0 flex flex-col gap-4 text-xs">
+                                <div className="flex justify-between items-center gap-3">
+                                  <span className="font-semibold text-[14px] text-[#101B17] truncate">{sch.origin}</span>
+                                  <span className="rounded-lg bg-[#EAF8F2] px-2 py-1 font-mono text-[12px] font-bold text-[#087B5B] shrink-0">{sch.time}</span>
                                 </div>
-
-                                <span className="text-[11px] text-[#8A9993]">
-                                  {sch.vehicleModel || 'Xe máy'} · {sch.vehiclePlate || '59-X3 892.12'} · {sch.availableSeats || 1} chỗ nhận
-                                </span>
-
-                                <div className="flex justify-between items-start gap-2">
-                                  <span className="font-semibold text-[#101B17] truncate">{sch.destination}</span>
-                                  <span className="font-mono font-semibold text-[#8A9993] shrink-0">
-                                    {sch.duration?.durationLabel || '01/10 → 31/12/2026'}
-                                  </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-[14px] text-[#101B17] truncate">{sch.destination}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* ③ Day of week badges */}
-                          <div className="flex flex-col gap-1.5">
-                            <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8A9993]">
-                              Lịch trình trong tuần
-                            </span>
-                            <div className="grid grid-cols-7 gap-1.5">
-                              {WEEK_DAYS.map((day) => {
-                                const isRunDay = (sch.days || []).includes(day) && isActive;
-                                return (
-                                  <span
-                                    key={day}
-                                    className={`h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-colors ${
-                                      isRunDay
-                                        ? 'bg-[#DDF3EA] text-[#0B7A5C] border border-[#B2E2D0]/60'
-                                        : 'bg-[#F7FAF9] text-[#C3CDC9] border border-[#EEF2F0]'
-                                    }`}
-                                  >
-                                    {day}
-                                  </span>
-                                );
-                              })}
+                          {/* Schedule details */}
+                          <div className="grid grid-cols-2 gap-2 py-3.5 border-b border-[#EEF2F0]">
+                            <div className="min-w-0 rounded-xl bg-[#F7FAF9] px-2.5 py-2">
+                              <span className="text-[9.5px] font-bold uppercase tracking-wide text-[#8A9993] block">Phương tiện</span>
+                              <span className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-[#44534C] truncate">
+                                <Car className="w-3.5 h-3.5 text-[#0B7A5C] shrink-0" />
+                                <span className="truncate">{sch.vehicleModel || 'Xe máy'} · {sch.availableSeats || 1} chỗ</span>
+                              </span>
+                            </div>
+                            <div className="min-w-0 rounded-xl bg-[#F7FAF9] px-2.5 py-2">
+                              <span className="text-[9.5px] font-bold uppercase tracking-wide text-[#8A9993] block">Hiệu lực</span>
+                              <span className="mt-1 block text-[11px] font-semibold text-[#44534C] truncate">Đến {sch.duration?.endDate || '31/12/2026'}</span>
                             </div>
                           </div>
 
-                          {/* ④ Regular passengers */}
-                          <div className="flex flex-col gap-2 pt-1 border-t border-[#EEF2F0]">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8A9993]">
-                                Khách quen đăng ký ({sch.subscribers?.length || 0}/{sch.availableSeats || 1})
-                              </span>
-                              {sch.wishlistDiscountPercent > 0 && (
-                                <span className="text-[11px] font-bold text-[#0B7A5C]">
-                                  Ưu đãi khách quen: -{sch.wishlistDiscountPercent}%
+                          {/* Regular passengers */}
+                          {sch.subscribers && sch.subscribers.length > 0 ? (
+                            <div className="flex flex-col gap-2 pt-3.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8A9993]">
+                                  Khách quen ({sch.subscribers.length}/{sch.availableSeats || 1})
                                 </span>
-                              )}
-                            </div>
+                                {sch.wishlistDiscountPercent > 0 && (
+                                  <span className="text-[11px] font-bold text-[#0B7A5C]">
+                                    -{sch.wishlistDiscountPercent}% khách quen
+                                  </span>
+                                )}
+                              </div>
 
-                            {sch.subscribers && sch.subscribers.length > 0 ? (
                               <div className="space-y-1.5">
                                 {sch.subscribers.map((p, idx) => (
                                   <div
                                     key={idx}
-                                    className="bg-[#F1FAF6] rounded-xl p-2.5 border border-[#BDE7D5]/60 flex items-center justify-between text-xs"
+                                    className="bg-[#F4FAF7] rounded-xl px-3 py-2.5 flex items-center justify-between text-xs"
                                   >
                                     <div className="flex items-center gap-2 min-w-0">
-                                      <span className="w-7 h-7 rounded-full bg-[#0F9D76] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                                      <span className="w-8 h-8 rounded-full bg-[#0F9D76] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                                         {p.avatar || 'MA'}
                                       </span>
                                       <div className="min-w-0 flex-1">
-                                        <span className="font-bold text-[#101B17] block truncate">{p.name}</span>
+                                        <span className="font-bold text-[12px] text-[#101B17] block truncate">{p.name}</span>
                                         <span className="text-[10px] text-[#4B5A54] block truncate">{p.pickup} → {p.dropoff}</span>
                                       </div>
                                     </div>
-                                    <span className="text-[10px] font-bold text-[#0B7A5C] bg-[#DDF3EA] px-2 py-0.5 rounded-md shrink-0">
-                                      Trọn gói T10
-                                    </span>
                                   </div>
                                 ))}
                               </div>
-                            ) : (
-                              <div className="text-[11px] text-[#8A9993] italic px-1">
-                                Chưa có hành khách đăng ký trọn gói.
-                              </div>
-                            )}
-                          </div>
+                            </div>
+                          ) : null}
 
-                          {/* ⑤ Pricing Summary & Action Footer */}
-                          <div className="flex items-center justify-between pt-1 border-t border-[#EEF2F0] text-xs">
-                            <span className="text-xs font-medium text-[#4B5A54]">
-                              Đơn giá: <strong className="font-mono text-[#0B7A5C]">{(sch.pricePerTrip || 35000).toLocaleString('vi-VN')} ₫</strong>/ghế
-                            </span>
-
-                            <span className="px-2 py-0.5 rounded-md bg-[#DDF3EA] text-[#0B7A5C] text-[10.5px] font-semibold">
-                              Tự động ghép khách
-                            </span>
-                          </div>
-
-                          {/* ⑥ Actions */}
-                          <div className="grid grid-cols-2 gap-2.5 pt-1">
+                          {/* Price and action */}
+                          <div className="flex items-center justify-between gap-3 pt-3.5 border-t border-[#EEF2F0]">
+                            <div className="min-w-0">
+                              <span className="block text-[10px] font-medium text-[#8A9993]">Giá mỗi ghế</span>
+                              <strong className="mt-0.5 block font-mono text-[16px] leading-none text-[#0B7A5C] whitespace-nowrap">
+                                {formatCompactPrice(sch.pricePerTrip)}
+                              </strong>
+                            </div>
                             <button
                               type="button"
                               onClick={() => navigate('/driver/schedules')}
-                              className="h-11 rounded-2xl border-[1.5px] border-[#E4EAE7] bg-white text-[#101B17] hover:bg-[#F7FAF9] font-bold text-xs transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
+                              className="h-9 px-3.5 rounded-xl border border-[#A4DFC9] bg-white hover:bg-[#F1FAF6] text-[#0B7A5C] font-bold text-[11px] transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
                             >
-                              <Edit3 className="w-3.5 h-3.5 text-[#4B5A54]" />
-                              <span>Quản lý lịch trình</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => navigate('/driver/home')}
-                              className="h-11 rounded-2xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-xs transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(15,157,118,0.25)]"
-                            >
-                              <span>Xem trên Trang chủ</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
+                              <Edit3 className="w-3.5 h-3.5 shrink-0" />
+                              <span>Quản lý</span>
                             </button>
                           </div>
                         </div>
