@@ -1,22 +1,24 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { 
-  User, 
-  Car, 
-  Calendar, 
-  ChevronRight, 
+import {
+  User,
+  Car,
+  Calendar,
+  ChevronRight,
   ShieldCheck,
   LogOut,
   Star,
   Wallet,
   Receipt,
-  Heart
+  Heart,
+  Bell
 } from 'lucide-react';
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
-  const { currentRole, currentUser, driverWallet, passengerWallet, vehicles, activeVehicle } = useApp();
+  const { currentRole, currentUser, driverWallet, passengerWallet, vehicles, activeVehicle, pendingBookingsForDriver } = useApp();
+  const hasUnreadNotifications = currentRole === 'driver' && pendingBookingsForDriver.length > 0;
 
   const currentWallet = currentRole === 'driver' ? driverWallet : passengerWallet;
   const formattedWallet = new Intl.NumberFormat('vi-VN').format(currentWallet);
@@ -72,6 +74,24 @@ export const ProfilePage = () => {
 
       {/* Account Settings Menu List */}
       <div className="bg-white rounded-3xl border border-[#E4EAE7] shadow-[0_2px_12px_rgba(16,27,23,0.04)] divide-y divide-[#EEF2F0] overflow-hidden">
+        {/* Notifications */}
+        <button
+          type="button"
+          onClick={() => navigate(currentRole === 'driver' ? '/driver/notifications' : '/passenger/notifications')}
+          className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#F1FAF6] transition-colors text-left cursor-pointer"
+        >
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <Bell className="w-4.5 h-4.5 text-[#4B5A54]" />
+              {hasUnreadNotifications && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EE7A22] ring-2 ring-white" />
+              )}
+            </div>
+            <span className="text-xs font-semibold text-[#101B17]">Thông báo</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#8A9993]" />
+        </button>
+
         {/* Driver Specific: Vehicle Profile */}
         {currentRole === 'driver' && (
           <button
@@ -130,9 +150,9 @@ export const ProfilePage = () => {
           <div className="flex items-center space-x-3">
             <Calendar className="w-4.5 h-4.5 text-[#4B5A54]" />
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-[#101B17]">Lịch trình đi lại định kỳ</span>
+              <span className="text-xs font-semibold text-[#101B17]">Lịch trình cố định</span>
               <span className="text-[11px] text-[#8A9993]">
-                {currentRole === 'driver' ? 'Tuyến cố định nhận khách cả tháng' : 'Nhu cầu đi học/đi làm quen thuộc'}
+                {currentRole === 'driver' ? 'Tuyến cố định nhận khách cả tháng' : 'Nhu cầu đi học/đi làm cố định'}
               </span>
             </div>
           </div>

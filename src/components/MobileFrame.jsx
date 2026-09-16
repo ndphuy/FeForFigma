@@ -29,7 +29,7 @@ export const MobileFrame = ({ children, hideNav = false }) => {
       group: 'Hành khách (Passenger)',
       screens: [
         { name: '1. Trang chủ (Passenger Home)', path: '/passenger/home' },
-        { name: '2. Lịch trình quen thuộc (Saved Commutes)', path: '/passenger/schedules' },
+        { name: '2. Lịch trình cố định (Saved Commutes)', path: '/passenger/schedules' },
         { name: '3. Kết quả tìm kiếm (Search Results)', path: '/passenger/results' },
         { name: '4. Chọn điểm đón thuận tiện (Pickup Picker)', path: '/passenger/pickup-picker' },
         { name: '5. Chi tiết chuyến đi (Trip Detail)', path: '/passenger/trip-detail/trip_001' },

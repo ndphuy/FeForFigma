@@ -150,19 +150,28 @@ export const NotificationsPage = () => {
 
   return (
     <div className="w-full min-h-full flex flex-col bg-[#F4F7F5] pb-6">
-      <div className="flex-none bg-white px-4 py-3 border-b border-[#EEF2F0] flex items-center justify-between">
-        <div>
-          <h1 className="text-base font-bold text-[#101B17] tracking-tight">Thông báo</h1>
-          <p className="text-[11px] text-[#8A9993] mt-0.5">
-            {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : 'Bạn đã đọc tất cả thông báo'}
-          </p>
+      <div className="flex-none bg-white px-4 py-3 border-b border-[#EEF2F0] flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate('/profile')}
+            className="w-10 h-10 border border-[#EEF2F0] rounded-xl bg-white hover:bg-[#F7FAF9] flex items-center justify-center text-lg text-[#101B17] shrink-0 cursor-pointer"
+          >
+            ‹
+          </button>
+          <div className="min-w-0">
+            <h1 className="text-base font-bold text-[#101B17] tracking-tight">Thông báo</h1>
+            <p className="text-[11px] text-[#8A9993] mt-0.5 truncate">
+              {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : 'Bạn đã đọc tất cả thông báo'}
+            </p>
+          </div>
         </div>
 
         <button
           type="button"
           onClick={() => setReadIds(roleNotifications.map((item) => item.id))}
           disabled={unreadCount === 0}
-          className="h-9 px-3 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] text-[11px] font-bold flex items-center gap-1.5 disabled:opacity-50"
+          className="h-9 px-3 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] text-[11px] font-bold flex items-center gap-1.5 disabled:opacity-50 shrink-0"
         >
           <Check className="w-3.5 h-3.5" />
           Đánh dấu đã đọc

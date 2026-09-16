@@ -1,23 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Car, 
-  Search, 
-  Edit3, 
-  Trash2, 
-  CheckCircle2, 
-  AlertCircle,
+import {
+  ArrowLeft,
+  Plus,
+  Calendar,
+  Car,
+  Search,
+  Edit3,
+  Trash2,
   X,
-  Phone,
   MessageCircle,
-  UserCheck,
-  ChevronRight
+  UserCheck
 } from 'lucide-react';
 
 export const PassengerSchedules = () => {
@@ -162,19 +156,10 @@ export const PassengerSchedules = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-sm font-bold text-[#101B17]">Lịch trình quen thuộc</h1>
+            <h1 className="text-sm font-bold text-[#101B17]">Lịch trình cố định</h1>
             <p className="text-[11px] text-[#4B5A54]">Nhu cầu đi lại định kỳ của bạn</p>
           </div>
         </div>
-
-        <button 
-          type="button"
-          onClick={handleOpenAddModal}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Thêm lịch</span>
-        </button>
       </div>
 
       {/* Main Content List */}
@@ -187,7 +172,7 @@ export const PassengerSchedules = () => {
           <div className="flex-1 min-w-0">
             <h4 className="text-xs font-bold text-[#0B7A5C]">Đi chung định kỳ cả tháng (22 chuyến)</h4>
             <p className="text-[11px] text-[#4B5A54] mt-0.5 leading-relaxed">
-              Lưu khung giờ đi học/đi làm quen thuộc để 1 chạm tra cứu tài xế đi cùng tuyến. Tiết kiệm tới 65% chi phí so với gọi xe riêng!
+              Lưu khung giờ đi học/đi làm cố định để 1 chạm tra cứu tài xế đi cùng tuyến. Tiết kiệm tới 65% chi phí so với gọi xe riêng!
             </p>
           </div>
         </div>
@@ -207,7 +192,7 @@ export const PassengerSchedules = () => {
               <Calendar className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#101B17]">Chưa có lịch trình quen thuộc nào</h3>
+              <h3 className="text-sm font-bold text-[#101B17]">Chưa có lịch trình cố định nào</h3>
               <p className="text-xs text-[#4B5A54] mt-1 max-w-xs mx-auto">
                 Thêm tuyến đường đi học, đi làm hàng ngày để tìm tài xế ghép chuyến trọn gói cả tháng.
               </p>
@@ -218,25 +203,29 @@ export const PassengerSchedules = () => {
               className="mt-2 px-5 py-2.5 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white text-xs font-bold rounded-xl transition-colors shadow-xs inline-flex items-center space-x-1.5 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>+ Thêm lịch quen thuộc đầu tiên</span>
+              <span>+ Thêm lịch cố định đầu tiên</span>
             </button>
           </div>
         ) : (
           /* List of Passenger Schedule Cards */
           passengerSchedules.map((sched) => (
-            <div 
-              key={sched.id} 
-              className={`bg-white rounded-3xl p-4 border transition-all duration-200 shadow-xs space-y-3.5 ${
-                sched.active ? 'border-[#B2E2D0] ring-1 ring-[#0F9D76]/10' : 'border-[#E4EAE7] opacity-80'
+            <div
+              key={sched.id}
+              className={`bg-white rounded-3xl p-4 border transition-all duration-200 shadow-xs space-y-3 ${
+                sched.active ? 'border-[#E4EAE7]' : 'border-[#E4EAE7] opacity-70'
               }`}
             >
               {/* Header: Icon + Title + Active Toggle Switch */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 min-w-0">
-                  <span className="text-base">{sched.icon || '🏢'}</span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <span className="w-9 h-9 rounded-xl bg-[#F1FAF6] flex items-center justify-center text-base shrink-0">
+                    {sched.icon || '🏢'}
+                  </span>
                   <div className="min-w-0">
                     <h3 className="text-sm font-bold text-[#101B17] truncate">{sched.title}</h3>
-                    <span className="text-[10px] text-[#0B7A5C] font-semibold">{sched.purpose || 'Đi làm'}</span>
+                    <span className="text-[10.5px] text-[#8A9993]">
+                      {sched.purpose || 'Đi làm'} · <span className={sched.active ? 'text-[#0B7A5C] font-semibold' : 'font-semibold'}>{sched.active ? 'Đang bật' : 'Tạm dừng'}</span>
+                    </span>
                   </div>
                 </div>
 
@@ -244,10 +233,10 @@ export const PassengerSchedules = () => {
                 <button
                   type="button"
                   onClick={() => togglePassengerSchedule(sched.id)}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
+                  aria-label={`Bật hoặc tạm dừng ${sched.title}`}
+                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer shrink-0 ${
                     sched.active ? 'bg-[#0F9D76]' : 'bg-[#DFE7E3]'
                   }`}
-                  aria-label="Toggle schedule active status"
                 >
                   <div
                     className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
@@ -257,114 +246,83 @@ export const PassengerSchedules = () => {
                 </button>
               </div>
 
-              {/* Route Visualizer */}
-              <div className="bg-[#F8FAF9] rounded-2xl p-3 border border-[#E4EAE7] space-y-2">
-                <div className="flex items-start space-x-2.5">
-                  <div className="flex flex-col items-center mt-0.5 shrink-0">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#0F9D76]" />
-                    <span className="w-0.5 h-6 bg-[#DFE7E3] my-0.5" />
-                    <span className="w-2.5 h-2.5 rounded-sm bg-[#EE7A22]" />
+              {/* Route + Schedule facts, grouped in one block */}
+              <div className="bg-[#F8FAF9] rounded-2xl p-3.5 border border-[#EEF2F0] space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex flex-col items-center pt-1 gap-1 shrink-0">
+                    <span className="w-2 h-2 rounded-full bg-[#0F9D76]" />
+                    <span className="w-px flex-1 min-h-5 bg-[#DFE7E3]" />
+                    <span className="w-2 h-2 rounded-xs bg-[#EE7A22]" />
                   </div>
-                  <div className="flex-1 min-w-0 space-y-2 text-xs">
-                    <div>
-                      <span className="text-[10px] font-bold text-[#0F9D76] uppercase tracking-wider block">Điểm đón</span>
+                  <div className="flex-1 min-w-0 flex flex-col gap-2.5 text-xs">
+                    <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold text-[#101B17] truncate">{sched.origin}</p>
+                      <span className="font-mono font-bold text-[#101B17] shrink-0">{sched.time}</span>
                     </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-[#EE7A22] uppercase tracking-wider block">Điểm đến</span>
-                      <p className="font-semibold text-[#101B17] truncate">{sched.destination}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Commute Specs Grid */}
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {/* Time & Days */}
-                <div className="bg-[#F4F7F5] p-2.5 rounded-2xl border border-[#EEF2F0] space-y-1">
-                  <div className="flex items-center space-x-1 text-[#4B5A54]">
-                    <Clock className="w-3.5 h-3.5 text-[#0F9D76]" />
-                    <span className="text-[11px]">Giờ đón:</span>
-                    <span className="font-bold text-[#101B17] font-mono">{sched.time}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {daysOfWeek.map((day) => {
-                      const isSelected = sched.days?.includes(day);
-                      return (
-                        <span 
-                          key={day}
-                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
-                            isSelected 
-                              ? 'bg-[#0F9D76] text-white' 
-                              : 'bg-white text-[#8A9993] border border-[#E4EAE7]'
-                          }`}
-                        >
-                          {day}
-                        </span>
-                      );
-                    })}
+                    <p className="font-semibold text-[#101B17] truncate">{sched.destination}</p>
                   </div>
                 </div>
 
-                {/* Duration & Vehicle Preference */}
-                <div className="bg-[#F4F7F5] p-2.5 rounded-2xl border border-[#EEF2F0] space-y-1">
-                  <div className="flex items-center space-x-1 text-[#4B5A54] truncate">
+                <div className="border-t border-[#E4EAE7]" />
+
+                <div className="flex items-center justify-between">
+                  {daysOfWeek.map((day) => {
+                    const isSelected = sched.days?.includes(day);
+                    return (
+                      <span
+                        key={day}
+                        className={`text-[9.5px] font-bold w-6 h-6 rounded-md flex items-center justify-center ${
+                          isSelected ? 'bg-[#0F9D76] text-white' : 'text-[#C3CDC9]'
+                        }`}
+                      >
+                        {day}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-[#4B5A54]">
+                  <span className="flex items-center gap-1">
                     <Car className="w-3.5 h-3.5 text-[#0B7A5C]" />
-                    <span className="text-[11px] font-semibold text-[#101B17] truncate">
-                      {sched.preferredVehicle === 'bike' ? 'Ưu tiên Xe máy' : sched.preferredVehicle === 'car' ? 'Ưu tiên Ô tô' : 'Tất cả phương tiện'}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-[#0F9D76] font-bold mt-1 truncate">
-                    🗓️ {sched.duration?.durationLabel || '01/10 → 31/10/2026'}
-                  </p>
+                    {sched.preferredVehicle === 'bike' ? 'Xe máy' : sched.preferredVehicle === 'car' ? 'Ô tô' : 'Mọi phương tiện'}
+                  </span>
+                  <span>{sched.duration?.durationLabel || '01/10 → 31/10/2026'}</span>
                 </div>
               </div>
 
               {/* Matched Driver Card OR Search Driver CTA */}
               {sched.matchedDriver ? (
-                <div className="bg-[#F1FAF6] rounded-2xl p-3 border border-[#B2E2D0] space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#0B7A5C] flex items-center space-x-1">
-                      <UserCheck className="w-3.5 h-3.5 mr-1" />
-                      <span>Tài xế đi cùng cố định</span>
-                    </span>
-                    <span className="text-[10px] font-bold text-[#0F9D76] bg-[#DDF3EA] px-2 py-0.5 rounded-md">
-                      22 chuyến / tháng
-                    </span>
+                <div className="bg-[#F1FAF6] rounded-2xl p-3 flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-[#0F9D76] text-white font-bold flex items-center justify-center text-xs shrink-0">
+                    {sched.matchedDriver.avatar || 'QH'}
                   </div>
-
-                  <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-[#DDF3EA]">
-                    <div className="flex items-center space-x-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold flex items-center justify-center text-xs shrink-0">
-                        {sched.matchedDriver.avatar || 'QH'}
-                      </div>
-                      <div className="min-w-0 text-xs">
-                        <p className="font-bold text-[#101B17] truncate">{sched.matchedDriver.name}</p>
-                        <p className="text-[11px] text-[#4B5A54] truncate">{sched.matchedDriver.vehicle}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => navigate('/shared/chat/drv_01')}
-                      className="px-2.5 py-1.5 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white rounded-lg text-xs font-bold transition-colors flex items-center space-x-1 shrink-0 cursor-pointer"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>Nhắn tin</span>
-                    </button>
+                  <div className="flex-1 min-w-0 text-xs">
+                    <p className="font-bold text-[#101B17] truncate flex items-center gap-1">
+                      <UserCheck className="w-3.5 h-3.5 text-[#0B7A5C] shrink-0" />
+                      <span className="truncate">{sched.matchedDriver.name}</span>
+                    </p>
+                    <p className="text-[10.5px] text-[#4B5A54] truncate">{sched.matchedDriver.vehicle} · 22 chuyến/tháng</p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/shared/chat/drv_01')}
+                    className="w-9 h-9 rounded-xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                    aria-label={`Nhắn tin cho ${sched.matchedDriver.name}`}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </button>
                 </div>
               ) : (
-                <div className="bg-[#FFF9F3] rounded-2xl p-3 border border-[#FFE4CC] flex items-center justify-between">
-                  <div className="text-xs">
+                <div className="bg-[#FFF9F3] rounded-2xl p-3 flex items-center justify-between gap-2">
+                  <div className="text-xs min-w-0">
                     <p className="font-bold text-[#101B17]">Chưa ghép đôi tài xế</p>
-                    <p className="text-[10px] text-[#8A9993]">Tìm tài xế trùng tuyến đi làm T2-T6</p>
+                    <p className="text-[10.5px] text-[#8A9993] truncate">Tìm tài xế trùng tuyến, cùng khung giờ</p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleFindDriver(sched)}
-                    className="px-3 py-1.5 bg-[#EE7A22] hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors flex items-center space-x-1 shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 bg-[#EE7A22] hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors flex items-center space-x-1 shadow-xs cursor-pointer shrink-0"
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span>Tìm tài xế</span>
@@ -372,74 +330,65 @@ export const PassengerSchedules = () => {
                 </div>
               )}
 
-              {/* Action Buttons: Find Driver / Edit / Delete */}
-              <div className="flex items-center justify-between pt-1 border-t border-[#EEF2F0]">
-                <button
-                  type="button"
-                  onClick={() => handleFindDriver(sched)}
-                  className="text-xs font-bold text-[#0F9D76] hover:underline flex items-center space-x-1 cursor-pointer"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>Tra cứu chuyến đi cùng tuyến</span>
-                </button>
-
-                <div className="flex items-center space-x-1.5">
-                  {deleteConfirmId === sched.id ? (
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-[11px] text-[#C22B35] font-bold">Xác nhận?</span>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(sched.id)}
-                        className="px-2.5 py-1 bg-[#C22B35] hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        Xóa
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmId(null)}
-                        className="px-2 py-1 bg-gray-100 text-[#4B5A54] rounded-lg text-xs cursor-pointer"
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(sched)}
-                        className="p-1.5 text-[#4B5A54] hover:bg-[#E4EAE7] rounded-lg transition-colors cursor-pointer"
-                        title="Chỉnh sửa"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmId(sched.id)}
-                        className="p-1.5 text-[#C22B35] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                        title="Xóa"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
+              {/* Edit / Delete */}
+              <div className="flex items-center justify-end pt-0.5">
+                {deleteConfirmId === sched.id ? (
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[11px] text-[#C22B35] font-bold mr-0.5">Xóa lịch này?</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(sched.id)}
+                      className="px-2.5 py-1 bg-[#C22B35] hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Xóa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(null)}
+                      className="px-2 py-1 bg-gray-100 text-[#4B5A54] rounded-lg text-xs cursor-pointer"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(sched)}
+                      className="p-1.5 text-[#4B5A54] hover:bg-[#E4EAE7] rounded-lg transition-colors cursor-pointer"
+                      title="Chỉnh sửa"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(sched.id)}
+                      className="p-1.5 text-[#C22B35] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="Xóa"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Floating Bottom CTA */}
-      <div className="p-4 bg-white/95 backdrop-blur-md border-t border-[#E4EAE7] shrink-0">
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          className="w-full py-3.5 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold rounded-2xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-2 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Thêm lịch trình quen thuộc</span>
-        </button>
-      </div>
+      {/* Floating Bottom CTA (only once a schedule already exists — empty state has its own CTA) */}
+      {passengerSchedules.length > 0 && (
+        <div className="p-4 bg-white/95 backdrop-blur-md border-t border-[#E4EAE7] shrink-0">
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            className="w-full py-3.5 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold rounded-2xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Thêm lịch trình cố định</span>
+          </button>
+        </div>
+      )}
 
       {/* Center Modal: Add / Edit Passenger Schedule */}
       {isModalOpen && (
@@ -449,7 +398,7 @@ export const PassengerSchedules = () => {
             <div className="px-5 py-4 border-b border-[#EEF2F0] flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-[#101B17]">
-                  {editingSchedule ? 'Chỉnh sửa lịch quen thuộc' : 'Thêm lịch quen thuộc mới'}
+                  {editingSchedule ? 'Chỉnh sửa lịch cố định' : 'Thêm lịch cố định mới'}
                 </h3>
                 <p className="text-[11px] text-[#4B5A54]">Nhu cầu đi lại cố định để tìm tài xế</p>
               </div>

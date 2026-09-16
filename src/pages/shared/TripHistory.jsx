@@ -135,7 +135,7 @@ export const TripHistory = () => {
           <div className="flex flex-col">
             <h1 className="text-base font-bold text-[#101B17] tracking-tight">Chuyến đi</h1>
             <span className="text-[11px] text-[#8A9993]">
-              {currentRole === 'driver' ? 'Quản lý chuyến lẻ & lịch trình cố định' : 'Chuyến đi lẻ & lịch trình quen thuộc'}
+              {currentRole === 'driver' ? 'Quản lý chuyến lẻ & lịch trình cố định' : 'Chuyến đi lẻ & lịch trình cố định'}
             </span>
           </div>
 
@@ -506,7 +506,7 @@ export const TripHistory = () => {
                     </div>
 
                     <h2 className="text-[16px] font-bold text-[#101B17] mb-1.5">
-                      Bạn chưa lưu lịch trình quen thuộc
+                      Bạn chưa lưu lịch trình cố định
                     </h2>
 
                     <p className="text-xs text-[#8A9993] max-w-[280px] leading-relaxed mb-6">
@@ -519,7 +519,7 @@ export const TripHistory = () => {
                       className="w-full max-w-[260px] h-12 rounded-2xl bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold text-sm shadow-[0_6px_18px_rgba(15,157,118,0.25)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
                     >
                       <Plus className="w-4 h-4 stroke-[2.5]" />
-                      <span>Thêm lịch quen thuộc ngay</span>
+                      <span>Thêm lịch cố định ngay</span>
                     </button>
                   </div>
                 ) : (
@@ -700,7 +700,7 @@ export const TripHistory = () => {
                       className="w-full h-12 rounded-2xl border-2 border-dashed border-[#BDE7D5] bg-[#F1FAF6] hover:bg-[#E3F6ED] text-[#0B7A5C] text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer mt-1"
                     >
                       <Plus className="w-4 h-4 stroke-[2.5]" />
-                      <span>+ Thêm lịch trình quen thuộc</span>
+                      <span>+ Thêm lịch trình cố định</span>
                     </button>
                   </div>
                 )}

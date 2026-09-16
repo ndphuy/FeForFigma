@@ -723,7 +723,7 @@ export const SearchResults = () => {
 
             <div className="bg-[#F1FAF6] p-3 rounded-2xl border border-[#DDF3EA] text-xs text-left space-y-1">
               <p className="font-bold text-[#0B7A5C]">Đã tự động cập nhật vào:</p>
-              <p className="text-[#4B5A54]">✓ Trang Lịch trình quen thuộc (/passenger/schedules)</p>
+              <p className="text-[#4B5A54]">✓ Trang Lịch trình cố định (/passenger/schedules)</p>
               <p className="text-[#4B5A54]">✓ Trang chủ & Lịch sử chuyến đi của bạn</p>
             </div>
 

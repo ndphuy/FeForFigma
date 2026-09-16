@@ -15,13 +15,14 @@ const TODAY_TRIP_STATUS = {
 
 export const DriverHome = () => {
   const navigate = useNavigate();
-  const { 
-    currentUser, 
-    driverSchedules, 
-    toggleDriverSchedule, 
-    trips, 
-    pendingBookingsForDriver, 
-    respondBooking 
+  const {
+    currentUser,
+    driverSchedules,
+    toggleDriverSchedule,
+    trips,
+    pendingBookingsForDriver,
+    respondBooking,
+    setActiveTripId
   } = useApp();
   const [activeTripIndex, setActiveTripIndex] = useState(0);
   const [showCancel, setShowCancel] = useState(false);
@@ -115,6 +116,7 @@ export const DriverHome = () => {
   const currentTotalSeats = currentActiveTrip.totalSeats || 4;
   const currentTotalVnd = currentBookedPassengers.reduce((sum, p) => sum + (p.fareVnd || 0), 0);
   const currentStatus = TODAY_TRIP_STATUS[currentActiveTrip.statusText] || TODAY_TRIP_STATUS['Đang mở'];
+  const canModifyTrip = currentActiveTrip.statusText === 'Đang mở';
 
   const workSchedule = driverSchedules[0] || primaryDriverSched;
   const isScheduleActive = workSchedule?.active ?? true;
@@ -149,21 +151,6 @@ export const DriverHome = () => {
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/driver/notifications')}
-          className="relative w-12 h-12 border border-[#EEF2F0] rounded-2xl bg-white flex items-center justify-center shrink-0 hover:bg-[#F7FAF9] transition-colors"
-          aria-label="Mở thông báo"
-        >
-          <svg viewBox="0 0 24 24" className="w-[21px] h-[21px]" fill="none" stroke="#4B5A54" strokeWidth="1.9" strokeLinecap="round">
-            <rect x="5" y="4.5" width="14" height="15" rx="4" />
-            <line x1="9" y1="9.5" x2="15" y2="9.5" />
-            <line x1="9" y1="14" x2="13" y2="14" />
-          </svg>
-          {pendingBookingsForDriver.length > 0 && (
-            <span className="absolute top-[9px] right-[9px] w-2.5 h-2.5 rounded-full bg-[#EE7A22] border-2 border-white" />
-          )}
-        </button>
       </header>
 
       <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
@@ -185,9 +172,8 @@ export const DriverHome = () => {
               {pendingBookingsForDriver.slice(0, 2).map((booking, index) => (
                 <span
                   key={booking.id}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border-2 border-[#FFF4E9] ${
-                    index === 0 ? 'bg-[#DDF3EA] text-[#0B7A5C]' : '-ml-3.5 bg-white text-[#4B5A54]'
-                  }`}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border-2 border-[#FFF4E9] ${index === 0 ? 'bg-[#DDF3EA] text-[#0B7A5C]' : '-ml-3.5 bg-white text-[#4B5A54]'
+                    }`}
                 >
                   {booking.passengerInitials}
                 </span>
@@ -276,11 +262,10 @@ export const DriverHome = () => {
             {/* Top row: Badges and Countdown */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`h-7 px-2.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 shrink-0 ${
-                  currentActiveTrip.tripKind === 'recurring'
+                <span className={`h-7 px-2.5 rounded-xl text-[11px] font-bold inline-flex items-center gap-1 shrink-0 ${currentActiveTrip.tripKind === 'recurring'
                     ? 'bg-[#DDF3EA] text-[#0B7A5C] border border-[#B2E2D0]/60'
                     : 'bg-[#FFF4E9] text-[#EE7A22] border border-[#F7D9B8]'
-                }`}>
+                  }`}>
                   {currentActiveTrip.tripKind === 'recurring' ? (
                     <>
                       <Repeat className="w-3 h-3 stroke-[2.5]" />
@@ -332,7 +317,7 @@ export const DriverHome = () => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => navigate(`/shared/cost-breakdown/${todayTrip.id}`)}
+                  onClick={() => navigate(`/shared/cost-breakdown/${currentActiveTrip.id}`)}
                   className="font-semibold text-[#0B7A5C] shrink-0 hover:underline"
                 >
                   Chia lại {currentTotalVnd.toLocaleString('vi-VN')} ₫
@@ -380,7 +365,7 @@ export const DriverHome = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveTripId(todayTrip.id);
+                    setActiveTripId(currentActiveTrip.id);
                     navigate('/driver/active-trip');
                   }}
                   className="h-[50px] rounded-2xl bg-[#0F9D76] text-white text-sm font-semibold hover:bg-[#0B7A5C] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(15,157,118,0.25)] cursor-pointer"
@@ -409,11 +394,10 @@ export const DriverHome = () => {
                   type="button"
                   onClick={() => setActiveTripIndex(idx)}
                   aria-label={`Chuyển sang chuyến ${idx + 1}`}
-                  className={`transition-all rounded-full cursor-pointer ${
-                    safeTripIndex === idx
+                  className={`transition-all rounded-full cursor-pointer ${safeTripIndex === idx
                       ? 'w-6 h-1.5 bg-[#0F9D76]'
                       : 'w-1.5 h-1.5 bg-[#D7E0DC] hover:bg-[#B2C4BD]'
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -474,9 +458,8 @@ export const DriverHome = () => {
             </button>
           </div>
 
-          <div className={`rounded-[22px] bg-white p-[18px] shadow-[0_2px_10px_rgba(16,27,23,0.05)] transition-opacity ${
-            isScheduleActive ? 'opacity-100' : 'opacity-60'
-          }`}>
+          <div className={`rounded-[22px] bg-white p-[18px] shadow-[0_2px_10px_rgba(16,27,23,0.05)] transition-opacity ${isScheduleActive ? 'opacity-100' : 'opacity-60'
+            }`}>
             <div className="flex items-center gap-3">
               <span className="w-11 h-11 rounded-[15px] bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center text-[11px] font-bold shrink-0">
                 T2–T6
@@ -503,9 +486,8 @@ export const DriverHome = () => {
                 return (
                   <span
                     key={day}
-                    className={`h-10 rounded-xl flex items-center justify-center text-xs font-semibold ${
-                      active ? 'bg-[#DDF3EA] text-[#0B7A5C]' : 'bg-[#F7FAF9] text-[#C3CDC9]'
-                    }`}
+                    className={`h-10 rounded-xl flex items-center justify-center text-xs font-semibold ${active ? 'bg-[#DDF3EA] text-[#0B7A5C]' : 'bg-[#F7FAF9] text-[#C3CDC9]'
+                      }`}
                   >
                     {day}
                   </span>
@@ -554,11 +536,10 @@ export const DriverHome = () => {
             {/* Header / Icon */}
             <div className="flex items-center gap-3">
               <div
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-                  bookingConfirmModal.type === 'accept'
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${bookingConfirmModal.type === 'accept'
                     ? 'bg-[#DDF3EA] text-[#0F9D76]'
                     : 'bg-[#FCEBEB] text-[#C22B35]'
-                }`}
+                  }`}
               >
                 {bookingConfirmModal.type === 'accept' ? (
                   <CheckCircle2 className="w-6 h-6" />
@@ -637,11 +618,10 @@ export const DriverHome = () => {
                     respondBooking(bookingId, decision);
                   }
                 }}
-                className={`h-12 rounded-2xl text-white font-bold text-sm transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center ${
-                  bookingConfirmModal.type === 'accept'
+                className={`h-12 rounded-2xl text-white font-bold text-sm transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center ${bookingConfirmModal.type === 'accept'
                     ? 'bg-[#0F9D76] hover:bg-[#0B7A5C] shadow-[0_6px_18px_rgba(15,157,118,0.28)]'
                     : 'bg-[#C22B35] hover:bg-[#A8232C] shadow-[0_6px_18px_rgba(194,43,53,0.28)]'
-                }`}
+                  }`}
               >
                 {bookingConfirmModal.type === 'accept' ? 'Duyệt đón' : 'Từ chối'}
               </button>

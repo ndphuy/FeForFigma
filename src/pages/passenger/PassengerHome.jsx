@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { Wallet, ChevronRight, ArrowUpDown, Calendar, Clock, User, Bell, MapPin, CalendarClock, TrendingUp } from 'lucide-react';
+import { Wallet, ChevronRight, ArrowUpDown, Calendar, Clock, User, MapPin, CalendarClock, TrendingUp } from 'lucide-react';
 
 export const PassengerHome = () => {
   const navigate = useNavigate();
@@ -71,17 +71,6 @@ export const PassengerHome = () => {
             <span className="text-[#C3CDC9] text-[10px]">▾</span>
           </span>
         </div>
-
-        <button
-          type="button"
-          onClick={() => navigate('/passenger/notifications')}
-          className="relative w-10 h-10 border border-[#EEF2F0] rounded-2xl bg-white flex items-center justify-center text-[#4B5A54] shrink-0 cursor-pointer hover:bg-[#F7FAF9] transition-colors"
-          title="Thông báo"
-          aria-label="Mở thông báo"
-        >
-          <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EE7A22] ring-2 ring-white" />
-        </button>
       </div>
 
       {/* Main Content */}
@@ -107,12 +96,12 @@ export const PassengerHome = () => {
           </div>
         </div>
 
-        {/* LỊCH TRÌNH QUEN THUỘC (SAVED COMMUTES QUICK BAR) */}
+        {/* LỊCH TRÌNH CỐ ĐỊNH (SAVED COMMUTES QUICK BAR) */}
         <div className="bg-white rounded-2xl p-3 border border-[#E4EAE7] shadow-[0_2px_8px_rgba(16,27,23,0.03)] flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5">
               <Calendar className="w-3.5 h-3.5 text-[#0F9D76]" />
-              <span className="text-xs font-bold text-[#101B17]">Lịch trình quen thuộc</span>
+              <span className="text-xs font-bold text-[#101B17]">Lịch trình cố định</span>
             </div>
             <button
               type="button"

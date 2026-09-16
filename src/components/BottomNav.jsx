@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Home, CarFront, MessageSquare, Bell, User } from 'lucide-react';
+import { Home, CarFront, MessageSquare, User } from 'lucide-react';
 
 export const BottomNav = () => {
   const navigate = useNavigate();
@@ -29,14 +29,7 @@ export const BottomNav = () => {
       hasUnread: true
     },
     {
-      id: 'p_notifications',
-      label: 'Thông báo',
-      icon: Bell,
-      path: '/passenger/notifications',
-      hasUnread: true
-    },
-    { 
-      id: 'p_profile', 
+      id: 'p_profile',
       label: 'Tài khoản', 
       icon: User, 
       path: '/profile' 
@@ -64,17 +57,11 @@ export const BottomNav = () => {
       hasUnread: true
     },
     {
-      id: 'd_notifications',
-      label: 'Thông báo',
-      icon: Bell,
-      path: '/driver/notifications',
+      id: 'd_profile',
+      label: 'Tài khoản',
+      icon: User,
+      path: '/profile',
       hasUnread: pendingBookingsForDriver.length > 0
-    },
-    { 
-      id: 'd_profile', 
-      label: 'Tài khoản', 
-      icon: User, 
-      path: '/profile' 
     },
   ];
 
