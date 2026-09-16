@@ -15,7 +15,7 @@ const TODAY_TRIP_STATUS = {
 
 export const DriverHome = () => {
   const navigate = useNavigate();
-  const { currentUser, schedules, toggleSchedule, trips, pendingBookingsForDriver } = useApp();
+  const { currentUser, schedules, toggleSchedule, trips, pendingBookingsForDriver, respondBooking } = useApp();
   const todayTrip = trips.find((t) => t.id === 'trip_001') || trips[0];
   const [showCancel, setShowCancel] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
@@ -112,13 +112,22 @@ export const DriverHome = () => {
               </span>
             </span>
 
-            <button
-              type="button"
-              onClick={() => navigate('/driver/requests')}
-              className="h-11 px-4 rounded-[14px] bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[13.5px] font-semibold shrink-0 transition-colors"
-            >
-              Duyệt
-            </button>
+            <span className="flex flex-col gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/driver/requests')}
+                className="h-9 px-4 rounded-[14px] bg-[#EE7A22] hover:bg-[#D96A16] text-white text-[13.5px] font-semibold transition-colors"
+              >
+                Duyệt
+              </button>
+              <button
+                type="button"
+                onClick={() => respondBooking(pendingBookingsForDriver[0].id, 'reject')}
+                className="h-9 px-4 rounded-[14px] bg-white border border-[#F7D9B8] hover:bg-[#FFF0F0] text-[#C22B35] text-[13.5px] font-semibold transition-colors"
+              >
+                Không duyệt
+              </button>
+            </span>
           </div>
         )}
 
