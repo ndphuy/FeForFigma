@@ -105,7 +105,7 @@ State is centrally managed via `src/context/AppContext.jsx` and backed by `src/d
 /
 ├── auth/
 │   ├── login                         # Direct Password Login (Phone / Email Switcher) + Integrated Forgot Password OTP Recovery Flow (SMS / Email) + 1-Click Demo Presets
-│   └── register                      # Streamlined Unified Registration (Form thông tin -> Xác thực OTP -> Hoàn tất, đã bỏ chọn vai trò & progress bar)
+│   └── register                      # Streamlined Unified Registration (Form thông tin -> Xác thực OTP qua Email -> Hoàn tất kích hoạt tài khoản)
 ├── profile                           # User profile, verified badges, wallet link & Wishlist
 ├── wallet                            # Wallet balance & transaction history
 │   └── top-up                        # VietQR / PayOS simulated payment gateway

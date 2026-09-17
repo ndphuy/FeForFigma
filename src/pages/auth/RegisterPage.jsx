@@ -53,6 +53,10 @@ export const RegisterPage = () => {
       setErrorMsg('Vui lòng nhập số điện thoại hợp lệ (từ 9-10 chữ số).');
       return;
     }
+    if (!formData.email.trim() || !formData.email.includes('@')) {
+      setErrorMsg('Vui lòng nhập địa chỉ email hợp lệ để nhận mã xác thực OTP.');
+      return;
+    }
     if (formData.password.length < 6) {
       setErrorMsg('Mật khẩu phải có ít nhất 6 ký tự.');
       return;
@@ -175,10 +179,10 @@ export const RegisterPage = () => {
               </div>
             </div>
 
-            {/* Email (Optional) */}
+            {/* Email */}
             <div>
               <label className="text-[11.5px] font-bold text-[#101B17] block mb-1">
-                Email sinh viên / công sở <span className="text-[#8A9993] font-normal">(tùy chọn)</span>
+                Email nhận mã xác thực <span className="text-[#C22B35]">*</span>
               </label>
               <div className="relative flex items-center">
                 <Mail className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
@@ -186,8 +190,9 @@ export const RegisterPage = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="example@fpt.edu.vn"
+                  placeholder="routeshare@gmail.com"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-[#E4EAE7] rounded-xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none transition-colors"
+                  required
                 />
               </div>
             </div>
@@ -259,7 +264,7 @@ export const RegisterPage = () => {
               type="submit"
               className="w-full py-3.5 bg-[#0F9D76] hover:bg-[#0B7A5C] text-white font-bold rounded-2xl text-xs transition-all shadow-[0_4px_14px_rgba(15,157,118,0.25)] flex items-center justify-center space-x-1.5 cursor-pointer mt-3"
             >
-              <span>Tiếp tục xác thực số điện thoại</span>
+              <span>Tiếp tục xác thực bằng email</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -271,11 +276,11 @@ export const RegisterPage = () => {
             <div className="text-left">
               <h1 className="text-xl font-bold text-[#101B17]">Nhập mã xác thực OTP</h1>
               <p className="text-xs text-[#4B5A54] mt-1">
-                Mã xác thực 6 số đã được gửi qua SMS đến số điện thoại:
+                Mã xác thực 6 số đã được gửi tới địa chỉ email:
               </p>
               <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#DDF3EA] text-[#0B7A5C] rounded-xl text-xs font-bold font-mono">
-                <Phone className="w-3.5 h-3.5" />
-                <span>{formData.phone || '0912 345 678'}</span>
+                <Mail className="w-3.5 h-3.5" />
+                <span>{formData.email || 'routeshare@gmail.com'}</span>
               </div>
             </div>
 
@@ -340,6 +345,10 @@ export const RegisterPage = () => {
               <div className="flex items-center gap-2 text-xs text-[#101B17]">
                 <ShieldCheck className="w-4 h-4 text-[#0F9D76]" />
                 <span>Tài khoản đã được bảo vệ & kích hoạt</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[#4B5A54]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0F9D76]" />
+                <span>Email xác thực: <strong className="text-[#101B17]">{formData.email}</strong></span>
               </div>
               <div className="flex items-center gap-2 text-xs text-[#4B5A54]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0F9D76]" />
