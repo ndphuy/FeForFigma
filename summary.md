@@ -51,17 +51,21 @@ The application runs inside a responsive phone mockup (`MobileFrame`: 410×864px
 
 State is centrally managed via `src/context/AppContext.jsx` and backed by `src/data/mockData.js`:
 - **Authentication & Roles**: Seamless switching between `passenger` and `driver` modes with persistent profile and vehicle state.
-- **Passenger Commute Search Flow**:
-  - **Trang Chủ Hành Khách Tinh Gọn (`PassengerHome.jsx`)**: Header avatar, số dư ví RouteShare, form tìm kiếm lộ trình trực quan (`[ 🔵 Điểm đón ]`, `[ 🟠 Điểm đến ]`, ngày/giờ, số người đi cùng với stepper `- 1 +`, nút CTA lớn *"Tìm chuyến đi phù hợp"*), thẻ insight mật độ tuyến. **Đã loại bỏ hoàn toàn phần "Chuyến gợi ý tốt nhất"** để giao diện trang chủ gọn gàng, tập trung tối đa vào luồng tìm chuyến.
-  - **Trang Nhập Điểm Đón & Điểm Đến Tinh Gọn (`DestinationSearch.jsx`)**: Khi bấm vào ô "Điểm đón" hoặc "Điểm đến" tại `PassengerHome`, chuyển trực tiếp sang trang tìm kiếm `/passenger/destination-search`. Giao diện tinh gọn với 2 ô nhập: `[ 🔵 Nhập điểm đón ]` và `[ 🟡 Nhập điểm đến ]` cùng nút đảo chiều `⇅` và nút "Tìm chuyến đi phù hợp" (loại bỏ hoàn toàn các tag gợi ý thừa và lịch sử gần đây).
+- **Passenger Commute Search Flow (Chuyến lẻ & Đi định kỳ T2–T6)**:
+  - **Trang Chủ Hành Khách Đa Năng (`PassengerHome.jsx`)**: Header avatar, số dư ví RouteShare, thanh chọn nhanh lịch trình cố định, form tìm kiếm lộ trình tích hợp bộ chuyển đổi 2 chế độ:
+    - *Chế độ Chuyến lẻ (1 lần)*: Điểm đón/đến, ngày đi, giờ đón, số người đi cùng.
+    - *Chế độ Đi định kỳ (Lịch cố định T2–T6)*: Điểm đón/đến, bộ chọn ngày lặp lại hàng tuần (`[T2] [T3] [T4] [T5] [T6] [T7] [CN]` cùng quick chips `T2-T6`, `Cả tuần`), giờ đón cố định, lựa chọn phương tiện ưu tiên (Tất cả / Ô tô / Xe máy), nút CTA *"Tìm lịch trình định kỳ phù hợp"*.
+  - **Trang Nhập Điểm Đón & Điểm Đến (`DestinationSearch.jsx`)**: Hỗ trợ 2 ô nhập (`[ 🔵 Điểm đón ]`, `[ 🟡 Điểm đến ]`), nút đảo chiều `⇅` và bộ chọn nhanh Chuyến lẻ / Đi định kỳ.
   - **Trang Kết Quả Tìm Chuyến Trực Quan Kèm Bản Đồ & Bottom Sheet Co Giãn (`SearchResults.jsx`)**:
     - **Header & Thanh tìm kiếm nổi**: Logo RouteShare, nút quay lại, thẻ lộ trình nổi 2 điểm (`🔵 Điểm đón`, `🟡 Điểm đến`) kèm nút đảo chiều `⇅`.
+    - **Bộ chuyển đổi linh hoạt Chuyến lẻ ↔ Đi định kỳ**: Cho phép hành khách chuyển đổi qua lại tức thì ngay trên đầu danh sách kết quả.
+    - **Chế độ Đi định kỳ (Recurring Match)**: Hiển thị giá trọn gói tháng (22 chuyến) kèm chiết khấu ~15%, nhãn T2–T6, nút **"Đăng ký trọn gói tháng"** và pop-up chúc mừng ghép đôi tự động đồng bộ vào `/passenger/schedules`.
     - **Bản đồ nền phía trên**: Trực quan hóa tuyến đường của hành khách (polyline xanh ngọc) trên nền bản đồ đô thị thực tế TP.HCM (Sông Sài Gòn, QL52, Mai Chí Thọ) cùng nút định vị GPS.
     - **Bottom Sheet danh sách chuyến đi vuốt linh hoạt**:
       - *Mặc định (Nửa màn hình ~50%)*: Bản đồ lộ trình hiển thị rõ ở nửa trên; nửa dưới hiển thị thanh kéo, tab lọc nhanh (`✨ Phù hợp nhất`, `📍 Gần điểm đón`, `Giá thấp`, `Khởi hành sớm`) và danh sách các chuyến đi.
       - *Vuốt lên / Chạm thanh kéo*: Mở rộng toàn màn hình (`full-height`) để lướt xem danh sách chuyến đi chi tiết.
       - *Vuốt xuống / Chạm lại thanh kéo*: Thu gọn về nửa màn hình để quan sát bản đồ.
-      - *Thẻ chuyến đi tinh gọn*: Tên tài xế, avatar, tích xanh xác minh, đánh giá sao, dòng xe & chỗ trống, giờ khởi hành, độ lệch tuyến, giá chia sẻ mỗi người, điểm đón thực tế và nút xem chi tiết chuyến.
+      - *Thẻ chuyến đi tinh gọn*: Tên tài xế, avatar, tích xanh xác minh, đánh giá sao, dòng xe & chỗ trống, giờ khởi hành, độ lệch tuyến, giá chia sẻ mỗi người (hoặc giá tháng), điểm đón thực tế và nút xem chi tiết chuyến / đăng ký trọn gói.
 - **Driver Fleet Management (`KYCVerify.jsx`)**: 
   - Quản lý tối đa 3 phương tiện (Ô tô 4/5/7 chỗ & Xe máy 2 chỗ).
   - Tinh gọn giao diện với 2 icon: ✏️ Sửa và 🗑️ Xóa.
@@ -98,9 +102,10 @@ State is centrally managed via `src/context/AppContext.jsx` and backed by `src/d
 
 ## 4. Route & Screen Matrix
 
-```
 /
-├── auth/login                        # Phone + OTP verification flow
+├── auth/
+│   ├── login                         # Direct Password Login + Integrated Forgot Password OTP Recovery Flow + 1-Click Demo Presets
+│   └── register                      # Streamlined Unified Registration (Form thông tin -> Xác thực OTP -> Hoàn tất, đã bỏ chọn vai trò & progress bar)
 ├── profile                           # User profile, verified badges, wallet link & Wishlist
 ├── wallet                            # Wallet balance & transaction history
 │   └── top-up                        # VietQR / PayOS simulated payment gateway

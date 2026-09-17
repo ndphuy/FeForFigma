@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ArrowUpDown, ArrowRight, Search, MapPin } from 'lucide-react';
+import { ArrowUpDown, ArrowRight, Search, MapPin, Car, Repeat } from 'lucide-react';
 
 export const DestinationSearch = () => {
   const navigate = useNavigate();
   const { searchParams, setSearchParams } = useApp();
 
+  const [tripType, setTripType] = useState('single'); // 'single' | 'recurring'
   const [origin, setOrigin] = useState(searchParams?.origin || 'Đại học FPT Thành phố Hồ Chí Minh');
   const [destination, setDestination] = useState(searchParams?.destination || 'Chợ Bến Thành - Cổng Bắc');
   const [activeField, setActiveField] = useState('destination'); // 'origin' | 'destination'
@@ -25,7 +26,11 @@ export const DestinationSearch = () => {
       origin: origin.trim(),
       destination: destination.trim(),
     }));
-    navigate('/passenger/results');
+    if (tripType === 'recurring') {
+      navigate(`/passenger/results?mode=recurring&origin=${encodeURIComponent(origin.trim())}&destination=${encodeURIComponent(destination.trim())}`);
+    } else {
+      navigate(`/passenger/results?mode=single&origin=${encodeURIComponent(origin.trim())}&destination=${encodeURIComponent(destination.trim())}`);
+    }
   };
 
   return (
@@ -49,7 +54,36 @@ export const DestinationSearch = () => {
 
       {/* Inputs Container */}
       <div className="p-4 flex-1 flex flex-col justify-between overflow-y-auto rs-scroll">
-        <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-xs flex flex-col gap-3">
+        <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-xs flex flex-col gap-3.5">
+          {/* Trip Type Selector */}
+          <div className="grid grid-cols-2 gap-1 p-1 bg-[#EEF2F0] rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setTripType('single')}
+              className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                tripType === 'single'
+                  ? 'bg-white text-[#0B7A5C] shadow-xs'
+                  : 'text-[#4B5A54] hover:text-[#101B17]'
+              }`}
+            >
+              <Car className="w-3.5 h-3.5 text-[#0F9D76]" />
+              <span>Chuyến lẻ</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTripType('recurring')}
+              className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                tripType === 'recurring'
+                  ? 'bg-[#0F9D76] text-white shadow-xs'
+                  : 'text-[#4B5A54] hover:text-[#101B17]'
+              }`}
+            >
+              <Repeat className="w-3.5 h-3.5" />
+              <span>Đi định kỳ (T2–T6)</span>
+            </button>
+          </div>
+
           <div className="relative flex flex-col gap-2.5">
             {/* Origin Input */}
             <div
@@ -116,7 +150,7 @@ export const DestinationSearch = () => {
             className="w-full h-12 rounded-2xl bg-[#0F9D76] hover:bg-[#0B7A5C] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(15,157,118,0.3)] transition-all cursor-pointer"
           >
             <Search className="w-4 h-4" />
-            <span>Tìm chuyến đi phù hợp</span>
+            <span>{tripType === 'recurring' ? 'Tìm lịch trình định kỳ phù hợp' : 'Tìm chuyến đi phù hợp'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

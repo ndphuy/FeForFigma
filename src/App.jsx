@@ -6,6 +6,7 @@ import { AdminApp } from './pages/admin/AdminApp';
 
 // Auth & Profile
 import { LoginPage } from './pages/auth/LoginPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
 import { ProfilePage } from './pages/shared/ProfilePage';
 import { KYCVerify } from './pages/driver/KYCVerify';
 import { DriverSchedules } from './pages/driver/DriverSchedules';
@@ -57,6 +58,7 @@ const AppRoutes = () => {
 
   const hideNavRoutes = [
     '/auth/login',
+    '/auth/register',
     '/shared/live-tracking',
     '/driver/active-trip',
     '/driver/schedules',
@@ -91,6 +93,7 @@ const AppRoutes = () => {
 
         {/* Auth & Profile */}
         <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/driver/kyc" element={<KYCVerify />} />
         <Route path="/driver/schedules" element={<DriverSchedules />} />

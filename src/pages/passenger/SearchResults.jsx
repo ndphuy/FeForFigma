@@ -15,7 +15,8 @@ import {
   MapPin,
   Car,
   Calendar,
-  Sparkles
+  Sparkles,
+  Repeat
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { AppMap } from '../../components/AppMap';
@@ -173,7 +174,9 @@ const TripCard = ({ trip, isBestMatch, onOpen, isRecurringMode, onSubscribeMonth
             <span>Khởi hành</span>
           </div>
           <span className="text-xs font-bold text-[#101B17] font-mono mt-0.5">{details.departure}</span>
-          <span className="text-[9px] text-[#8A9993] leading-tight mt-0.5">(linh hoạt {details.flexibility})</span>
+          <span className="text-[9px] text-[#8A9993] leading-tight mt-0.5">
+            {isRecurringMode ? '(Thứ 2 – Thứ 6)' : `(linh hoạt ${details.flexibility})`}
+          </span>
         </div>
 
         <div className="flex flex-col border-l border-[#E4EAE7] pl-2">
@@ -226,7 +229,7 @@ const TripCard = ({ trip, isBestMatch, onOpen, isRecurringMode, onSubscribeMonth
                   : 'bg-[#0F9D76] hover:bg-[#0B7A5C] text-white'
               }`}
             >
-              <span>{isSubscribed ? '✓ Đã gửi yêu cầu' : 'Đăng ký trọn gói tháng'}</span>
+              <span>{isSubscribed ? '✓ Đã đăng ký' : 'Đăng ký trọn gói tháng'}</span>
             </button>
           ) : (
             <button
@@ -419,7 +422,9 @@ export const SearchResults = () => {
   const { trips, searchFilter, setSearchParams, subscribeRecurringCommute, driverSchedules } = useApp();
   
   const queryParams = new URLSearchParams(location.search);
-  const isRecurringMode = queryParams.get('mode') === 'recurring';
+  const initialMode = queryParams.get('mode') === 'recurring' ? 'recurring' : 'single';
+  const [currentMode, setCurrentMode] = useState(initialMode); // 'single' | 'recurring'
+  const isRecurringMode = currentMode === 'recurring';
   const scheduleId = queryParams.get('scheduleId');
 
   const [sortBy, setSortBy] = useState('match');
@@ -440,7 +445,7 @@ export const SearchResults = () => {
   const [draftFilters, setDraftFilters] = useState(initialFilters);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Filters actually narrow the list now — they used to only relabel the chips.
+  // Filters actually narrow the list now
   const filteredTrips = useMemo(() => trips.filter((trip) => {
     if (filters.maxPrice !== 'all' && trip.priceVnd > Number(filters.maxPrice)) return false;
     if (filters.minRating !== 'all' && (trip.driverTrustScore || 0) < Number(filters.minRating)) return false;
@@ -613,9 +618,38 @@ export const SearchResults = () => {
           <div className="h-1.5 w-12 rounded-full bg-[#D8E1DD] group-hover:bg-[#0F9D76] transition-colors" />
         </div>
 
+        {/* Mode Switcher Tabs (Single vs Recurring Commute) */}
+        <div className="grid grid-cols-2 gap-1.5 px-3.5 pt-1.5 pb-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setCurrentMode('single')}
+            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              currentMode === 'single'
+                ? 'bg-[#0F9D76] text-white shadow-xs'
+                : 'bg-[#F4F7F5] text-[#4B5A54] hover:text-[#101B17] border border-[#E4EAE7]'
+            }`}
+          >
+            <Car className="w-3.5 h-3.5" />
+            <span>Chuyến lẻ (1 lần)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCurrentMode('recurring')}
+            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              currentMode === 'recurring'
+                ? 'bg-[#0F9D76] text-white shadow-xs'
+                : 'bg-[#F4F7F5] text-[#4B5A54] hover:text-[#101B17] border border-[#E4EAE7]'
+            }`}
+          >
+            <Repeat className="w-3.5 h-3.5" />
+            <span>Đi định kỳ (T2–T6)</span>
+          </button>
+        </div>
+
         {/* Recurring Commute Banner (When in recurring mode) */}
         {isRecurringMode && (
-          <div className="bg-[#DDF3EA] border border-[#B2E2D0] rounded-2xl p-2.5 mx-3.5 mb-1.5 flex items-center justify-between text-xs shrink-0 shadow-xs">
+          <div className="bg-[#DDF3EA] border border-[#B2E2D0] rounded-2xl p-2.5 mx-3.5 my-1 flex items-center justify-between text-xs shrink-0 shadow-xs">
             <div className="flex items-center space-x-2 min-w-0">
               <span className="text-base shrink-0">🔁</span>
               <div className="min-w-0">

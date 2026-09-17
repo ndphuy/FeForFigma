@@ -161,5 +161,29 @@ export const CONVERSATIONS_BY_ROLE = {
 
 export const getConversationsForRole = (role) => CONVERSATIONS_BY_ROLE[role] || [];
 
-export const getConversationById = (role, conversationId) =>
-  getConversationsForRole(role).find((conversation) => conversation.id === conversationId);
+export const getConversationById = (role, conversationId) => {
+  const conversations = getConversationsForRole(role);
+  if (!conversations || conversations.length === 0) return null;
+  if (!conversationId) return conversations[0];
+
+  // 1. Direct ID match
+  let found = conversations.find((conversation) => conversation.id === conversationId);
+  if (found) return found;
+
+  // 2. Match by personId (e.g., 'drv_01', 'pas_01')
+  found = conversations.find((conversation) => conversation.personId === conversationId);
+  if (found) return found;
+
+  // 3. Match by tripId (e.g., 'trip_001', 'hist_pas_02')
+  found = conversations.find((conversation) => conversation.tripId === conversationId);
+  if (found) return found;
+
+  // 4. Substring match
+  found = conversations.find((conversation) =>
+    conversation.id.toLowerCase().includes(conversationId.toLowerCase())
+  );
+  if (found) return found;
+
+  // 5. Fallback to active/first conversation
+  return conversations[0];
+};
