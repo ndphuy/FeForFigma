@@ -1,63 +1,46 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Home, CarFront, MessageSquare, User } from 'lucide-react';
+import { Search, CarFront, History, MessageSquare, User } from 'lucide-react';
 
 export const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentRole, pendingBookingsForDriver } = useApp();
+  const { switchRole, pendingBookingsForDriver } = useApp();
 
-  const passengerTabs = [
+  // Unified nav: passenger and driver flows live side by side instead of behind a role switch.
+  const tabs = [
     {
-      id: 'p_home',
-      label: 'Trang chủ',
-      icon: Home,
-      path: '/passenger/home'
+      id: 'search',
+      label: 'Tìm chuyến',
+      icon: Search,
+      path: '/passenger/home',
+      onNavigate: () => switchRole('passenger')
     },
     {
-      id: 'p_history',
-      label: 'Chuyến đi',
+      id: 'post',
+      label: 'Đăng chuyến',
       icon: CarFront,
-      path: '/passenger/history'
+      path: '/driver/home',
+      onNavigate: () => switchRole('driver')
     },
     {
-      id: 'p_chat',
+      id: 'trips',
+      label: 'Chuyến đi',
+      icon: History,
+      path: '/passenger/history',
+      matchPaths: ['/passenger/history', '/driver/history', '/shared/trip-history']
+    },
+    {
+      id: 'chat',
       label: 'Tin nhắn',
       icon: MessageSquare,
       path: '/passenger/messages',
+      matchPaths: ['/passenger/messages', '/driver/messages'],
       hasUnread: true
     },
     {
-      id: 'p_profile',
-      label: 'Tài khoản', 
-      icon: User, 
-      path: '/profile' 
-    },
-  ];
-
-  const driverTabs = [
-    {
-      id: 'd_home',
-      label: 'Trang chủ',
-      icon: Home,
-      path: '/driver/home'
-    },
-    {
-      id: 'd_history',
-      label: 'Chuyến đi',
-      icon: CarFront,
-      path: '/driver/history'
-    },
-    {
-      id: 'd_chat',
-      label: 'Tin nhắn',
-      icon: MessageSquare,
-      path: '/driver/messages',
-      hasUnread: true
-    },
-    {
-      id: 'd_profile',
+      id: 'profile',
       label: 'Tài khoản',
       icon: User,
       path: '/profile',
@@ -65,19 +48,20 @@ export const BottomNav = () => {
     },
   ];
 
-  const tabs = currentRole === 'driver' ? driverTabs : passengerTabs;
-
   return (
     <div className="w-full bg-white px-2 pt-2.5 pb-[22px] flex items-center justify-around select-none z-40 shrink-0 shadow-[0_-2px_18px_rgba(16,27,23,0.06)]">
       {tabs.map((tab) => {
         const Icon = tab.icon;
-        const isActive = location.pathname === tab.path;
+        const isActive = (tab.matchPaths || [tab.path]).includes(location.pathname);
 
         return (
           <button
             key={tab.id}
             type="button"
-            onClick={() => navigate(tab.path)}
+            onClick={() => {
+              tab.onNavigate?.();
+              navigate(tab.path);
+            }}
             aria-label={tab.label}
             aria-current={isActive ? 'page' : undefined}
             className={`flex min-w-[62px] flex-col items-center justify-center flex-1 gap-1.5 py-2 px-1 rounded-2xl transition-all relative ${

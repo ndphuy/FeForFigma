@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { MOCK_USER_PROFILES } from '../../data/mockData';
 import {
   User,
   Car,
@@ -9,7 +10,6 @@ import {
   ShieldCheck,
   LogOut,
   Star,
-  Wallet,
   Receipt,
   Heart,
   Bell
@@ -20,54 +20,60 @@ export const ProfilePage = () => {
   const { currentRole, currentUser, driverWallet, passengerWallet, vehicles, activeVehicle, pendingBookingsForDriver } = useApp();
   const hasUnreadNotifications = currentRole === 'driver' && pendingBookingsForDriver.length > 0;
 
-  const currentWallet = currentRole === 'driver' ? driverWallet : passengerWallet;
-  const formattedWallet = new Intl.NumberFormat('vi-VN').format(currentWallet);
+  const formattedDriverWallet = new Intl.NumberFormat('vi-VN').format(driverWallet);
+  const formattedPassengerWallet = new Intl.NumberFormat('vi-VN').format(passengerWallet);
 
   return (
     <div className="flex-1 p-4 space-y-3.5 bg-[#F4F7F5] overflow-y-auto rs-scroll pb-8">
-      {/* User Header Card */}
+      {/* User Header Card — one identity, two role activity stats underneath */}
       <div className="bg-white rounded-3xl p-5 border border-[#E4EAE7] shadow-[0_2px_12px_rgba(16,27,23,0.04)]">
         <div className="flex items-center space-x-3.5">
           {/* Circular Initials Avatar */}
           <div className="w-14 h-14 rounded-full bg-[#DDF3EA] text-[#0B7A5C] font-bold flex items-center justify-center text-lg shrink-0 border border-[#B2E2D0]/50 shadow-xs">
-            {currentUser.initials || (currentRole === 'driver' ? 'QH' : 'MA')}
+            {currentUser.initials}
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-base font-bold text-[#101B17] truncate">{currentUser.name}</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DDF3EA] text-[#0B7A5C] border border-[#B2E2D0]">
-                {currentRole === 'driver' ? 'Tài xế' : 'Hành khách'}
-              </span>
-            </div>
-            
+            <h1 className="text-base font-bold text-[#101B17] truncate">{currentUser.name}</h1>
             <p className="text-xs text-[#4B5A54] mt-0.5">{currentUser.phone}</p>
-            
-            <div className="flex items-center space-x-2 text-xs text-[#4B5A54] mt-1">
-              <span className="flex items-center font-bold text-amber-600">
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="flex items-center font-bold text-amber-600 text-xs">
                 <Star className="w-3.5 h-3.5 fill-[#EE7A22] text-[#EE7A22] mr-0.5" />
                 {currentUser.trustScore}
               </span>
-              <span>·</span>
-              <span>{currentRole === 'driver' ? `${currentUser.tripsCompleted || 96} chuyến lái` : `${currentUser.tripsTaken || 38} chuyến đi`}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#EAF2FF] text-[#2F6FCE] border border-[#BBD6F7]">Tài xế</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF4E9] text-[#D96A16] border border-[#F7D9B8]">Hành khách</span>
             </div>
           </div>
         </div>
 
-        {/* Wallet Balance Bar (Clicking navigates to Wallet Detail) */}
-        <div 
+        {/* As driver */}
+        <div
           onClick={() => navigate('/wallet')}
-          className="mt-4 pt-4 border-t border-[#EEF2F0] flex items-center justify-between cursor-pointer hover:bg-[#F1FAF6] -mx-2 px-2 py-1 rounded-xl transition-colors"
+          className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-[#E4EAE7] p-3 cursor-pointer hover:bg-[#F1FAF6] transition-colors"
         >
-          <div className="flex items-center space-x-2 text-xs text-[#4B5A54]">
-            <Wallet className="w-4 h-4 text-[#0F9D76]" />
-            <span>Số dư ví:</span>
-            <span className="font-bold text-[#101B17] font-mono">{formattedWallet} ₫</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-[#EAF2FF] text-[#2F6FCE] shrink-0">Là tài xế</span>
+            <span className="text-[11px] text-[#4B5A54] truncate">{MOCK_USER_PROFILES.driver.tripsCompleted} chuyến lái</span>
           </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="font-bold text-[#101B17] font-mono text-xs">{formattedDriverWallet} ₫</span>
+            <ChevronRight className="w-3.5 h-3.5 text-[#0F9D76]" />
+          </div>
+        </div>
 
-          <div className="flex items-center space-x-1 text-xs font-bold text-[#0F9D76]">
-            <span>Chi tiết ví</span>
-            <ChevronRight className="w-4 h-4" />
+        {/* As passenger */}
+        <div
+          onClick={() => navigate('/wallet')}
+          className="mt-2.5 flex items-center justify-between gap-3 rounded-2xl border border-[#E4EAE7] p-3 cursor-pointer hover:bg-[#F1FAF6] transition-colors"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-[#FFF4E9] text-[#D96A16] shrink-0">Là hành khách</span>
+            <span className="text-[11px] text-[#4B5A54] truncate">{MOCK_USER_PROFILES.passenger.tripsTaken} chuyến đi</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="font-bold text-[#101B17] font-mono text-xs">{formattedPassengerWallet} ₫</span>
+            <ChevronRight className="w-3.5 h-3.5 text-[#0F9D76]" />
           </div>
         </div>
       </div>

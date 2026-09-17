@@ -86,9 +86,9 @@ const AppRoutes = () => {
     <MobileFrame hideNav={shouldHideNav}>
       <Routes>
         {/* Default Redirect */}
-        <Route 
-          path="/" 
-          element={<Navigate to={currentRole === 'driver' ? '/driver/home' : '/passenger/home'} replace />} 
+        <Route
+          path="/"
+          element={<Navigate to="/passenger/home" replace />}
         />
 
         {/* Auth & Profile */}

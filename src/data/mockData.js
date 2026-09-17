@@ -45,18 +45,25 @@ export const MOCK_DRIVER_VEHICLES = [
   }
 ];
 
+// One person, one identity — they can post trips as a driver and book trips as a
+// passenger from the same account. Only the role-specific activity stats (trip
+// counts, wallet balance, vehicle) differ; name/id/phone/trustScore never do.
+const ACCOUNT_IDENTITY = {
+  id: "usr_01",
+  name: "Quốc Huy",
+  initials: "QH",
+  phone: "0908 123 456",
+  email: "quochuy@gmail.com",
+  trustScore: 4.8,
+  verified: true,
+  verificationStatus: "Đã xác thực CCCD & GPLX",
+};
+
 export const MOCK_USER_PROFILES = {
   driver: {
-    id: "drv_01",
-    name: "Quốc Huy",
-    initials: "QH",
-    phone: "0908 123 456",
-    email: "quochuy.driver@gmail.com",
+    ...ACCOUNT_IDENTITY,
     role: "driver",
-    trustScore: 4.8,
     tripsCompleted: 96,
-    verified: true,
-    verificationStatus: "Đã xác thực CCCD & GPLX",
     walletBalance: 1250000,
     vehicle: {
       model: "Honda City",
@@ -68,16 +75,9 @@ export const MOCK_USER_PROFILES = {
     },
   },
   passenger: {
-    id: "pas_01",
-    name: "Minh Anh",
-    initials: "MA",
-    phone: "0912 345 678",
-    email: "minhanh@gmail.com",
+    ...ACCOUNT_IDENTITY,
     role: "passenger",
-    trustScore: 4.9,
     tripsTaken: 38,
-    verified: true,
-    verificationStatus: "Đã xác thực CCCD",
     walletBalance: 450000,
   },
 };
@@ -125,7 +125,7 @@ export const MOCK_PICKUP_POINTS = [
 export const INITIAL_TRIPS = [
   {
     id: "trip_001",
-    driverId: "drv_01",
+    driverId: "usr_01",
     driverName: "Quốc Huy",
     driverInitials: "QH",
     driverTrustScore: 4.8,
@@ -320,6 +320,37 @@ export const INITIAL_BOOKINGS = [
     bookingCode: "#RS-7719",
     pin: "6392",
     createdAt: "15 phút trước"
+  },
+  // Pending second rider on the driver's flagship trip — lets the booking-approval
+  // and "extra passenger joins mid-trip" refund demo run without the account ever
+  // booking a seat on its own trip.
+  {
+    id: "bk_demo_03",
+    tripId: "trip_001",
+    passengerId: "pas_05",
+    passengerName: "Minh Anh",
+    passengerInitials: "MA",
+    passengerPhone: "0912 345 678",
+    passengerTrustScore: 4.9,
+    passengerTrips: 12,
+    pickupPoint: "FPT University HCMC",
+    dropoffPoint: "Chợ Bến Thành, Q.1",
+    fareVnd: 45000,
+    seatsCount: 1,
+    status: "pending",
+    driverName: "Quốc Huy",
+    driverPhone: "0908 123 456",
+    vehicleModel: "Honda City · Trắng",
+    vehiclePlate: "51G-119.02",
+    departureTime: "07:00",
+    departureDate: "Hôm nay, 12/09",
+    routeText: "FPT University HCMC → Chợ Bến Thành, Q.1 · 07:00",
+    overlapPercent: 94,
+    detourKm: "+0.3 km",
+    detourMin: "+1 phút",
+    bookingCode: "#RS-3305",
+    pin: "8210",
+    createdAt: "8 phút trước"
   }
 ];
 
@@ -370,7 +401,7 @@ export const MOCK_DRIVER_SCHEDULES = [
     wishlistDiscountPercent: 15,
     active: true,
     subscribers: [
-      { id: "pas_01", name: "Minh Anh", avatar: "MA", phone: "0912 345 678", pickup: "Ngã 4 Thủ Đức", dropoff: "Khu CNC" }
+      { id: "pas_02", name: "Thùy Linh", avatar: "TL", phone: "0988 776 655", pickup: "Ngã 4 Thủ Đức", dropoff: "Khu CNC" }
     ]
   },
   {
@@ -408,11 +439,11 @@ export const MOCK_PASSENGER_SCHEDULES = [
     preferredVehicle: "all",
     active: true,
     matchedDriver: {
-      id: "drv_01",
-      name: "Quốc Huy",
-      avatar: "QH",
-      vehicle: "Honda SH 150i · 59-X3 892.12",
-      phone: "0908 123 456",
+      id: "drv_02",
+      name: "Nguyễn Minh",
+      avatar: "NM",
+      vehicle: "Mazda 3 · 51K-882.91",
+      phone: "0933 222 111",
       status: "Đã ghép đôi trọn gói T10 (22 chuyến)"
     }
   },
@@ -458,14 +489,14 @@ export const MOCK_WALLET_TRANSACTIONS = [
   },
   {
     id: "tx_02",
-    title: "Đóng góp chuyến đi cùng Quốc Huy (FPT → Q.1)",
+    title: "Đóng góp chuyến đi cùng Nguyễn Minh (FPT → Q.1)",
     date: "Hôm qua · 07:55",
     amount: -45000,
     type: "out",
   },
   {
     id: "tx_03",
-    title: "Thu nhập chia sẻ từ Minh Anh",
+    title: "Thu nhập chia sẻ từ Thùy Linh",
     date: "09/09/2026",
     amount: 45000,
     type: "in",

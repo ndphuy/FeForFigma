@@ -87,13 +87,13 @@ export const AppProvider = ({ children }) => {
         if (exists) return prev.filter(d => d.id !== targetId);
         const newDriver = typeof target === 'object' ? target : {
           id: targetId,
-          name: 'Tài xế Quốc Huy',
-          avatar: 'QH',
+          name: 'Tài xế Nguyễn Minh',
+          avatar: 'NM',
           trustScore: 4.9,
-          vehicle: 'Honda City · 51G-119.02',
+          vehicle: 'Mazda 3 · 51K-882.91',
           commonRoute: 'FPT University → Q.1',
-          tripsCompleted: 96,
-          phone: '0908 123 456'
+          tripsCompleted: 128,
+          phone: '0933 222 111'
         };
         return [newDriver, ...prev];
       });
@@ -103,12 +103,12 @@ export const AppProvider = ({ children }) => {
         if (exists) return prev.filter(p => p.id !== targetId);
         const newPassenger = typeof target === 'object' ? target : {
           id: targetId,
-          name: 'Hành khách Minh Anh',
-          avatar: 'MA',
+          name: 'Hành khách Thùy Linh',
+          avatar: 'TL',
           trustScore: 4.8,
           commonRoute: 'Thủ Đức → Bến Thành',
-          tripsTaken: 38,
-          phone: '0912 345 678'
+          tripsTaken: 24,
+          phone: '0988 776 655'
         };
         return [newPassenger, ...prev];
       });
@@ -224,7 +224,7 @@ export const AppProvider = ({ children }) => {
     const newTripId = `trip_${Date.now()}`;
     const newTrip = {
       id: newTripId,
-      driverId: 'drv_01',
+      driverId: currentUser.id,
       driverName: MOCK_USER_PROFILES.driver.name,
       driverInitials: MOCK_USER_PROFILES.driver.initials,
       driverTrustScore: MOCK_USER_PROFILES.driver.trustScore,
@@ -286,6 +286,7 @@ export const AppProvider = ({ children }) => {
     const targetTrip = trips.find(t => t.id === tripId);
     const requestedSeats = Number(seatsCount);
     if (!targetTrip) return { ok: false, message: 'Không tìm thấy chuyến đi này.' };
+    if (targetTrip.driverId === currentUser.id) return { ok: false, message: 'Bạn không thể đặt chỗ trên chính chuyến mình đã đăng.' };
     if (targetTrip.statusText !== 'Đang mở') return { ok: false, message: 'Chuyến đi hiện không mở nhận khách.' };
     if (!Number.isInteger(requestedSeats) || requestedSeats < 1 || requestedSeats > targetTrip.availableSeats) {
       return { ok: false, message: 'Số chỗ yêu cầu không hợp lệ hoặc đã hết chỗ.' };
@@ -303,7 +304,7 @@ export const AppProvider = ({ children }) => {
     const newBooking = {
       id: newBookingId,
       tripId: targetTrip.id,
-      passengerId: 'pas_01',
+      passengerId: currentUser.id,
       passengerName: MOCK_USER_PROFILES.passenger.name,
       passengerInitials: MOCK_USER_PROFILES.passenger.initials,
       passengerPhone: MOCK_USER_PROFILES.passenger.phone,
@@ -708,17 +709,17 @@ export const AppProvider = ({ children }) => {
     if (existingPassengerSched) {
       updatePassengerSchedule(existingPassengerSched.id, {
         matchedDriver: {
-          id: 'drv_01',
-          name: 'Quốc Huy',
-          avatar: 'QH',
-          vehicle: targetDriverSched.vehicleModel ? `${targetDriverSched.vehicleModel} · ${targetDriverSched.vehiclePlate}` : 'Honda City · 51G-119.02',
-          phone: '0908 123 456',
+          id: 'drv_02',
+          name: 'Nguyễn Minh',
+          avatar: 'NM',
+          vehicle: targetDriverSched.vehicleModel ? `${targetDriverSched.vehicleModel} · ${targetDriverSched.vehiclePlate}` : 'Mazda 3 · 51K-882.91',
+          phone: '0933 222 111',
           status: 'Đã đăng ký trọn gói tháng 10 (22 chuyến)'
         }
       });
     } else {
       addPassengerSchedule({
-        title: `Đi chung cùng ${targetDriverSched.title || 'Tài xế Quốc Huy'}`,
+        title: `Đi chung cùng ${targetDriverSched.title || 'Tài xế Nguyễn Minh'}`,
         purpose: 'Đi làm',
         icon: '🏢',
         origin: targetDriverSched.origin,
@@ -728,11 +729,11 @@ export const AppProvider = ({ children }) => {
         duration: targetDriverSched.duration || { startDate: '01/10/2026', endDate: '31/10/2026', durationLabel: '01/10 → 31/10/2026' },
         preferredVehicle: targetDriverSched.vehicleType || 'all',
         matchedDriver: {
-          id: 'drv_01',
-          name: 'Quốc Huy',
-          avatar: 'QH',
-          vehicle: targetDriverSched.vehicleModel ? `${targetDriverSched.vehicleModel} · ${targetDriverSched.vehiclePlate}` : 'Honda City · 51G-119.02',
-          phone: '0908 123 456',
+          id: 'drv_02',
+          name: 'Nguyễn Minh',
+          avatar: 'NM',
+          vehicle: targetDriverSched.vehicleModel ? `${targetDriverSched.vehicleModel} · ${targetDriverSched.vehiclePlate}` : 'Mazda 3 · 51K-882.91',
+          phone: '0933 222 111',
           status: 'Đã đăng ký trọn gói tháng 10 (22 chuyến)'
         }
       });

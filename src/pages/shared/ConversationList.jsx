@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ChevronRight, MessageSquare, Search } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { getConversationsForRole } from '../../data/conversations';
+import { getAllConversations } from '../../data/conversations';
 
 const ConversationCard = ({ conversation, onOpen }) => {
   const isCurrent = conversation.period === 'current';
@@ -30,8 +30,15 @@ const ConversationCard = ({ conversation, onOpen }) => {
             {isCurrent ? 'HIỆN TẠI' : 'CHUYẾN CŨ'}
           </span>
         </span>
-        <span className="text-[10.5px] font-semibold text-[#0B7A5C] mt-0.5 truncate">
-          {conversation.roleLabel} · {conversation.schedule}
+        <span className="flex items-center gap-1.5 mt-0.5">
+          <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+            conversation.myRole === 'driver' ? 'bg-[#EAF2FF] text-[#2F6FCE]' : 'bg-[#FFF4E9] text-[#D96A16]'
+          }`}>
+            {conversation.myRole === 'driver' ? 'Bạn lái' : 'Bạn đi'}
+          </span>
+          <span className="text-[10.5px] font-semibold text-[#0B7A5C] truncate">
+            {conversation.roleLabel} · {conversation.schedule}
+          </span>
         </span>
         <span className="text-[11px] text-[#4B5A54] mt-1 truncate">{conversation.route}</span>
         <span className="text-[11px] text-[#8A9993] mt-1 truncate">{conversation.lastMessage}</span>
@@ -53,9 +60,9 @@ const ConversationCard = ({ conversation, onOpen }) => {
 
 export const ConversationList = () => {
   const navigate = useNavigate();
-  const { currentRole } = useApp();
+  const { switchRole } = useApp();
   const [query, setQuery] = useState('');
-  const conversations = getConversationsForRole(currentRole);
+  const conversations = getAllConversations();
   const normalizedQuery = query.trim().toLocaleLowerCase('vi');
   const filteredConversations = normalizedQuery
     ? conversations.filter((conversation) =>
@@ -68,6 +75,7 @@ export const ConversationList = () => {
   const pastConversations = filteredConversations.filter((conversation) => conversation.period === 'past');
 
   const openConversation = (conversation) => {
+    switchRole(conversation.myRole);
     navigate(`/shared/chat/${conversation.id}`);
   };
 
@@ -81,7 +89,7 @@ export const ConversationList = () => {
           <div>
             <h1 className="text-base font-bold text-[#101B17] tracking-tight">Tin nhắn chuyến đi</h1>
             <p className="text-[11px] text-[#8A9993] mt-0.5">
-              {currentRole === 'driver' ? 'Trò chuyện với đúng hành khách' : 'Trò chuyện với đúng tài xế'}
+              Trò chuyện với đúng tài xế và hành khách của bạn
             </p>
           </div>
         </div>
@@ -92,7 +100,7 @@ export const ConversationList = () => {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={`Tìm ${currentRole === 'driver' ? 'hành khách' : 'tài xế'} hoặc tuyến đường`}
+            placeholder="Tìm tài xế, hành khách hoặc tuyến đường"
             className="flex-1 min-w-0 bg-transparent outline-none text-xs text-[#101B17] placeholder:text-[#8A9993]"
           />
         </label>

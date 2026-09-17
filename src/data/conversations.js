@@ -1,18 +1,18 @@
 export const CONVERSATIONS_BY_ROLE = {
   passenger: [
     {
-      id: 'pas_trip_001_driver_quoc_huy',
-      tripId: 'trip_001',
-      personId: 'drv_01',
-      name: 'Quốc Huy',
-      initials: 'QH',
+      id: 'pas_trip_002_driver_nguyen_minh',
+      tripId: 'trip_002',
+      personId: 'drv_02',
+      name: 'Nguyễn Minh',
+      initials: 'NM',
       roleLabel: 'Tài xế hiện tại',
-      phone: '0908123456',
+      phone: '0933222111',
       verified: true,
       period: 'current',
       statusLabel: 'Chuyến hiện tại',
-      route: 'FPT University HCMC → Chợ Bến Thành',
-      schedule: 'Hôm nay · 07:00',
+      route: 'FPT University HCMC → Tòa nhà Bitexco, Q.1',
+      schedule: 'Hôm nay · 07:20',
       lastMessage: 'Mình sẽ tới Cổng 2 sau 5 phút nữa.',
       lastMessageTime: '07:19',
       unread: 2,
@@ -70,28 +70,6 @@ export const CONVERSATIONS_BY_ROLE = {
     }
   ],
   driver: [
-    {
-      id: 'drv_trip_001_passenger_minh_anh',
-      tripId: 'trip_001',
-      personId: 'pas_01',
-      name: 'Minh Anh',
-      initials: 'MA',
-      roleLabel: 'Hành khách hiện tại',
-      phone: '0912345678',
-      verified: true,
-      period: 'current',
-      statusLabel: 'Chuyến hiện tại',
-      route: 'FPT University HCMC → Chợ Bến Thành',
-      schedule: 'Hôm nay · 07:00',
-      lastMessage: 'Em đã có mặt tại Cổng 2 rồi ạ.',
-      lastMessageTime: '07:18',
-      unread: 1,
-      messages: [
-        { id: 1, from: 'me', text: 'Chào bạn, mình sẽ tới Cổng 2 lúc 07:25 nhé.', time: '07:02' },
-        { id: 2, from: 'them', text: 'Dạ vâng, em đợi ở Cổng 2 ạ.', time: '07:03' },
-        { id: 3, from: 'them', text: 'Em đã có mặt tại Cổng 2 rồi ạ.', time: '07:18' }
-      ]
-    },
     {
       id: 'drv_trip_001_passenger_thuy_linh',
       tripId: 'trip_001',
@@ -160,6 +138,12 @@ export const CONVERSATIONS_BY_ROLE = {
 };
 
 export const getConversationsForRole = (role) => CONVERSATIONS_BY_ROLE[role] || [];
+
+// Merged inbox: conversations from both roles, each tagged with which role you are in it.
+export const getAllConversations = () => [
+  ...CONVERSATIONS_BY_ROLE.passenger.map((c) => ({ ...c, myRole: 'passenger' })),
+  ...CONVERSATIONS_BY_ROLE.driver.map((c) => ({ ...c, myRole: 'driver' })),
+];
 
 export const getConversationById = (role, conversationId) => {
   const conversations = getConversationsForRole(role);

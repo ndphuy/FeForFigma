@@ -15,75 +15,78 @@ import {
 
 export const WalletDetail = () => {
   const navigate = useNavigate();
-  const { currentRole, driverWallet, passengerWallet } = useApp();
+  const { driverWallet, passengerWallet } = useApp();
 
-  const currentWallet = currentRole === 'driver' ? driverWallet : passengerWallet;
-  const formattedWallet = new Intl.NumberFormat('vi-VN').format(currentWallet);
+  const formattedDriverWallet = new Intl.NumberFormat('vi-VN').format(driverWallet);
+  const formattedPassengerWallet = new Intl.NumberFormat('vi-VN').format(passengerWallet);
 
-  // Mock Transaction History
-  const [transactions] = useState(
-    currentRole === 'driver'
-      ? [
-        {
-          id: 'tx_01',
-          title: 'Tiền cước từ Minh Anh (Q.7 → Q.1)',
-          date: 'Hôm nay · 07:55',
-          amount: 45000,
-          type: 'in', // 'in' | 'out'
-        },
-        {
-          id: 'tx_02',
-          title: 'Tiền cước từ Hoàng Nam (Q.4 → Q.1)',
-          date: 'Hôm qua · 17:45',
-          amount: 45000,
-          type: 'in',
-        },
-        {
-          id: 'tx_03',
-          title: 'Rút tiền về tài khoản Techcombank',
-          date: '09/09/2026',
-          amount: -500000,
-          type: 'out',
-        },
-        {
-          id: 'tx_04',
-          title: 'Tiền cước từ Thanh Trúc',
-          date: '08/09/2026',
-          amount: 52000,
-          type: 'in',
-        }
-      ]
-      : [
-        {
-          id: 'tx_01',
-          title: 'Nạp tiền ví RouteShare (PayOS/VietQR)',
-          date: 'Hôm nay · 06:30',
-          amount: 200000,
-          type: 'in',
-        },
-        {
-          id: 'tx_02',
-          title: 'Thanh toán chuyến đi Quốc Huy (Q.7 → Q.1)',
-          date: 'Hôm qua · 07:55',
-          amount: -45000,
-          type: 'out',
-        },
-        {
-          id: 'tx_03',
-          title: 'Thanh toán chuyến đi Thùy Linh (Q.7 → Q.1)',
-          date: '09/09/2026',
-          amount: -52000,
-          type: 'out',
-        },
-        {
-          id: 'tx_04',
-          title: 'Nạp tiền ví RouteShare',
-          date: '05/09/2026',
-          amount: 300000,
-          type: 'in',
-        }
-      ]
-  );
+  // Mock Transaction History — merged across both wallets, tagged per role
+  const [transactions] = useState([
+    {
+      id: 'tx_drv_01',
+      role: 'driver',
+      title: 'Tiền cước từ Thùy Linh (Q.7 → Q.1)',
+      date: 'Hôm nay · 07:55',
+      amount: 45000,
+      type: 'in', // 'in' | 'out'
+    },
+    {
+      id: 'tx_pas_01',
+      role: 'passenger',
+      title: 'Nạp tiền ví RouteShare (PayOS/VietQR)',
+      date: 'Hôm nay · 06:30',
+      amount: 200000,
+      type: 'in',
+    },
+    {
+      id: 'tx_drv_02',
+      role: 'driver',
+      title: 'Tiền cước từ Hoàng Nam (Q.4 → Q.1)',
+      date: 'Hôm qua · 17:45',
+      amount: 45000,
+      type: 'in',
+    },
+    {
+      id: 'tx_pas_02',
+      role: 'passenger',
+      title: 'Thanh toán chuyến đi Nguyễn Minh (Q.7 → Q.1)',
+      date: 'Hôm qua · 07:55',
+      amount: -45000,
+      type: 'out',
+    },
+    {
+      id: 'tx_drv_03',
+      role: 'driver',
+      title: 'Rút tiền về tài khoản Techcombank',
+      date: '09/09/2026',
+      amount: -500000,
+      type: 'out',
+    },
+    {
+      id: 'tx_pas_03',
+      role: 'passenger',
+      title: 'Thanh toán chuyến đi Hoàng Tùng (Q.7 → Q.1)',
+      date: '09/09/2026',
+      amount: -52000,
+      type: 'out',
+    },
+    {
+      id: 'tx_drv_04',
+      role: 'driver',
+      title: 'Tiền cước từ Thanh Trúc',
+      date: '08/09/2026',
+      amount: 52000,
+      type: 'in',
+    },
+    {
+      id: 'tx_pas_04',
+      role: 'passenger',
+      title: 'Nạp tiền ví RouteShare',
+      date: '05/09/2026',
+      amount: 300000,
+      type: 'in',
+    }
+  ]);
 
   return (
     <div className="flex-1 flex flex-col justify-between p-5 bg-[#F4F7F5]">
@@ -100,31 +103,37 @@ export const WalletDetail = () => {
           <div className="w-10" />
         </div>
 
-        {/* Balance Card */}
-        <div className="bg-white rounded-3xl p-5 border border-[#E4EAE7] shadow-[0_2px_8px_rgba(16,27,23,0.03)] space-y-4">
-          <div>
-            <span className="text-xs font-medium text-[#8A9993] block mb-1">
-              Số dư khả dụng ({currentRole === 'driver' ? 'Ví tài xế' : 'Ví hành khách'})
+        {/* Balance Cards: driver + passenger side by side */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_8px_rgba(16,27,23,0.03)] space-y-2.5">
+            <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#2F6FCE] bg-[#EAF2FF] px-2 py-0.5 rounded-full inline-block">
+              Ví tài xế
             </span>
-            <div className="flex items-baseline space-x-1.5">
-              <span className="text-3xl font-black text-[#0F9D76]">
-                {formattedWallet}
-              </span>
-              <span className="text-base font-bold text-[#101B17]">đ</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black text-[#0F9D76]">{formattedDriverWallet}</span>
+              <span className="text-xs font-bold text-[#101B17]">đ</span>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2">
-            <button
-              onClick={() => navigate('/wallet/top-up')}
-              className="py-3 bg-[#0F9D76] hover:bg-[#0B7A5C] active:scale-[0.99] text-white font-bold rounded-2xl text-xs transition-all shadow-xs flex items-center justify-center space-x-1.5"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Nạp tiền vào ví</span>
-            </button>
+          <div className="bg-white rounded-3xl p-4 border border-[#E4EAE7] shadow-[0_2px_8px_rgba(16,27,23,0.03)] space-y-2.5">
+            <span className="text-[10.5px] font-bold uppercase tracking-wide text-[#D96A16] bg-[#FFF4E9] px-2 py-0.5 rounded-full inline-block">
+              Ví hành khách
+            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black text-[#0F9D76]">{formattedPassengerWallet}</span>
+              <span className="text-xs font-bold text-[#101B17]">đ</span>
+            </div>
           </div>
         </div>
+
+        {/* Action Buttons */}
+        <button
+          onClick={() => navigate('/wallet/top-up')}
+          className="w-full py-3 bg-[#0F9D76] hover:bg-[#0B7A5C] active:scale-[0.99] text-white font-bold rounded-2xl text-xs transition-all shadow-xs flex items-center justify-center space-x-1.5"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>Nạp tiền vào ví</span>
+        </button>
 
         {/* Transaction History Section */}
         <div className="space-y-2.5">
@@ -132,7 +141,7 @@ export const WalletDetail = () => {
             <h2 className="text-xs font-bold text-[#101B17] uppercase tracking-wider">
               Lịch sử giao dịch
             </h2>
-            <span className="text-[11px] text-[#8A9993]">Gần đây</span>
+            <span className="text-[11px] text-[#8A9993]">Cả 2 ví · Gần đây</span>
           </div>
 
           <div className="bg-white rounded-3xl border border-[#E4EAE7] shadow-[0_2px_8px_rgba(16,27,23,0.03)] divide-y divide-[#E4EAE7] overflow-hidden">
@@ -151,7 +160,14 @@ export const WalletDetail = () => {
                   </div>
 
                   <div>
-                    <span className="text-xs font-bold text-[#101B17] block leading-snug">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+                        tx.role === 'driver' ? 'bg-[#EAF2FF] text-[#2F6FCE]' : 'bg-[#FFF4E9] text-[#D96A16]'
+                      }`}>
+                        {tx.role === 'driver' ? 'Ví tài xế' : 'Ví khách'}
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-[#101B17] block leading-snug mt-1">
                       {tx.title}
                     </span>
                     <span className="text-[10px] text-[#8A9993] mt-0.5 block">
