@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Lock,
   Phone,
+  Mail,
   Eye,
   EyeOff,
   ChevronRight,
@@ -22,11 +23,17 @@ export const LoginPage = () => {
 
   // viewMode: 'login' | 'forgot_phone' | 'forgot_otp' | 'forgot_reset'
   const [viewMode, setViewMode] = useState('login');
+  
+  // Login method: 'phone' | 'email'
+  const [loginType, setLoginType] = useState('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Forgot password flow states
+  const [recoveryType, setRecoveryType] = useState('phone'); // 'phone' | 'email'
+  const [recoveryEmail, setRecoveryEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -38,14 +45,24 @@ export const LoginPage = () => {
   // Handle Standard Password Login
   const handlePasswordLogin = (e) => {
     e.preventDefault();
-    if (phoneNumber.length < 9) {
-      setErrorMsg('Vui lòng nhập số điện thoại hợp lệ (từ 9-10 chữ số).');
-      return;
+    if (loginType === 'phone') {
+      if (phoneNumber.length < 9) {
+        setErrorMsg('Vui lòng nhập số điện thoại hợp lệ (từ 9-10 chữ số).');
+        return;
+      }
+    } else {
+      if (!email.trim() || !email.includes('@')) {
+        setErrorMsg('Vui lòng nhập địa chỉ email hợp lệ.');
+        return;
+      }
     }
+
     if (!password) {
       setErrorMsg('Vui lòng nhập mật khẩu.');
       return;
     }
+
+    setErrorMsg('');
     setIsAuthenticated(true);
     if (currentRole === 'driver') {
       navigate('/driver/home');
@@ -57,10 +74,18 @@ export const LoginPage = () => {
   // Handle Forgot Password - Send OTP
   const handleForgotSendOTP = (e) => {
     e.preventDefault();
-    if (phoneNumber.length < 9) {
-      setErrorMsg('Vui lòng nhập số điện thoại hợp lệ để nhận mã xác thực.');
-      return;
+    if (recoveryType === 'phone') {
+      if (phoneNumber.length < 9) {
+        setErrorMsg('Vui lòng nhập số điện thoại hợp lệ để nhận mã xác thực.');
+        return;
+      }
+    } else {
+      if (!recoveryEmail.trim() || !recoveryEmail.includes('@')) {
+        setErrorMsg('Vui lòng nhập địa chỉ email hợp lệ để nhận mã xác thực.');
+        return;
+      }
     }
+
     setErrorMsg('');
     setOtpValue('');
     setTimer(45);
@@ -174,11 +199,46 @@ export const LoginPage = () => {
         {/* VIEW 1: STANDARD LOGIN FORM */}
         {viewMode === 'login' && (
           <div>
-            <div className="mb-5">
+            <div className="mb-4">
               <h1 className="text-xl font-bold text-[#101B17]">Đăng nhập tài khoản</h1>
               <p className="text-xs text-[#4B5A54] mt-1">
-                Nhập số điện thoại và mật khẩu để tiếp tục hành trình.
+                Nhập thông tin tài khoản và mật khẩu để tiếp tục hành trình.
               </p>
+            </div>
+
+            {/* Login Type Selector (Phone vs Email) */}
+            <div className="grid grid-cols-2 gap-1 p-1 bg-[#E4EAE7]/70 rounded-2xl mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginType('phone');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginType === 'phone'
+                    ? 'bg-white text-[#0B7A5C] shadow-xs'
+                    : 'text-[#4B5A54] hover:text-[#101B17]'
+                }`}
+              >
+                <Phone className="w-3.5 h-3.5 text-[#0F9D76]" />
+                <span>Số điện thoại</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginType('email');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginType === 'email'
+                    ? 'bg-white text-[#0B7A5C] shadow-xs'
+                    : 'text-[#4B5A54] hover:text-[#101B17]'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5 text-[#0F9D76]" />
+                <span>Email</span>
+              </button>
             </div>
 
             {errorMsg && (
@@ -188,26 +248,48 @@ export const LoginPage = () => {
             )}
 
             <form onSubmit={handlePasswordLogin} className="space-y-4">
-              {/* Phone Input */}
-              <div>
-                <label className="text-[11.5px] font-bold text-[#101B17] block mb-1.5">
-                  Số điện thoại
-                </label>
-                <div className="relative flex items-center">
-                  <Phone className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => {
-                      setPhoneNumber(e.target.value);
-                      setErrorMsg('');
-                    }}
-                    placeholder="Nhập số điện thoại (VD: 0912 345 678)..."
-                    className="w-full pl-10 pr-4 py-3.5 bg-white border border-[#E4EAE7] rounded-2xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none font-mono transition-colors shadow-xs"
-                    required
-                  />
+              {/* Phone or Email Input */}
+              {loginType === 'phone' ? (
+                <div>
+                  <label className="text-[11.5px] font-bold text-[#101B17] block mb-1.5">
+                    Số điện thoại
+                  </label>
+                  <div className="relative flex items-center">
+                    <Phone className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        setErrorMsg('');
+                      }}
+                      placeholder="Nhập số điện thoại (VD: 0912 345 678)..."
+                      className="w-full pl-10 pr-4 py-3.5 bg-white border border-[#E4EAE7] rounded-2xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none font-mono transition-colors shadow-xs"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="text-[11.5px] font-bold text-[#101B17] block mb-1.5">
+                    Địa chỉ Email
+                  </label>
+                  <div className="relative flex items-center">
+                    <Mail className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrorMsg('');
+                      }}
+                      placeholder="example@fpt.edu.vn / gmail.com..."
+                      className="w-full pl-10 pr-4 py-3.5 bg-white border border-[#E4EAE7] rounded-2xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none transition-colors shadow-xs"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Password Input */}
               <div>
@@ -219,6 +301,12 @@ export const LoginPage = () => {
                     type="button"
                     onClick={() => {
                       setErrorMsg('');
+                      if (loginType === 'email' && email) {
+                        setRecoveryType('email');
+                        setRecoveryEmail(email);
+                      } else {
+                        setRecoveryType('phone');
+                      }
                       setViewMode('forgot_phone');
                     }}
                     className="text-[11px] text-[#0F9D76] font-semibold hover:underline cursor-pointer"
@@ -310,14 +398,49 @@ export const LoginPage = () => {
           </div>
         )}
 
-        {/* VIEW 2: FORGOT PASSWORD - STEP 1: ENTER PHONE */}
+        {/* VIEW 2: FORGOT PASSWORD - STEP 1: ENTER PHONE OR EMAIL */}
         {viewMode === 'forgot_phone' && (
           <div className="space-y-4">
             <div>
               <h1 className="text-xl font-bold text-[#101B17]">Khôi phục mật khẩu</h1>
               <p className="text-xs text-[#4B5A54] mt-1">
-                Nhập số điện thoại đã đăng ký để nhận mã OTP xác thực khôi phục tài khoản.
+                Chọn phương thức nhận mã xác thực OTP để khôi phục tài khoản của bạn.
               </p>
+            </div>
+
+            {/* Recovery Method Switcher */}
+            <div className="grid grid-cols-2 gap-1 p-1 bg-[#E4EAE7]/70 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setRecoveryType('phone');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  recoveryType === 'phone'
+                    ? 'bg-white text-[#0B7A5C] shadow-xs'
+                    : 'text-[#4B5A54] hover:text-[#101B17]'
+                }`}
+              >
+                <Phone className="w-3.5 h-3.5 text-[#0F9D76]" />
+                <span>Số điện thoại</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRecoveryType('email');
+                  setErrorMsg('');
+                }}
+                className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  recoveryType === 'email'
+                    ? 'bg-white text-[#0B7A5C] shadow-xs'
+                    : 'text-[#4B5A54] hover:text-[#101B17]'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5 text-[#0F9D76]" />
+                <span>Email</span>
+              </button>
             </div>
 
             {errorMsg && (
@@ -327,25 +450,47 @@ export const LoginPage = () => {
             )}
 
             <form onSubmit={handleForgotSendOTP} className="space-y-4">
-              <div>
-                <label className="text-[11.5px] font-bold text-[#101B17] block mb-1.5">
-                  Số điện thoại đăng ký
-                </label>
-                <div className="relative flex items-center">
-                  <Phone className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => {
-                      setPhoneNumber(e.target.value);
-                      setErrorMsg('');
-                    }}
-                    placeholder="Nhập số điện thoại (VD: 0912 345 678)..."
-                    className="w-full pl-10 pr-4 py-3.5 bg-white border border-[#E4EAE7] rounded-2xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none font-mono transition-colors shadow-xs"
-                    required
-                  />
+              {recoveryType === 'phone' ? (
+                <div>
+                  <label className="text-[11.5px] font-bold text-[#101B17] block mb-1.5">
+                    Số điện thoại đăng ký
+                  </label>
+                  <div className="relative flex items-center">
+                    <Phone className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        setErrorMsg('');
+                      }}
+                      placeholder="Nhập số điện thoại (VD: 0912 345 678)..."
+                      className="w-full pl-10 pr-4 py-3.5 bg-white border border-[#E4EAE7] rounded-2xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none font-mono transition-colors shadow-xs"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="text-[11.5px] font-bold text-[#101B17] block mb-1.5">
+                    Địa chỉ Email đăng ký
+                  </label>
+                  <div className="relative flex items-center">
+                    <Mail className="w-4 h-4 text-[#8A9993] absolute left-3.5 pointer-events-none" />
+                    <input
+                      type="email"
+                      value={recoveryEmail}
+                      onChange={(e) => {
+                        setRecoveryEmail(e.target.value);
+                        setErrorMsg('');
+                      }}
+                      placeholder="Nhập email đã đăng ký..."
+                      className="w-full pl-10 pr-4 py-3.5 bg-white border border-[#E4EAE7] rounded-2xl text-xs font-semibold text-[#101B17] focus:border-[#0F9D76] outline-none transition-colors shadow-xs"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -364,11 +509,22 @@ export const LoginPage = () => {
             <div>
               <h1 className="text-xl font-bold text-[#101B17]">Nhập mã xác thực OTP</h1>
               <p className="text-xs text-[#4B5A54] mt-1">
-                Mã xác thực 6 số đã được gửi qua SMS đến số điện thoại:
+                {recoveryType === 'phone'
+                  ? 'Mã xác thực 6 số đã được gửi qua SMS đến số điện thoại:'
+                  : 'Mã xác thực 6 số đã được gửi tới hòm thư Email:'}
               </p>
               <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#DDF3EA] text-[#0B7A5C] rounded-xl text-xs font-bold font-mono">
-                <Phone className="w-3.5 h-3.5" />
-                <span>{phoneNumber || '0912 345 678'}</span>
+                {recoveryType === 'phone' ? (
+                  <>
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{phoneNumber || '0912 345 678'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>{recoveryEmail || 'example@gmail.com'}</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -413,7 +569,7 @@ export const LoginPage = () => {
                   }}
                   className="w-full py-2.5 text-xs text-[#8A9993] hover:text-[#101B17] font-semibold cursor-pointer"
                 >
-                  Đổi số điện thoại khác
+                  Đổi {recoveryType === 'phone' ? 'số điện thoại' : 'địa chỉ email'} khác
                 </button>
               </div>
             </form>
