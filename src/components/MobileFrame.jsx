@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { StatusBar } from './StatusBar';
 import { BottomNav } from './BottomNav';
 import { RouteShareMark } from './RouteShareMark';
-import { RotateCcw, User, Car, Layers } from 'lucide-react';
+import { RotateCcw, User, Car, Layers, ShieldCheck } from 'lucide-react';
 
 export const MobileFrame = ({ children, hideNav = false }) => {
   const navigate = useNavigate();
@@ -13,7 +13,9 @@ export const MobileFrame = ({ children, hideNav = false }) => {
     currentRole,
     switchRole,
     resetDemoState,
-    pendingBookingsForDriver
+    pendingBookingsForDriver,
+    isDriverVerified,
+    setIsDriverVerified
   } = useApp();
 
   const handleRoleToggle = (role) => {
@@ -145,6 +147,19 @@ export const MobileFrame = ({ children, hideNav = false }) => {
             </select>
             <Layers className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
           </div>
+
+          <button
+            onClick={() => setIsDriverVerified((v) => !v)}
+            title="Giả lập trạng thái xác thực CCCD/GPLX của tài xế cho demo"
+            className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+              isDriverVerified
+                ? 'bg-slate-700 hover:bg-slate-600 text-slate-200 border-slate-600'
+                : 'bg-[#EE7A22]/20 hover:bg-[#EE7A22]/30 text-[#F5A75E] border-[#EE7A22]/40'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">{isDriverVerified ? 'Tài xế: Đã xác thực' : 'Tài xế: Chưa xác thực'}</span>
+          </button>
 
           <button
             onClick={resetDemoState}

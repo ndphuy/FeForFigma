@@ -17,7 +17,7 @@ import {
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
-  const { currentRole, currentUser, driverWallet, passengerWallet, vehicles, activeVehicle, pendingBookingsForDriver } = useApp();
+  const { currentRole, currentUser, driverWallet, passengerWallet, vehicles, activeVehicle, pendingBookingsForDriver, isDriverVerified } = useApp();
   const hasUnreadNotifications = currentRole === 'driver' && pendingBookingsForDriver.length > 0;
 
   const formattedDriverWallet = new Intl.NumberFormat('vi-VN').format(driverWallet);
@@ -166,15 +166,23 @@ export const ProfilePage = () => {
         </button>
 
         {/* Identity Verification */}
-        <div className="px-4 py-3.5 flex items-center justify-between text-left">
+        <button
+          type="button"
+          onClick={() => navigate('/driver/kyc')}
+          className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-[#F1FAF6] transition-colors text-left cursor-pointer"
+        >
           <div className="flex items-center space-x-3">
-            <ShieldCheck className="w-4.5 h-4.5 text-[#0F9D76]" />
-            <span className="text-xs font-semibold text-[#101B17]">Xác thực CCCD gắn chip</span>
+            <ShieldCheck className={`w-4.5 h-4.5 ${isDriverVerified ? 'text-[#0F9D76]' : 'text-[#D96A16]'}`} />
+            <span className="text-xs font-semibold text-[#101B17]">Xác thực CCCD & GPLX (tài xế)</span>
           </div>
-          <span className="text-[11px] font-bold text-[#0F9D76] bg-[#DDF3EA] px-2.5 py-0.5 rounded-full border border-[#B2E2D0]">
-            Đã xác thực
+          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+            isDriverVerified
+              ? 'text-[#0F9D76] bg-[#DDF3EA] border-[#B2E2D0]'
+              : 'text-[#D96A16] bg-[#FFF4E9] border-[#F7D9B8]'
+          }`}>
+            {isDriverVerified ? 'Đã xác thực' : 'Chưa xác thực'}
           </span>
-        </div>
+        </button>
       </div>
 
       {/* Logout */}

@@ -39,6 +39,11 @@ export const AppProvider = ({ children }) => {
   const [vehicles, setVehicles] = useState(MOCK_DRIVER_VEHICLES);
   const [activeVehicle, setActiveVehicle] = useState(MOCK_DRIVER_VEHICLES[0]);
 
+  // Driver identity verification (CCCD/GPLX) — gates access to "Đăng chuyến".
+  // Defaults to verified so the rest of the demo runs unblocked; toggle it off
+  // from the demo control bar to show the verification-required flow.
+  const [isDriverVerified, setIsDriverVerified] = useState(true);
+
   const addVehicle = (newVehicle) => {
     const created = {
       ...newVehicle,
@@ -214,6 +219,9 @@ export const AppProvider = ({ children }) => {
   const publishTrip = (tripData) => {
     if (currentRole !== 'driver') {
       return { ok: false, message: 'Chỉ tài xế mới có thể đăng chuyến.' };
+    }
+    if (!isDriverVerified) {
+      return { ok: false, message: 'Hãy xác thực CCCD & GPLX trước khi đăng chuyến.' };
     }
 
     const vehicle = vehicles.find(v => v.id === tripData.vehicleId) || activeVehicle;
@@ -765,6 +773,7 @@ export const AppProvider = ({ children }) => {
     setPickupPoints(MOCK_PICKUP_POINTS);
     setSelectedPickupPoint(MOCK_PICKUP_POINTS[0]);
     setVehicles(MOCK_DRIVER_VEHICLES);
+    setIsDriverVerified(true);
     setActiveTripId('trip_001');
     setActiveBookingId('bk_demo_02');
     setDriverWallet(MOCK_USER_PROFILES.driver.walletBalance);
@@ -904,6 +913,8 @@ export const AppProvider = ({ children }) => {
         activeVehicle,
         setActiveVehicle,
         addVehicle,
+        isDriverVerified,
+        setIsDriverVerified,
         updateVehicle,
         deleteVehicle,
         wishlistDrivers,

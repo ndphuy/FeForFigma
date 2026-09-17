@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ShieldCheck, CheckCircle2, Car, FileText, Plus, Check, Trash2, ArrowRight, Camera, Pencil, X } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Car, FileText, Plus, Check, Trash2, ArrowRight, Camera, Pencil, X, Clock } from 'lucide-react';
 
 export const KYCVerify = () => {
   const navigate = useNavigate();
-  const { vehicles, addVehicle, updateVehicle, deleteVehicle } = useApp();
+  const { vehicles, addVehicle, updateVehicle, deleteVehicle, isDriverVerified, setIsDriverVerified } = useApp();
+  const [justVerified, setJustVerified] = useState(false);
+
+  const handleVerifyNow = () => {
+    setIsDriverVerified(true);
+    setJustVerified(true);
+    setTimeout(() => navigate('/driver/create-trip'), 900);
+  };
 
   // Modal State for Add & Edit Vehicle
   const [showVehicleModal, setShowVehicleModal] = useState(false);
@@ -104,7 +111,14 @@ export const KYCVerify = () => {
 
         {/* Legal documents verification status */}
         <div className="bg-white p-4 rounded-3xl border border-[#E4EAE7] shadow-[0_2px_10px_rgba(16,27,23,0.04)] flex flex-col gap-2.5">
-          <span className="text-xs font-bold text-[#101B17]">Giấy tờ pháp lý chủ xe</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[#101B17]">Giấy tờ pháp lý chủ xe</span>
+            {!isDriverVerified && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF4E9] text-[#D96A16] border border-[#F7D9B8]">
+                Chưa xác thực
+              </span>
+            )}
+          </div>
 
           {/* CCCD */}
           <div className="bg-[#F7FAF9] p-3 rounded-2xl border border-[#EEF2F0] flex items-center justify-between">
@@ -114,10 +128,14 @@ export const KYCVerify = () => {
               </div>
               <div>
                 <p className="text-xs font-bold text-[#101B17]">Căn cước công dân (CCCD)</p>
-                <p className="text-[10.5px] text-[#0B7A5C] font-semibold">Đã đối soát BCA · Hợp lệ</p>
+                <p className={`text-[10.5px] font-semibold ${isDriverVerified ? 'text-[#0B7A5C]' : 'text-[#B45812]'}`}>
+                  {isDriverVerified ? 'Đã đối soát BCA · Hợp lệ' : 'Chưa gửi để đối soát'}
+                </p>
               </div>
             </div>
-            <CheckCircle2 className="w-5 h-5 text-[#0F9D76] shrink-0" />
+            {isDriverVerified
+              ? <CheckCircle2 className="w-5 h-5 text-[#0F9D76] shrink-0" />
+              : <Clock className="w-5 h-5 text-[#D96A16] shrink-0" />}
           </div>
 
           {/* GPLX */}
@@ -128,11 +146,36 @@ export const KYCVerify = () => {
               </div>
               <div>
                 <p className="text-xs font-bold text-[#101B17]">Giấy phép lái xe (GPLX B2 & A1)</p>
-                <p className="text-[10.5px] text-[#0B7A5C] font-semibold">Còn hạn sử dụng đến 2029</p>
+                <p className={`text-[10.5px] font-semibold ${isDriverVerified ? 'text-[#0B7A5C]' : 'text-[#B45812]'}`}>
+                  {isDriverVerified ? 'Còn hạn sử dụng đến 2029' : 'Chưa gửi để đối soát'}
+                </p>
               </div>
             </div>
-            <CheckCircle2 className="w-5 h-5 text-[#0F9D76] shrink-0" />
+            {isDriverVerified
+              ? <CheckCircle2 className="w-5 h-5 text-[#0F9D76] shrink-0" />
+              : <Clock className="w-5 h-5 text-[#D96A16] shrink-0" />}
           </div>
+
+          {!isDriverVerified && (
+            <button
+              type="button"
+              onClick={handleVerifyNow}
+              disabled={justVerified}
+              className="h-11 mt-1 rounded-2xl bg-[#0F9D76] hover:bg-[#0B7A5C] disabled:opacity-70 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+            >
+              {justVerified ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Đã xác thực! Đang chuyển tới tạo chuyến...</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Xác thực CCCD & GPLX ngay</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         {/* VEHICLES LIST SECTION */}

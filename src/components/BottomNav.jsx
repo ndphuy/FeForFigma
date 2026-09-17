@@ -6,7 +6,7 @@ import { Search, CarFront, History, MessageSquare, User } from 'lucide-react';
 export const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { switchRole, pendingBookingsForDriver } = useApp();
+  const { switchRole, pendingBookingsForDriver, isDriverVerified } = useApp();
 
   // Unified nav: passenger and driver flows live side by side instead of behind a role switch.
   const tabs = [
@@ -21,7 +21,8 @@ export const BottomNav = () => {
       id: 'post',
       label: 'Đăng chuyến',
       icon: CarFront,
-      path: '/driver/home',
+      path: isDriverVerified ? '/driver/home' : '/driver/kyc',
+      matchPaths: isDriverVerified ? ['/driver/home'] : ['/driver/home', '/driver/kyc'],
       onNavigate: () => switchRole('driver')
     },
     {

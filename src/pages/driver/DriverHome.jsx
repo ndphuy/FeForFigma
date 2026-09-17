@@ -22,12 +22,15 @@ export const DriverHome = () => {
     trips,
     pendingBookingsForDriver,
     respondBooking,
-    setActiveTripId
+    setActiveTripId,
+    isDriverVerified
   } = useApp();
   const [activeTripIndex, setActiveTripIndex] = useState(0);
   const [showCancel, setShowCancel] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
   const [bookingConfirmModal, setBookingConfirmModal] = useState(null);
+
+  const goCreateTrip = () => navigate(isDriverVerified ? '/driver/create-trip' : '/driver/kyc');
 
   const primaryDriverSched = driverSchedules[0] || {
     id: 'dsch_01',
@@ -141,10 +144,12 @@ export const DriverHome = () => {
           <span className="text-xs font-medium text-[#8A9993]">Chào buổi sáng</span>
           <span className="flex items-center gap-[7px] text-lg font-semibold text-[#101B17] leading-tight min-w-0">
             <span className="truncate">{currentUser.name || 'Quốc Huy'}</span>
-            <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" aria-label="Tài xế đã xác thực">
-              <circle cx="12" cy="12" r="10" fill="#0F9D76" />
-              <polyline points="7.5,12.5 10.5,15.5 16.5,9" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            {isDriverVerified && (
+              <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" aria-label="Tài xế đã xác thực">
+                <circle cx="12" cy="12" r="10" fill="#0F9D76" />
+                <polyline points="7.5,12.5 10.5,15.5 16.5,9" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </span>
           <span className="text-[11.5px] text-[#8A9993] truncate">
             <span className="text-[#F0A020]">★</span> {currentUser.trustScore || '4.8'} · {currentUser.vehicle?.model || 'Honda City'} · {currentUser.vehicle?.plate || '51G-119.02'}
@@ -154,13 +159,28 @@ export const DriverHome = () => {
       </header>
 
       <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+        {!isDriverVerified && (
+          <button
+            type="button"
+            onClick={() => navigate('/driver/kyc')}
+            className="w-full bg-[#FFF4E9] border border-[#F7D9B8] rounded-2xl p-3 flex items-center gap-2.5 text-left hover:bg-[#FFEEDB] transition-colors cursor-pointer"
+          >
+            <span className="w-8 h-8 rounded-xl bg-[#EE7A22] text-white flex items-center justify-center shrink-0 text-sm font-bold">!</span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-xs font-bold text-[#8A4A0B]">Cần xác thực CCCD & GPLX trước khi đăng chuyến</span>
+              <span className="block text-[11px] text-[#8A4A0B]/80">Bấm để xác thực giấy tờ ngay</span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-[#8A4A0B] shrink-0" />
+          </button>
+        )}
+
         <button
           type="button"
-          onClick={() => navigate('/driver/create-trip')}
+          onClick={goCreateTrip}
           className="w-full h-16 rounded-[20px] bg-[#0F9D76] hover:bg-[#0B8A66] text-white text-[17px] font-semibold flex items-center justify-center gap-2.5 shadow-[0_8px_22px_rgba(15,157,118,0.30)] active:scale-[0.99] transition-all"
         >
           <span className="w-[26px] h-[26px] rounded-full bg-white/20 flex items-center justify-center text-[17px] leading-none">+</span>
-          Tạo chuyến đi
+          {isDriverVerified ? 'Tạo chuyến đi' : 'Xác thực để đăng chuyến'}
         </button>
 
         {pendingBookingsForDriver.length > 0 && (
@@ -407,7 +427,7 @@ export const DriverHome = () => {
         <section className="grid grid-cols-3 gap-2.5">
           <button
             type="button"
-            onClick={() => navigate('/driver/create-trip')}
+            onClick={goCreateTrip}
             className="min-h-24 rounded-[20px] border-[1.5px] border-[#E4EAE7] bg-white flex flex-col items-center justify-center gap-2 px-2 text-[#101B17] font-semibold text-xs active:scale-[0.98] hover:border-[#BDE7D5] hover:bg-[#F7FAF9] transition-all"
           >
             <span className="w-9 h-9 rounded-xl bg-[#F1FAF6] text-[#0B7A5C] flex items-center justify-center">
